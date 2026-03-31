@@ -58,9 +58,71 @@ export function connectTickerStream(symbol: string, onMessage: (data: any) => vo
 export async function fetchEconomicEvents() {
   // Mocking economic calendar data as it usually requires paid APIs
   return [
-    { event: "CPI (Consumer Price Index)", impact: "HIGH", time: "14:30", date: "Hoy" },
-    { event: "FOMC Meeting Minutes", impact: "CRITICAL", time: "20:00", date: "Mañana" },
-    { event: "Unemployment Claims", impact: "MEDIUM", time: "13:30", date: "Jueves" },
+    { 
+      event: "FOMC Meeting", 
+      impact: "CRITICAL", 
+      time: "14:00 EST", 
+      date: "2025-03-19", 
+      description: "Decisión de tasas de interés.",
+      effect: "Volatilidad extrema",
+      probability: 95
+    },
+    { 
+      event: "Retail Sales", 
+      impact: "HIGH", 
+      time: "08:30 EST", 
+      date: "2025-03-16", 
+      description: "Ventas minoristas.",
+      effect: "Indicador de fortaleza económica",
+      probability: 60
+    },
+    { 
+      event: "PPI Data", 
+      impact: "HIGH", 
+      time: "08:30 EST", 
+      date: "2025-03-14", 
+      description: "Inflación mayorista.",
+      effect: "Anticipa tendencia de inflación",
+      probability: 65
+    },
+    { 
+      event: "G7 Summit", 
+      impact: "MEDIUM", 
+      time: "10:00 GMT", 
+      date: "2025-03-22", 
+      description: "Reunión de líderes mundiales.",
+      effect: "Impacto geopolítico en divisas",
+      probability: 45
+    },
+  ];
+}
+
+export async function fetchWhaleMovements() {
+  return [
+    { symbol: "BTCUSDT", type: "BUY", amount: "$2450K", impact: "Alta", exchange: "Binance", time: "hace 2 min" },
+    { symbol: "ETHUSDT", type: "SELL", amount: "$1800K", impact: "Alta", exchange: "Bybit", time: "hace 5 min" },
+    { symbol: "BNBUSDT", type: "BUY", amount: "$950K", impact: "Media", exchange: "OKX", time: "hace 12 min" },
+    { symbol: "SOLUSDT", type: "BUY", amount: "$620K", impact: "Media", exchange: "Coinbase", time: "hace 18 min" },
+    { symbol: "XRPUSDT", type: "SELL", amount: "$870K", impact: "Alta", exchange: "Binance", time: "hace 25 min" },
+  ];
+}
+
+export async function fetchTopTraders() {
+  return [
+    { name: "CryptoGod", exchange: "Binance", followers: "12.5K", trade: "LONG BTC", profit: "+12.4%", score: 94 },
+    { name: "WhaleHunter", exchange: "Bybit", followers: "8.9K", trade: "SHORT ETH", profit: "+8.2%", score: 88 },
+    { name: "SmartMoney", exchange: "OKX", followers: "6.7K", trade: "LONG SOL", profit: "+15.7%", score: 85 },
+    { name: "AlphaTrader", exchange: "Binance", followers: "15.4K", trade: "LONG BTC", profit: "+9.3%", score: 91 },
+    { name: "MoonMaker", exchange: "Kucoin", followers: "5.2K", trade: "SHORT BNB", profit: "+5.8%", score: 72 },
+  ];
+}
+
+export async function fetchLargeTransactions() {
+  return [
+    { symbol: "BTC", amount: "1,250", type: "Acumulación", time: "1 min", address: "0x3a2... → 0x7f1..." },
+    { symbol: "ETH", amount: "45,000", type: "Distribución", time: "4 min", address: "0x9e4... → 0x2b8..." },
+    { symbol: "SOL", amount: "250,000", type: "Depósito", time: "9 min", address: "0x5c3... → Exchange" },
+    { symbol: "BNB", amount: "15,000", type: "Retiro", time: "14 min", address: "Exchange → 0x1d9..." },
   ];
 }
 
