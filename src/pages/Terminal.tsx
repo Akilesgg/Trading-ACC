@@ -8,37 +8,25 @@ import {
   Minus, 
   Zap, 
   Activity, 
-  ArrowUpRight, 
-  ArrowDownRight,
   Shield,
   Clock,
   Target,
   BarChart3,
-  ChevronRight,
-  Flame,
   Brain,
   Settings,
-  Maximize2,
-  Minimize2,
-  LayoutGrid,
-  List,
   Search,
-  Bell,
-  Menu,
-  User,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
-  MoreVertical,
   Layers,
-  History,
-  Wallet,
-  GraduationCap,
-  Bolt
+  Info,
+  AlertTriangle,
+  CheckCircle2,
+  Crosshair,
+  Waves,
+  Gauge
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchTicker, CryptoData, fetchKlines } from "@/services/cryptoService";
-import { useTrades } from "@/hooks/useTrades";
 import { 
   AreaChart, 
   Area, 
@@ -47,393 +35,486 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  BarChart,
-  Bar,
   ComposedChart,
   Line,
-  Cell
+  Bar
 } from "recharts";
 
 const Terminal = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const symbol = searchParams.get("symbol") || "BTCUSDT";
+  const symbolParam = searchParams.get("symbol") || "BTCUSDT";
+  const [searchSymbol, setSearchSymbol] = useState(symbolParam);
   const [ticker, setTicker] = useState<CryptoData | null>(null);
   const [klines, setKlines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [side, setSide] = useState<"buy" | "sell">("buy");
-  const [orderType, setOrderType] = useState<"limit" | "market">("limit");
-  const [amount, setAmount] = useState("");
-  const [price, setPrice] = useState("");
-  const { trades, executeTrade } = useTrades();
-  const [activeTab, setActiveTab] = useState<"Open Orders" | "Order History" | "Trade History" | "Assets">("Trade History");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [timeframe, setTimeframe] = useState("1h");
+  
+  // Analysis State
+  const [analysis, setAnalysis] = useState<any>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchTicker(symbol);
+        const data = await fetchTicker(symbolParam);
         setTicker(data);
-        setPrice(data.price);
-        const chartData = await fetchKlines(symbol, "1h", 100);
+        const chartData = await fetchKlines(symbolParam, timeframe, 100);
         setKlines(chartData);
       } catch (error) {
-        console.error("Terminal data load error:", error);
+        console.error("Analyzer data load error:", error);
       } finally {
         setLoading(false);
       }
     };
     loadData();
-    const interval = setInterval(loadData, 5000);
-    return () => clearInterval(interval);
-  }, [symbol]);
+  }, [symbolParam, timeframe]);
 
-  if (!ticker) return <div className="pt-32 text-center">Inicializando terminal...</div>;
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchSymbol) {
+      navigate(`/terminal?symbol=${searchSymbol.toUpperCase()}`);
+    }
+  };
+
+  const runAnalysis = () => {
+    if (!ticker || cooldown > 0) return;
+    setAnalyzing(true);
+    
+    // Simulate complex analysis
+    setTimeout(() => {
+      const price = parseFloat(ticker.price);
+      const isBullish = Math.random() > 0.5;
+      const volatility = price * 0.02;
+
+      const newAnalysis = {
+        type: isBullish ? "LONG" : "SHORT",
+        entry: price,
+        sl: isBullish ? price - volatility : price + volatility,
+        tp1: isBullish ? price + volatility * 0.8 : price - volatility * 0.8,
+        tp2: isBullish ? price + volatility * 1.5 : price - volatility * 1.5,
+        tp3: isBullish ? price + volatility * 2.5 : price - volatility * 2.5,
+        ratio: "1:2.8",
+        score: Math.floor(Math.random() * 40) + 50, // 50-90
+        sentiment: isBullish ? "BULLISH" : "BEARISH",
+        indicators: {
+          rsi: { val: (Math.random() * 40 + 30).toFixed(1), status: "NEUTRAL" },
+          macd: { val: "-9.53", status: "ALCISTA", color: "text-primary" },
+          ema: { val: "20/50", status: "BAJISTA", color: "text-secondary" },
+          vwap: { val: "66671.72", status: "POR DEBAJO", color: "text-secondary" },
+          vol: { val: "A: 0.0%", status: "MOMENTUM -", color: "text-on-surface-variant" }
+        }
+      };
+      
+      setAnalysis(newAnalysis);
+      setAnalyzing(false);
+      setCooldown(30); // 30 seconds wait-off
+    }, 1500);
+  };
+
+  if (loading || !ticker) return (
+    <div className="h-screen flex items-center justify-center bg-surface-container-lowest">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-on-surface-variant font-label animate-pulse">Sincronizando con Red de Datos...</p>
+      </div>
+    </div>
+  );
 
   const isPositive = parseFloat(ticker.priceChangePercent) >= 0;
-
-  const orderBook = {
-    asks: Array.from({ length: 15 }, (_, i) => ({
-      price: parseFloat(ticker.price) * (1 + (i + 1) * 0.0001),
-      amount: Math.random() * 2,
-      total: Math.random() * 50000,
-    })).reverse(),
-    bids: Array.from({ length: 15 }, (_, i) => ({
-      price: parseFloat(ticker.price) * (1 - (i + 1) * 0.0001),
-      amount: Math.random() * 2,
-      total: Math.random() * 50000,
-    })),
-  };
-
-  const handleTrade = async () => {
-    if (!amount || !price) return;
-    
-    await executeTrade({
-      symbol,
-      side,
-      type: orderType,
-      price: parseFloat(price),
-      amount: parseFloat(amount),
-      total: parseFloat(price) * parseFloat(amount)
-    });
-    
-    setAmount("");
-  };
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="h-screen pt-16 pb-20 md:pb-0 bg-surface-container-lowest flex flex-col overflow-hidden"
+      className="min-h-screen pt-16 pb-24 bg-surface-container-lowest text-on-surface overflow-x-hidden"
     >
-      {/* Terminal Header */}
-      <header className="h-14 border-b border-outline-variant/10 flex items-center justify-between px-4 bg-surface-container-low">
-        <div className="flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 hover:bg-surface-container-high rounded-lg transition-colors">
-            <ArrowLeft className="w-5 h-5 text-on-surface-variant" />
-          </button>
-          <div className="flex items-center gap-3 border-l border-outline-variant/10 pl-4">
-            <div className="flex items-center gap-2">
-              <h2 className="font-headline font-bold text-lg">{ticker.symbol.replace("USDT", "")}</h2>
-              <span className="text-[10px] bg-surface-container-highest px-2 py-0.5 rounded text-on-surface-variant font-bold uppercase tracking-widest">USDT</span>
-            </div>
-            <div className="flex items-center gap-4 text-xs font-label ml-4">
-              <div className="flex flex-col">
-                <span className={cn("font-bold", isPositive ? "text-primary" : "text-secondary")}>${parseFloat(ticker.price).toLocaleString()}</span>
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">Precio</span>
-              </div>
-              <div className="flex flex-col">
-                <span className={cn("font-bold", isPositive ? "text-primary" : "text-secondary")}>{isPositive ? "+" : ""}{ticker.priceChangePercent}%</span>
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">Cambio 24h</span>
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="font-bold text-on-surface">${parseFloat(ticker.highPrice).toLocaleString()}</span>
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">Máximo 24h</span>
-              </div>
-              <div className="hidden sm:flex flex-col">
-                <span className="font-bold text-on-surface">${parseFloat(ticker.lowPrice).toLocaleString()}</span>
-                <span className="text-[10px] text-on-surface-variant uppercase tracking-widest">Mínimo 24h</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <button className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant">
-            <Settings className="w-5 h-5" />
-          </button>
-          <button className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant">
-            <Maximize2 className="w-5 h-5" />
-          </button>
-        </div>
-      </header>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: Order Book */}
-        <aside className="w-64 border-r border-outline-variant/10 flex flex-col bg-surface-container-low overflow-hidden">
-          <div className="p-3 border-b border-outline-variant/10 flex justify-between items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Libro de Órdenes</span>
-            <div className="flex gap-1">
-              <div className="w-3 h-3 bg-primary/20 rounded-sm"></div>
-              <div className="w-3 h-3 bg-secondary/20 rounded-sm"></div>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto font-mono text-[10px] p-2 space-y-0.5">
-            <div className="flex justify-between text-on-surface-variant mb-2 px-1">
-              <span>Precio (USDT)</span>
-              <span>Cantidad</span>
-            </div>
-            {/* Asks */}
-            {orderBook.asks.map((ask, i) => (
-              <div key={i} className="flex justify-between relative group hover:bg-secondary/5 px-1">
-                <div className="absolute right-0 top-0 bottom-0 bg-secondary/10 transition-all" style={{ width: `${(ask.amount / 2) * 100}%` }}></div>
-                <span className="text-secondary relative z-10">{ask.price.toFixed(2)}</span>
-                <span className="text-on-surface-variant relative z-10">{ask.amount.toFixed(4)}</span>
-              </div>
-            ))}
-            {/* Spread */}
-            <div className="py-3 text-center border-y border-outline-variant/10 my-2">
-              <p className={cn("text-lg font-bold font-headline", isPositive ? "text-primary" : "text-secondary")}>${parseFloat(ticker.price).toLocaleString()}</p>
-              <p className="text-[10px] text-on-surface-variant uppercase tracking-widest">Spread: 0.01%</p>
-            </div>
-            {/* Bids */}
-            {orderBook.bids.map((bid, i) => (
-              <div key={i} className="flex justify-between relative group hover:bg-primary/5 px-1">
-                <div className="absolute right-0 top-0 bottom-0 bg-primary/10 transition-all" style={{ width: `${(bid.amount / 2) * 100}%` }}></div>
-                <span className="text-primary relative z-10">{bid.price.toFixed(2)}</span>
-                <span className="text-on-surface-variant relative z-10">{bid.amount.toFixed(4)}</span>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Middle: Chart & History */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-surface-container-lowest">
-          <div className="flex-1 p-4 relative">
-            <div className="absolute top-8 left-8 z-10 flex gap-4">
-              <div className="flex bg-surface-container-high rounded-lg p-1">
-                {["1M", "5M", "15M", "1H", "4H", "1D"].map((tf) => (
-                  <button key={tf} className={cn("px-3 py-1 rounded text-[10px] font-bold uppercase tracking-widest transition-all", tf === "1H" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}>
-                    {tf}
-                  </button>
-                ))}
-              </div>
-              <div className="flex bg-surface-container-high rounded-lg p-1">
-                <button className="p-1.5 rounded text-primary"><BarChart3 className="w-4 h-4" /></button>
-                <button className="p-1.5 rounded text-on-surface-variant"><Activity className="w-4 h-4" /></button>
-              </div>
-            </div>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={klines}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#22262b" vertical={false} />
-                <XAxis 
-                  dataKey="time" 
-                  hide 
-                />
-                <YAxis 
-                  domain={['auto', 'auto']} 
-                  orientation="right" 
-                  stroke="#45484c" 
-                  fontSize={10} 
-                  tickFormatter={(val) => `$${val.toLocaleString()}`}
-                />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: "#1c2024", border: "none", borderRadius: "12px", color: "#f8f9fe" }}
-                  itemStyle={{ color: "#b1ffce" }}
-                />
-                <Bar 
-                  dataKey="volume" 
-                  yAxisId={0} 
-                  fill="#22262b" 
-                  opacity={0.3} 
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="close" 
-                  stroke={isPositive ? "#b1ffce" : "#ff7162"} 
-                  strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorPrice)" 
-                />
-                <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={isPositive ? "#b1ffce" : "#ff7162"} stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor={isPositive ? "#b1ffce" : "#ff7162"} stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="h-48 border-t border-outline-variant/10 bg-surface-container-low flex flex-col">
-            <div className="flex border-b border-outline-variant/10">
-              {[
-                { id: "Open Orders", label: "Órdenes Abiertas" },
-                { id: "Order History", label: "Historial de Órdenes" },
-                { id: "Trade History", label: "Historial de Operaciones" },
-                { id: "Assets", label: "Activos" }
-              ].map((tab) => (
-                <button 
-                  key={tab.id} 
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={cn(
-                    "px-6 py-3 text-[10px] font-bold uppercase tracking-widest transition-all border-b-2", 
-                    activeTab === tab.id ? "border-primary text-primary" : "border-transparent text-on-surface-variant"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {activeTab === "Trade History" ? (
-                <table className="w-full text-left text-[10px] font-label">
-                  <thead className="sticky top-0 bg-surface-container-low text-on-surface-variant uppercase tracking-widest border-b border-outline-variant/10">
-                    <tr>
-                      <th className="px-6 py-2">Hora</th>
-                      <th className="px-6 py-2">Símbolo</th>
-                      <th className="px-6 py-2">Lado</th>
-                      <th className="px-6 py-2">Precio</th>
-                      <th className="px-6 py-2">Cantidad</th>
-                      <th className="px-6 py-2">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-outline-variant/5">
-                    {trades.filter(t => t.symbol === symbol).map((trade) => (
-                      <tr key={trade.id} className="hover:bg-surface-container-high/30">
-                        <td className="px-6 py-2 text-on-surface-variant">
-                          {trade.timestamp.toDate().toLocaleTimeString()}
-                        </td>
-                        <td className="px-6 py-2 font-bold">{trade.symbol.replace("USDT", "")}</td>
-                        <td className={cn("px-6 py-2 font-bold uppercase", trade.side === "buy" ? "text-primary" : "text-secondary")}>
-                          {trade.side === "buy" ? "Compra" : "Venta"}
-                        </td>
-                        <td className="px-6 py-2">${trade.price.toLocaleString()}</td>
-                        <td className="px-6 py-2">{trade.amount}</td>
-                        <td className="px-6 py-2">${trade.total.toLocaleString()}</td>
-                      </tr>
-                    ))}
-                    {trades.filter(t => t.symbol === symbol).length === 0 && (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-8 text-center text-on-surface-variant/40 italic">
-                          No se encontró historial de operaciones para este par.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="flex-1 h-full flex items-center justify-center text-on-surface-variant/40 italic text-xs">
-                  No se encontraron datos para esta sección.
-                </div>
-              )}
-            </div>
-          </div>
-        </main>
-
-        {/* Right: Trade Panel */}
-        <aside className="w-80 border-l border-outline-variant/10 bg-surface-container-low flex flex-col p-4 space-y-6">
-          <div className="flex bg-surface-container-high rounded-xl p-1">
-            <button 
-              onClick={() => setSide("buy")}
-              className={cn("flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all", side === "buy" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant")}
-            >
-              Comprar
+      {/* Top Header / Search */}
+      <div className="px-4 py-4 border-b border-outline-variant/10 bg-surface-container-low sticky top-16 z-30">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <button onClick={() => navigate("/")} className="p-2 hover:bg-surface-container-high rounded-lg transition-colors">
+              <ArrowLeft className="w-5 h-5" />
             </button>
-            <button 
-              onClick={() => setSide("sell")}
-              className={cn("flex-1 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all", side === "sell" ? "bg-secondary text-on-secondary shadow-lg" : "text-on-surface-variant")}
-            >
-              Vender
-            </button>
+            <form onSubmit={handleSearch} className="relative flex-1 md:w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+              <input 
+                type="text" 
+                value={searchSymbol}
+                onChange={(e) => setSearchSymbol(e.target.value)}
+                placeholder="Buscar activo (ej: BTCUSDT)"
+                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-2 pl-10 pr-4 focus:outline-none focus:border-primary transition-all text-sm font-bold"
+              />
+            </form>
           </div>
 
-          <div className="flex gap-4 border-b border-outline-variant/10 pb-2">
-            {[
-              { id: "limit", label: "Límite" },
-              { id: "market", label: "Mercado" },
-              { id: "stop", label: "Stop" }
-            ].map((type) => (
+          <div className="flex items-center gap-2 bg-surface-container-high p-1 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar">
+            {["1m", "5m", "15m", "1h", "4h", "1d"].map((tf) => (
               <button 
-                key={type.id}
-                onClick={() => setOrderType(type.id as any)}
-                className={cn("text-[10px] font-bold uppercase tracking-widest transition-all", orderType === type.id ? "text-primary" : "text-on-surface-variant")}
+                key={tf} 
+                onClick={() => setTimeframe(tf)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap",
+                  timeframe === tf ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
+                )}
               >
-                {type.label}
+                {tf}
               </button>
             ))}
           </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                <span>Precio</span>
-                <span>USDT</span>
-              </div>
-              <input 
-                type="text" 
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                disabled={orderType === "market"}
-                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 px-4 focus:outline-none focus:border-primary transition-colors font-mono text-sm"
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
-                <span>Cantidad</span>
-                <span>{ticker.symbol.replace("USDT", "")}</span>
-              </div>
-              <input 
-                type="text" 
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 px-4 focus:outline-none focus:border-primary transition-colors font-mono text-sm"
-              />
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {["25%", "50%", "75%", "100%"].map((p) => (
-                <button key={p} className="py-1.5 bg-surface-container-high rounded-lg text-[8px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all">
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-3 pt-4 border-t border-outline-variant/10">
-            <div className="flex justify-between text-xs font-label">
-              <span className="text-on-surface-variant">Disponible</span>
-              <span className="font-bold">1,240.50 USDT</span>
-            </div>
-            <div className="flex justify-between text-xs font-label">
-              <span className="text-on-surface-variant">Compra Máx.</span>
-              <span className="font-bold">0.024 BTC</span>
-            </div>
-            <div className="flex justify-between text-xs font-label">
-              <span className="text-on-surface-variant">Comisión Est.</span>
-              <span className="font-bold">0.12 USDT</span>
-            </div>
-          </div>
-
           <button 
-            onClick={handleTrade}
+            onClick={runAnalysis}
+            disabled={analyzing || cooldown > 0}
             className={cn(
-              "w-full py-4 rounded-2xl font-extrabold uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all mt-auto",
-              side === "buy" ? "bg-primary text-on-primary shadow-primary/20" : "bg-secondary text-on-secondary shadow-secondary/20"
+              "w-full md:w-auto px-8 py-2.5 rounded-xl font-extrabold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all shadow-xl",
+              (analyzing || cooldown > 0) ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed" : "bg-primary text-on-primary shadow-primary/20 hover:scale-105 active:scale-95"
             )}
           >
-            {side === "buy" ? "Comprar" : "Vender"} {ticker.symbol.replace("USDT", "")}
+            {analyzing ? (
+              <>
+                <div className="w-3 h-3 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
+                Analizando...
+              </>
+            ) : cooldown > 0 ? (
+              <>
+                <Clock className="w-4 h-4" />
+                Wait-off: {cooldown}s
+              </>
+            ) : (
+              <>
+                <Brain className="w-4 h-4" />
+                Analizar
+              </>
+            )}
           </button>
+        </div>
+      </div>
 
-          <div className="bg-surface-container-high/50 p-4 rounded-xl space-y-3">
-            <div className="flex items-center gap-2 text-primary">
-              <Brain className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Asistente de Ejecución IA</span>
+      <div className="max-w-7xl mx-auto p-4 space-y-6">
+        {/* Market Overview Row */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Precio Actual</span>
+              <Activity className="w-4 h-4 text-primary" />
             </div>
-            <p className="text-[10px] text-on-surface-variant leading-relaxed">
-              Absorción de ballenas detectada en ${(parseFloat(ticker.price) * 0.998).toFixed(2)}. Se recomienda establecer una orden límite ligeramente por encima.
+            <p className="text-2xl font-headline font-bold">${parseFloat(ticker.price).toLocaleString()}</p>
+            <p className={cn("text-xs font-bold mt-1", isPositive ? "text-primary" : "text-secondary")}>
+              {isPositive ? "+" : ""}{ticker.priceChangePercent}% (24h)
             </p>
           </div>
-        </aside>
+          
+          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Volumen 24h</span>
+              <BarChart3 className="w-4 h-4 text-tertiary" />
+            </div>
+            <p className="text-2xl font-headline font-bold">${(parseFloat(ticker.volume) / 1000000).toFixed(2)}M</p>
+            <p className="text-xs text-on-surface-variant mt-1">USDT</p>
+          </div>
+
+          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Rango 24h</span>
+              <Layers className="w-4 h-4 text-secondary" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-[10px] font-bold">
+                <span className="text-secondary">L: ${parseFloat(ticker.lowPrice).toLocaleString()}</span>
+                <span className="text-primary">H: ${parseFloat(ticker.highPrice).toLocaleString()}</span>
+              </div>
+              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-secondary to-primary" 
+                  style={{ width: `${((parseFloat(ticker.price) - parseFloat(ticker.lowPrice)) / (parseFloat(ticker.highPrice) - parseFloat(ticker.lowPrice))) * 100}%` }}
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 flex flex-col justify-center items-center text-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Sentimiento IA</span>
+            <div className="flex items-center gap-2">
+              <Gauge className={cn("w-6 h-6", isPositive ? "text-primary" : "text-secondary")} />
+              <span className={cn("text-xl font-bold font-headline", isPositive ? "text-primary" : "text-secondary")}>
+                {isPositive ? "ALCISTA" : "BAJISTA"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Analysis Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          {/* Order Blocks */}
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Shield className="w-3 h-3" /> ORDER BLOCKS
+            </h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">BOS Bearish:</span>
+                <span className="text-xs font-bold text-secondary">${(parseFloat(ticker.price) * 1.05).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">BOS Bullish:</span>
+                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.95).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">FVG:</span>
+                <span className="text-xs font-bold text-tertiary">${(parseFloat(ticker.price) * 0.98).toFixed(2)} - ${(parseFloat(ticker.price) * 0.99).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Mitigation Block:</span>
+                <span className="text-xs font-bold text-on-surface">${(parseFloat(ticker.price) * 1.02).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Wyckoff */}
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Waves className="w-3 h-3" /> WYCKOFF
+            </h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Distribución:</span>
+                <span className="text-xs font-bold text-secondary">Fase B</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Tendencia:</span>
+                <span className="text-xs font-bold text-secondary flex items-center gap-1">
+                  RESISTENCIA <AlertTriangle className="w-3 h-3" />
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Volumen 24h:</span>
+                <span className="text-xs font-bold text-tertiary">$1M</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Variación 24h:</span>
+                <span className="text-xs font-bold text-primary">0.08%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* OTE Zones */}
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Target className="w-3 h-3" /> OTE ZONES
+            </h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">OTE LONG:</span>
+                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.96).toFixed(2)} - ${(parseFloat(ticker.price) * 0.97).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">OTE SHORT:</span>
+                <span className="text-xs font-bold text-secondary">${(parseFloat(ticker.price) * 1.03).toFixed(2)} - ${(parseFloat(ticker.price) * 1.04).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Fib:</span>
+                <span className="text-xs font-bold text-tertiary">0.705 / 0.79</span>
+              </div>
+              <div className="bg-primary/10 p-2 rounded-lg text-center">
+                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Zona óptima entrada</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Liquidez */}
+          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Zap className="w-3 h-3" /> LIQUIDEZ
+            </h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">LIQ ARRIBA:</span>
+                <span className="text-xs font-bold text-secondary">${(parseFloat(ticker.price) * 1.06).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">LIQ ABAJO:</span>
+                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.94).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Stop Hunt:</span>
+                <span className="text-xs font-bold text-tertiary">${(parseFloat(ticker.price) * 1.01).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant">Status:</span>
+                <span className="text-xs font-bold text-on-surface">Pendiente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Indicators Section */}
+        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
+          <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
+            <Activity className="w-3 h-3" /> 5 INDICADORES TÉCNICOS
+          </h4>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              { label: "RSI (14)", value: analysis?.indicators.rsi.val || "50.0", status: analysis?.indicators.rsi.status || "NEUTRAL", color: "text-on-surface" },
+              { label: "MACD", value: analysis?.indicators.macd.val || "L: -9.53", status: analysis?.indicators.macd.status || "ALCISTA", color: analysis?.indicators.macd.color || "text-primary" },
+              { label: "EMA 20/50", value: analysis?.indicators.ema.val || "66671.72", status: analysis?.indicators.ema.status || "BAJISTA", color: analysis?.indicators.ema.color || "text-secondary" },
+              { label: "VWAP", value: analysis?.indicators.vwap.val || "66671.72", status: analysis?.indicators.vwap.status || "POR DEBAJO", color: analysis?.indicators.vwap.color || "text-secondary" },
+              { label: "VOL Trend", value: analysis?.indicators.vol.val || "A: 0.0%", status: analysis?.indicators.vol.status || "MOMENTUM -", color: analysis?.indicators.vol.color || "text-on-surface-variant" }
+            ].map((ind, i) => (
+              <div key={i} className="bg-surface-container p-4 rounded-xl text-center space-y-1">
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{ind.label}</p>
+                <p className={cn("text-sm font-bold", ind.color)}>{ind.value}</p>
+                <p className={cn("text-[10px] font-bold uppercase tracking-widest", ind.color)}>{ind.status}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Analysis Results */}
+        {analysis && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+          >
+            <div className="lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-6">
+              <div className="flex justify-between items-center">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <Target className="w-3 h-3" /> NIVELES DE TRADING ({timeframe.toUpperCase()})
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">RECOMENDACIÓN:</span>
+                  <span className={cn("text-xs font-bold px-3 py-1 rounded-full", analysis.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")}>
+                    {analysis.type === "LONG" ? "COMPRA MODERADA" : "VENTA MODERADA"} ({analysis.score}%)
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-3 bg-surface-container rounded-xl border-l-4 border-primary">
+                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">ENTRADA:</span>
+                    <span className="text-lg font-bold text-primary">${analysis.entry.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-surface-container rounded-xl border-l-4 border-secondary">
+                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">STOP LOSS:</span>
+                    <span className="text-lg font-bold text-secondary">${analysis.sl.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs font-bold px-3">
+                    <span className="text-on-surface-variant uppercase tracking-widest">RATIO RIESGO/BENEFICIO:</span>
+                    <span className="text-tertiary">{analysis.ratio}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    { label: "TAKE PROFIT 1", val: analysis.tp1, color: "text-tertiary" },
+                    { label: "TAKE PROFIT 2", val: analysis.tp2, color: "text-tertiary" },
+                    { label: "TAKE PROFIT 3", val: analysis.tp3, color: "text-tertiary" }
+                  ].map((tp, i) => (
+                    <div key={i} className="flex justify-between items-center p-3 bg-surface-container rounded-xl">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{tp.label}:</span>
+                      <span className={cn("text-sm font-bold", tp.color)}>${tp.val.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-outline-variant/10 space-y-4">
+                <h5 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">JUSTIFICACIÓN DE ENTRADA ({analysis.type}):</h5>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <span>RSI en {analysis.indicators.rsi.val} - Presión {analysis.type === "LONG" ? "compradora" : "vendedora"} sostenida.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <span>MACD mostrando {analysis.indicators.macd.status.toLowerCase()}, divergencia {analysis.type === "LONG" ? "positiva" : "negativa"}.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <span>EMA20/50 en cruce {analysis.type === "LONG" ? "alcista" : "bajista"}, tendencia confirmada.</span>
+                  </li>
+                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    <span>Zonas OTE: Entrada óptima detectada en niveles de Fibonacci 0.705-0.79.</span>
+                  </li>
+                </ul>
+                <div className="bg-surface-container p-3 rounded-xl">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">PUNTUACIÓN TOTAL: {analysis.score}%</p>
+                  <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div className="h-full bg-primary" style={{ width: `${analysis.score}%` }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                  <BarChart3 className="w-3 h-3" /> GRÁFICO DE ANÁLISIS
+                </h4>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={klines}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#22262b" vertical={false} />
+                      <XAxis dataKey="time" hide />
+                      <YAxis domain={['auto', 'auto']} hide />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: "#1c2024", border: "none", borderRadius: "12px" }}
+                        itemStyle={{ color: "#b1ffce" }}
+                      />
+                      <Area 
+                        type="monotone" 
+                        dataKey="close" 
+                        stroke="#b1ffce" 
+                        fillOpacity={0.1} 
+                        fill="#b1ffce" 
+                      />
+                      {/* Entry Line */}
+                      <Line type="monotone" dataKey={() => analysis.entry} stroke="#b1ffce" strokeDasharray="5 5" dot={false} />
+                      {/* SL Line */}
+                      <Line type="monotone" dataKey={() => analysis.sl} stroke="#ff7162" strokeDasharray="5 5" dot={false} />
+                    </ComposedChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-surface-container-high to-surface-container-low p-6 rounded-2xl border border-primary/20 relative overflow-hidden group">
+                <div className="relative z-10 space-y-4">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Brain className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Sugerencia de IA</span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant leading-relaxed italic">
+                    "La estructura de mercado en {timeframe} sugiere una {analysis.type === "LONG" ? "acumulación" : "distribución"} fuerte. Los niveles de liquidez indican un posible movimiento hacia el TP2 en las próximas horas."
+                  </p>
+                </div>
+                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {!analysis && !analyzing && (
+          <div className="py-20 text-center space-y-4">
+            <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6">
+              <Brain className="w-10 h-10 text-on-surface-variant/20" />
+            </div>
+            <h3 className="text-xl font-headline font-bold text-on-surface-variant">Listo para Analizar</h3>
+            <p className="text-on-surface-variant max-w-md mx-auto text-sm">
+              Selecciona un activo y un marco de tiempo, luego presiona el botón de analizar para obtener niveles de entrada, TPs y Stop Loss basados en IA.
+            </p>
+          </div>
+        )}
       </div>
     </motion.div>
   );

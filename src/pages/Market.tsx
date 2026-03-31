@@ -31,6 +31,15 @@ const MarketPage = () => {
     coin.symbol.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefreshMap = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -146,8 +155,20 @@ const MarketPage = () => {
       <div className="bg-surface-container-high p-8 rounded-[2rem] border border-outline-variant/10 space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="font-headline text-2xl font-bold uppercase tracking-tighter">Mapa de Calor del Mercado</h2>
-          <button className="bg-primary text-on-primary px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all">
-            Actualizar Mapa
+          <button 
+            onClick={handleRefreshMap}
+            disabled={refreshing}
+            className={cn(
+              "bg-primary text-on-primary px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all flex items-center gap-2",
+              refreshing && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            {refreshing ? (
+              <>
+                <div className="w-3 h-3 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></div>
+                ACTUALIZANDO...
+              </>
+            ) : "Actualizar Mapa"}
           </button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 h-96">

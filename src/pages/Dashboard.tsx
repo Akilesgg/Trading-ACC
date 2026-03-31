@@ -25,16 +25,29 @@ const Dashboard = () => {
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
   const [loading, setLoading] = useState(true);
   const { watchlist, toggleWatchlist } = useWatchlist();
-  const [filter, setFilter] = useState<"all" | "watchlist">("all");
+  const [filter, setFilter] = useState<"all" | "watchlist" | "bullish" | "bearish" | "neutral">("all");
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const symbols = filter === "watchlist" && watchlist.length > 0 
-          ? watchlist 
-          : ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
+        let symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT"];
+        
+        if (filter === "watchlist" && watchlist.length > 0) {
+          symbols = watchlist;
+        }
+        
         const data = await fetchTickers(symbols);
-        setTickers(data);
+        
+        let filteredData = data;
+        if (filter === "bullish") {
+          filteredData = data.filter(t => parseFloat(t.priceChangePercent) > 1);
+        } else if (filter === "bearish") {
+          filteredData = data.filter(t => parseFloat(t.priceChangePercent) < -1);
+        } else if (filter === "neutral") {
+          filteredData = data.filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= 1);
+        }
+        
+        setTickers(filteredData);
         const aiSentiment = await getMarketSentiment();
         setSentiment(aiSentiment);
       } catch (error) {
@@ -47,9 +60,9 @@ const Dashboard = () => {
   }, [filter, watchlist]);
 
   const signals = [
-    { label: "SEÑALES ALCISTAS", count: 14, color: "text-primary" },
-    { label: "SEÑALES BAJISTAS", count: "03", color: "text-secondary" },
-    { label: "NEUTRAL / LATERAL", count: "08", color: "text-tertiary" },
+    { id: "bullish", label: "SEÑALES ALCISTAS", count: 14, color: "text-primary" },
+    { id: "bearish", label: "SEÑALES BAJISTAS", count: "03", color: "text-secondary" },
+    { id: "neutral", label: "NEUTRAL / LATERAL", count: "08", color: "text-tertiary" },
   ];
 
   const velocityMoves = [
@@ -98,20 +111,27 @@ const Dashboard = () => {
           </div>
 
           {/* Active Signal Summary */}
-          <Link to="/dashboard" className="bg-surface-container-high p-6 rounded-xl space-y-6 hover:bg-surface-container-highest transition-colors group">
+          <div className="bg-surface-container-high p-6 rounded-xl space-y-6 border border-outline-variant/10">
             <h3 className="font-headline text-lg font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-tertiary group-hover:scale-110 transition-transform" />
+              <Activity className="w-5 h-5 text-tertiary" />
               SEÑALES ACTIVAS
             </h3>
             <div className="space-y-4">
               {signals.map((s) => (
-                <div key={s.label} className="flex justify-between items-center p-3 bg-surface-container rounded-lg">
+                <button 
+                  key={s.label} 
+                  onClick={() => setFilter(s.id as any)}
+                  className={cn(
+                    "w-full flex justify-between items-center p-3 rounded-lg transition-all active:scale-95",
+                    filter === s.id ? "bg-primary/10 border border-primary/30" : "bg-surface-container hover:bg-surface-container-highest"
+                  )}
+                >
                   <span className="text-sm font-label uppercase tracking-wider text-on-surface-variant">{s.label}</span>
                   <span className={cn("font-headline font-bold text-xl", s.color)}>{s.count}</span>
-                </div>
+                </button>
               ))}
             </div>
-          </Link>
+          </div>
         </div>
       </section>
 
