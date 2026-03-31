@@ -124,7 +124,7 @@ const Terminal = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="h-screen bg-surface-container-lowest flex flex-col overflow-hidden"
+      className="h-screen pt-16 pb-20 md:pb-0 bg-surface-container-lowest flex flex-col overflow-hidden"
     >
       {/* Terminal Header */}
       <header className="h-14 border-b border-outline-variant/10 flex items-center justify-between px-4 bg-surface-container-low">

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, 
   BarChart3, 
   Zap, 
-  Wallet, 
+  Wallet as WalletIcon, 
   Search, 
   Menu, 
   Bell, 
@@ -37,6 +37,7 @@ import Market from "./pages/Market";
 import Analysis from "./pages/Analysis";
 import SignalDetail from "./pages/SignalDetail";
 import Terminal from "./pages/Terminal";
+import Wallet from "./pages/Wallet";
 
 const LoginScreen = () => {
   const { login } = useAuth();
@@ -79,23 +80,21 @@ const TopAppBar = () => {
   const { user, logout } = useAuth();
   const isTerminal = location.pathname === "/terminal";
 
-  if (isTerminal) return null;
-
   return (
     <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
       <div className="flex justify-between items-center px-6 h-16 w-full">
         <div className="flex items-center gap-4">
-          <button className="hover:bg-primary/10 transition-colors p-2 rounded-xl active:scale-95 duration-200">
+          <Link to="/dashboard" className="hover:bg-primary/10 transition-colors p-2 rounded-xl active:scale-95 duration-200">
             <Menu className="w-6 h-6 text-primary" />
-          </button>
-          <h1 className="text-xl font-bold tracking-tighter text-primary font-headline uppercase">TRADING ACC</h1>
+          </Link>
+          <Link to="/dashboard" className="text-xl font-bold tracking-tighter text-primary font-headline uppercase">TRADING ACC</Link>
         </div>
         <div className="hidden md:flex items-center gap-8 font-label text-[10px] font-bold uppercase tracking-widest text-on-background/60">
-          <Link to="/market" className="hover:text-primary transition-colors">Mercados</Link>
-          <Link to="/dashboard" className="hover:text-primary transition-colors">Señales</Link>
-          <Link to="/terminal" className="hover:text-primary transition-colors">Operar</Link>
-          <Link to="/analysis" className="text-primary-fixed">Análisis</Link>
-          <Link to="#" className="hover:text-primary transition-colors">Billetera</Link>
+          <Link to="/market" className={cn("hover:text-primary transition-colors", location.pathname === "/market" && "text-primary")}>Mercados</Link>
+          <Link to="/dashboard" className={cn("hover:text-primary transition-colors", location.pathname === "/dashboard" && "text-primary")}>Señales</Link>
+          <Link to="/terminal" className={cn("hover:text-primary transition-colors", location.pathname === "/terminal" && "text-primary")}>Operar</Link>
+          <Link to="/analysis" className={cn("hover:text-primary transition-colors", location.pathname === "/analysis" && "text-primary")}>Análisis</Link>
+          <Link to="/wallet" className={cn("hover:text-primary transition-colors", location.pathname === "/wallet" && "text-primary")}>Billetera</Link>
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden sm:flex flex-col items-end mr-2">
@@ -118,14 +117,11 @@ const TopAppBar = () => {
 
 const BottomNavBar = () => {
   const location = useLocation();
-  const isTerminal = location.pathname === "/terminal";
-
-  if (isTerminal) return null;
 
   const navItems = [
     { icon: LayoutDashboard, label: "Panel", path: "/dashboard" },
     { icon: BarChart3, label: "Mercado", path: "/market" },
-    { icon: Zap, label: "Señales", path: "/signals" },
+    { icon: Zap, label: "Señales", path: "/dashboard" },
     { icon: TrendingUp, label: "Análisis", path: "/analysis" },
     { icon: Wallet, label: "Billetera", path: "/wallet" },
   ];
@@ -180,9 +176,9 @@ export default function App() {
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/signal/:symbol" element={<SignalDetail />} />
               <Route path="/terminal" element={<Terminal />} />
+              <Route path="/wallet" element={<Wallet />} />
               {/* Fallbacks */}
               <Route path="/signals" element={<Dashboard />} />
-              <Route path="/wallet" element={<Market />} />
             </Routes>
           </AnimatePresence>
         </main>

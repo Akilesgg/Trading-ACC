@@ -1,215 +1,193 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { 
-  Search, 
-  TrendingUp, 
-  TrendingDown, 
-  Minus, 
-  Star, 
-  ArrowUpRight,
-  ArrowDownRight,
-  Filter,
-  LayoutGrid,
-  List
-} from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Filter, LayoutGrid, List, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchTickers, CryptoData } from "@/services/cryptoService";
-import { Link } from "react-router-dom";
-import { useWatchlist } from "@/hooks/useWatchlist";
+import { fetchCryptoData } from "@/services/cryptoService";
 
-const Market = () => {
-  const [tickers, setTickers] = useState<CryptoData[]>([]);
-  const [loading, setLoading] = useState(true);
+const MarketPage = () => {
+  const [marketData, setMarketData] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"grid" | "list">("list");
-  const { watchlist, toggleWatchlist } = useWatchlist();
-
-  const symbols = [
-    "BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", 
-    "ADAUSDT", "AVAXUSDT", "DOTUSDT", "LINKUSDT", "MATICUSDT",
-    "NEARUSDT", "ATOMUSDT", "LTCUSDT", "BCHUSDT", "SHIBUSDT"
-  ];
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchTickers(symbols);
-        setTickers(data);
+        const data = await fetchCryptoData();
+        setMarketData(data);
       } catch (error) {
-        console.error("Market data load error:", error);
+        console.error("Error loading market data", error);
       } finally {
         setLoading(false);
       }
     };
     loadData();
-    const interval = setInterval(loadData, 5000);
+    const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const filteredTickers = tickers.filter(t => 
-    t.symbol.toLowerCase().includes(search.toLowerCase())
+  const filteredData = marketData.filter(coin => 
+    coin.name.toLowerCase().includes(search.toLowerCase()) || 
+    coin.symbol.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
       className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8"
     >
-      {/* Search & Filters */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant" />
-          <input 
-            type="text" 
-            placeholder="Buscar activos..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-surface-container-high border border-outline-variant/20 rounded-full py-3 pl-12 pr-6 focus:outline-none focus:border-primary transition-colors font-label text-sm"
-          />
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="font-headline text-3xl font-bold tracking-tighter uppercase">Mercados</h1>
+          <p className="text-on-surface-variant font-label text-xs uppercase tracking-widest mt-1">Explora todos los activos disponibles</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="p-3 bg-surface-container-high rounded-xl hover:bg-surface-container-highest transition-colors">
+        <div className="flex w-full md:w-auto gap-3">
+          <div className="relative flex-1 md:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+            <input 
+              type="text" 
+              placeholder="BUSCAR ACTIVO..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-surface-container-high border-none rounded-xl pl-10 pr-4 py-3 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary outline-none transition-all"
+            />
+          </div>
+          <button className="p-3 bg-surface-container-high rounded-xl hover:bg-surface-container-highest transition-all">
             <Filter className="w-5 h-5 text-on-surface-variant" />
           </button>
           <div className="flex bg-surface-container-high rounded-xl p-1">
             <button 
               onClick={() => setView("list")}
-              className={cn("p-2 rounded-lg transition-all", view === "list" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant")}
+              className={cn("p-2 rounded-lg transition-all", view === "list" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
             >
-              <List className="w-5 h-5" />
+              <List className="w-4 h-4" />
             </button>
             <button 
               onClick={() => setView("grid")}
-              className={cn("p-2 rounded-lg transition-all", view === "grid" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant")}
+              className={cn("p-2 rounded-lg transition-all", view === "grid" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
             >
-              <LayoutGrid className="w-5 h-5" />
+              <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Market Table/Grid */}
-      {view === "list" ? (
-        <div className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/10">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-surface-container-high/50 text-[10px] font-label uppercase tracking-widest text-on-surface-variant">
-                <tr>
-                  <th className="px-6 py-4">Activo</th>
-                  <th className="px-6 py-4">Precio</th>
-                  <th className="px-6 py-4">Cambio 24h</th>
-                  <th className="px-6 py-4">Máx / Mín 24h</th>
-                  <th className="px-6 py-4">Volumen</th>
-                  <th className="px-6 py-4 text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-outline-variant/10">
-                {filteredTickers.map((ticker) => {
-                  const isPositive = parseFloat(ticker.priceChangePercent) >= 0;
-                  return (
-                    <tr key={ticker.symbol} className="hover:bg-surface-container-high/30 transition-colors group">
-                      <td className="px-6 py-5">
-                        <div className="flex items-center gap-3">
-                          <Star 
-                            className={cn(
-                              "w-4 h-4 transition-colors cursor-pointer",
-                              watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
-                            )} 
-                            onClick={() => toggleWatchlist(ticker.symbol)}
-                          />
-                          <div className="flex flex-col">
-                            <span className="font-headline font-bold text-sm">{ticker.symbol.replace("USDT", "")}</span>
-                            <span className="text-[10px] text-on-surface-variant font-label uppercase">USDT</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 font-headline font-bold text-sm">
-                        ${parseFloat(ticker.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className={cn("flex items-center gap-1 font-bold text-sm", isPositive ? "text-primary" : "text-secondary")}>
-                          {isPositive ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                          {ticker.priceChangePercent}%
-                        </div>
-                      </td>
-                      <td className="px-6 py-5">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[10px] text-primary-dim font-bold">H: ${parseFloat(ticker.highPrice).toLocaleString()}</span>
-                          <span className="text-[10px] text-secondary-dim font-bold">L: ${parseFloat(ticker.lowPrice).toLocaleString()}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-5 text-sm text-on-surface-variant font-label">
-                        ${(parseFloat(ticker.volume) * parseFloat(ticker.price) / 1000000).toFixed(2)}M
-                      </td>
-                      <td className="px-6 py-5 text-right">
-                        <Link 
-                          to={`/terminal?symbol=${ticker.symbol}`}
-                          className="px-4 py-2 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all active:scale-95"
-                        >
-                          Operar
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {filteredTickers.map((ticker) => {
-            const isPositive = parseFloat(ticker.priceChangePercent) >= 0;
-            return (
-              <div key={ticker.symbol} className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all group">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center">
-                      <TrendingUp className={cn("w-5 h-5", isPositive ? "text-primary" : "text-secondary")} />
-                    </div>
-                    <div>
-                      <h4 className="font-headline font-bold">{ticker.symbol.replace("USDT", "")}</h4>
-                      <p className="text-[10px] text-on-surface-variant font-label uppercase">Binance Spot</p>
-                    </div>
-                  </div>
-                  <Star 
-                    className={cn(
-                      "w-4 h-4 transition-colors cursor-pointer",
-                      watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant group-hover:text-primary"
-                    )} 
-                    onClick={() => toggleWatchlist(ticker.symbol)}
-                  />
+        <div className={cn(
+          "grid gap-4",
+          view === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1"
+        )}>
+          {filteredData.map((coin) => (
+            <motion.div
+              layout
+              key={coin.id}
+              className={cn(
+                "bg-surface-container-low border border-outline-variant/10 rounded-2xl hover:border-primary/30 transition-all group",
+                view === "list" ? "flex items-center justify-between p-4 px-6" : "p-6 flex flex-col gap-4"
+              )}
+            >
+              <div className="flex items-center gap-4">
+                <img src={coin.image} alt={coin.name} className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+                <div>
+                  <p className="font-bold uppercase tracking-tight">{coin.name}</p>
+                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">{coin.symbol}</p>
                 </div>
-                <div className="space-y-1 mb-6">
-                  <p className="text-2xl font-headline font-bold">${parseFloat(ticker.price).toLocaleString()}</p>
-                  <p className={cn("text-xs font-bold flex items-center gap-1", isPositive ? "text-primary" : "text-secondary")}>
-                    {isPositive ? "+" : ""}{ticker.priceChangePercent}%
-                    <span className="text-[10px] text-on-surface-variant font-label">(24h)</span>
-                  </p>
-                </div>
-                <div className="h-12 w-full bg-surface-container-high/30 rounded-lg relative overflow-hidden">
-                  {/* Mini Sparkline Placeholder */}
-                  <div className="absolute inset-0 flex items-end px-2 gap-1">
-                    {[40, 60, 45, 70, 55, 80, 65, 90].map((h, i) => (
-                      <div key={i} className={cn("flex-1 rounded-t-sm", isPositive ? "bg-primary/20" : "bg-secondary/20")} style={{ height: `${h}%` }}></div>
-                    ))}
-                  </div>
-                </div>
-                <Link 
-                  to={`/terminal?symbol=${ticker.symbol}`}
-                  className="mt-6 block w-full py-3 bg-surface-container-high rounded-xl text-center text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-on-primary transition-all"
-                >
-                  Abrir Terminal
-                </Link>
               </div>
-            );
-          })}
+
+              {view === "list" && (
+                <div className="hidden md:block flex-1 mx-12">
+                  <div className="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                    <div 
+                      className={cn("h-full rounded-full", coin.price_change_percentage_24h > 0 ? "bg-primary" : "bg-secondary")}
+                      style={{ width: `${Math.min(Math.abs(coin.price_change_percentage_24h) * 5, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              <div className={cn("text-right", view === "grid" && "flex justify-between items-end")}>
+                {view === "grid" && (
+                  <div className="flex flex-col items-start">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Capitalización</p>
+                    <p className="text-xs font-bold">${(coin.market_cap / 1e9).toFixed(2)}B</p>
+                  </div>
+                )}
+                <div>
+                  <p className="font-headline font-bold text-lg">${coin.current_price.toLocaleString()}</p>
+                  <div className={cn(
+                    "flex items-center justify-end gap-1 text-xs font-bold",
+                    coin.price_change_percentage_24h > 0 ? "text-primary" : "text-secondary"
+                  )}>
+                    {coin.price_change_percentage_24h > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {coin.price_change_percentage_24h.toFixed(2)}%
+                  </div>
+                </div>
+              </div>
+
+              <div className={cn("flex gap-2", view === "list" ? "ml-6" : "mt-2")}>
+                <button className="flex-1 bg-surface-container-highest hover:bg-primary hover:text-on-primary p-3 rounded-xl transition-all group/btn">
+                  <ArrowUpRight className="w-4 h-4 mx-auto group-hover/btn:scale-110 transition-transform" />
+                </button>
+                <button className="flex-1 bg-surface-container-highest hover:bg-secondary hover:text-on-primary p-3 rounded-xl transition-all group/btn">
+                  <ArrowDownRight className="w-4 h-4 mx-auto group-hover/btn:scale-110 transition-transform" />
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
+
+      {/* Heatmap Section Placeholder */}
+      <div className="bg-surface-container-high p-8 rounded-[2rem] border border-outline-variant/10 space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="font-headline text-2xl font-bold uppercase tracking-tighter">Mapa de Calor del Mercado</h2>
+          <button className="bg-primary text-on-primary px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all">
+            Actualizar Mapa
+          </button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 h-96">
+          {/* Mock Heatmap Blocks */}
+          <div className="bg-primary/80 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
+            <span className="text-xl font-bold">BTC</span>
+            <span className="text-xs font-bold">+2.4%</span>
+          </div>
+          <div className="bg-primary/60 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
+            <span className="text-xl font-bold">ETH</span>
+            <span className="text-xs font-bold">+1.8%</span>
+          </div>
+          <div className="bg-secondary/70 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
+            <span className="text-xl font-bold">SOL</span>
+            <span className="text-xs font-bold">-3.2%</span>
+          </div>
+          <div className="bg-primary/40 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
+            <span className="text-xl font-bold">BNB</span>
+            <span className="text-xs font-bold">+0.5%</span>
+          </div>
+          <div className="bg-secondary/40 rounded-lg flex flex-col items-center justify-center text-on-primary p-4 col-span-2">
+            <span className="text-xl font-bold">XRP</span>
+            <span className="text-xs font-bold">-0.8%</span>
+          </div>
+          <div className="bg-primary/20 rounded-lg flex flex-col items-center justify-center text-on-surface p-4 col-span-2 row-span-2">
+            <span className="text-xl font-bold">ADA</span>
+            <span className="text-xs font-bold">+0.1%</span>
+          </div>
+          <div className="bg-secondary/90 rounded-lg flex flex-col items-center justify-center text-on-primary p-4 col-span-2">
+            <span className="text-xl font-bold">DOGE</span>
+            <span className="text-xs font-bold">-5.4%</span>
+          </div>
+          <div className="bg-primary/90 rounded-lg flex flex-col items-center justify-center text-on-primary p-4 col-span-2">
+            <span className="text-xl font-bold">AVAX</span>
+            <span className="text-xs font-bold">+4.2%</span>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 };
 
-export default Market;
+export default MarketPage;

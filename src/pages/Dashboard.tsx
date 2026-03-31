@@ -87,17 +87,20 @@ const Dashboard = () => {
                     <span className="text-primary-dim font-bold">+12% vs ayer</span>
                   </div>
                 </div>
-                <button className="bg-gradient-to-br from-primary to-primary-dim text-on-primary-fixed px-8 py-4 rounded-full font-bold uppercase tracking-wider shadow-[0_10px_20px_rgba(0,255,163,0.2)] active:scale-95 transition-transform">
+                <Link 
+                  to="/market"
+                  className="bg-gradient-to-br from-primary to-primary-dim text-on-primary-fixed px-8 py-4 rounded-full font-bold uppercase tracking-wider shadow-[0_10px_20px_rgba(0,255,163,0.2)] active:scale-95 transition-transform text-center"
+                >
                   Ver Mapa de Calor
-                </button>
+                </Link>
               </div>
             </div>
           </div>
 
           {/* Active Signal Summary */}
-          <div className="bg-surface-container-high p-6 rounded-xl space-y-6">
+          <Link to="/dashboard" className="bg-surface-container-high p-6 rounded-xl space-y-6 hover:bg-surface-container-highest transition-colors group">
             <h3 className="font-headline text-lg font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-tertiary" />
+              <Activity className="w-5 h-5 text-tertiary group-hover:scale-110 transition-transform" />
               SEÑALES ACTIVAS
             </h3>
             <div className="space-y-4">
@@ -108,7 +111,7 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-          </div>
+          </Link>
         </div>
       </section>
 
@@ -235,7 +238,10 @@ const Dashboard = () => {
                 <p className="font-bold text-tertiary">14ms</p>
               </div>
             </div>
-            <button className="w-full py-4 bg-inverse-surface text-inverse-on-surface rounded-full font-extrabold uppercase tracking-widest text-sm active:scale-95 transition-all">
+            <button 
+              onClick={() => alert("¡Próximamente! La versión PRO estará disponible pronto.")}
+              className="w-full py-4 bg-inverse-surface text-inverse-on-surface rounded-full font-extrabold uppercase tracking-widest text-sm active:scale-95 transition-all"
+            >
               Mejorar a Pro
             </button>
           </div>
@@ -245,7 +251,10 @@ const Dashboard = () => {
       </section>
 
       {/* Floating Action Button: Insights */}
-      <button className="fixed right-6 bottom-24 w-14 h-14 bg-gradient-to-br from-primary to-primary-dim rounded-2xl flex items-center justify-center shadow-2xl z-40 active:scale-90 transition-transform">
+      <button 
+        onClick={() => setFilter(filter === "all" ? "watchlist" : "all")}
+        className="fixed right-6 bottom-24 w-14 h-14 bg-gradient-to-br from-primary to-primary-dim rounded-2xl flex items-center justify-center shadow-2xl z-40 active:scale-90 transition-transform"
+      >
         <Brain className="w-8 h-8 text-on-primary-fixed" />
       </button>
     </motion.div>

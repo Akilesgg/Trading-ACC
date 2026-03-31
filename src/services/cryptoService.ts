@@ -30,3 +30,17 @@ export async function fetchKlines(symbol: string, interval: string = "1h", limit
     volume: parseFloat(d[5]),
   }));
 }
+
+export async function fetchCryptoData() {
+  const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "AVAXUSDT"];
+  const tickers = await fetchTickers(symbols);
+  return tickers.map(t => ({
+    id: t.symbol,
+    name: t.symbol.replace("USDT", ""),
+    symbol: t.symbol.replace("USDT", ""),
+    current_price: parseFloat(t.price),
+    price_change_percentage_24h: parseFloat(t.priceChangePercent),
+    market_cap: parseFloat(t.volume) * parseFloat(t.price), // Mock market cap
+    image: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${t.symbol.replace("USDT", "").toLowerCase()}.png`
+  }));
+}
