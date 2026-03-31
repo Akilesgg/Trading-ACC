@@ -1,20 +1,11 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Trading ACC Terminal
 
-# Run and deploy your AI Studio app
+Servidor de trading con señales y análisis de IA.
 
-This contains everything you need to run your app locally.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAkilesgg%2FTrading-ACC&env=GEMINI_API_KEY&envDescription=Tu%20API%20Key%20de%20Google%20AI%20Studio&envLink=https%3A%2F%2Faistudio.google.com%2Fapp%2Fapikey)
 
-View your app in AI Studio: https://ai.studio/apps/4d09c4a2-2b55-4ff5-b6b0-e16ac95a2034
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Cómo lanzar la terminal online
+1. Haz clic en el botón **"Deploy"** de arriba.
+2. Conecta tu cuenta de GitHub.
+3. Introduce tu `GEMINI_API_KEY` cuando te lo pida.
+4. ¡Listo! Tendrás tu propia URL para acceder a la terminal.
