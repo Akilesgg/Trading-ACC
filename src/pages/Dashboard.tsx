@@ -12,11 +12,24 @@ import {
   ArrowDownRight,
   Flame,
   Brain,
-  Star
+  Star,
+  Target,
+  Users,
+  Waves,
+  ArrowRightLeft,
+  Newspaper,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
-import { fetchTickers, CryptoData } from "@/services/cryptoService";
+import { 
+  fetchTickers, 
+  CryptoData, 
+  fetchWhaleMovements, 
+  fetchTopTraders, 
+  fetchLargeTransactions, 
+  fetchEconomicEvents 
+} from "@/services/cryptoService";
 import { getMarketSentiment } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
 
@@ -26,6 +39,11 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { watchlist, toggleWatchlist } = useWatchlist();
   const [filter, setFilter] = useState<"all" | "watchlist" | "bullish" | "bearish" | "neutral">("all");
+  
+  const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
+  const [topTraders, setTopTraders] = useState<any[]>([]);
+  const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
+  const [economicEvents, setEconomicEvents] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -50,6 +68,17 @@ const Dashboard = () => {
         setTickers(filteredData);
         const aiSentiment = await getMarketSentiment();
         setSentiment(aiSentiment);
+
+        const [whales, traders, txs, events] = await Promise.all([
+          fetchWhaleMovements(),
+          fetchTopTraders(),
+          fetchLargeTransactions(),
+          fetchEconomicEvents()
+        ]);
+        setWhaleMovements(whales);
+        setTopTraders(traders);
+        setLargeTransactions(txs);
+        setEconomicEvents(events);
       } catch (error) {
         console.error("Dashboard data load error:", error);
       } finally {
@@ -238,55 +267,163 @@ const Dashboard = () => {
 
       {/* Dynamic Trends & Volume */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div className="space-y-6">
-          <h3 className="font-headline text-xl font-bold uppercase tracking-wide">Movimientos de Alta Velocidad</h3>
-          <div className="space-y-4">
-            {velocityMoves.map((move) => (
-              <div key={move.id} className="flex items-center justify-between p-4 bg-surface-container rounded-xl border-l-2 border-primary">
+        {/* ... existing velocity moves ... */}
+      </section>
+
+      {/* Copy Trading & News Section (Added for visibility) */}
+      <section className="space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Copy Trading Panel */}
+          <div className="lg:col-span-3 space-y-4">
+            <div className="bg-[#0a0c10] border border-orange-500/30 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-gradient-to-r from-orange-600/20 to-transparent p-4 border-b border-orange-500/20 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <Target className="w-5 h-5 text-black" />
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-orange-500">
+                    COPY TRADING | WHALES & TOP TRADERS EN VIVO
+                  </h3>
+                </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-on-surface-variant font-label text-xs">{move.id}</span>
-                  <div>
-                    <h5 className="font-bold text-sm">{move.pair}</h5>
-                    <p className="text-xs text-on-surface-variant font-label">{move.desc}</p>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10">
+                    <Zap className="w-3 h-3 text-primary" />
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase">Ballenas Activas: {whaleMovements.length}</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10">
+                    <Users className="w-3 h-3 text-primary" />
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase">Top Traders: {topTraders.length}</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={cn("font-bold text-sm", move.color)}>{move.type}</p>
-                  <p className="text-[10px] font-label uppercase tracking-widest text-on-surface-variant">{move.time}</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-outline-variant/10">
+                {/* Whale Movements */}
+                <div className="p-4 space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                    <Waves className="w-3 h-3" /> MOVIMIENTOS DE BALLENAS
+                  </h4>
+                  <div className="space-y-3">
+                    {whaleMovements.slice(0, 4).map((whale, i) => (
+                      <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-surface-container rounded flex items-center justify-center">
+                            <img 
+                              src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${whale.symbol.replace("USDT", "").toLowerCase()}.png`} 
+                              className="w-4 h-4" 
+                              alt=""
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-on-surface">{whale.symbol}</p>
+                            <p className="text-[8px] text-on-surface-variant uppercase">{whale.time}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={cn("text-[10px] font-black", whale.type === "BUY" ? "text-primary" : "text-secondary")}>{whale.type}</p>
+                          <p className="text-[10px] font-bold text-on-surface">{whale.amount}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Top Traders */}
+                <div className="p-4 space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                    <Users className="w-3 h-3" /> TOP TRADERS
+                  </h4>
+                  <div className="space-y-3">
+                    {topTraders.slice(0, 4).map((trader, i) => (
+                      <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-surface-container rounded-full flex items-center justify-center">
+                            <Users className="w-3 h-3 text-on-surface-variant" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold text-on-surface">{trader.name}</p>
+                            <p className="text-[8px] text-on-surface-variant uppercase">{trader.profit}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={cn("text-[10px] font-black", trader.trade.includes("LONG") ? "text-primary" : "text-secondary")}>{trader.trade}</p>
+                        </div>
+                        <div className="w-6 h-6 rounded-full border border-orange-500/30 flex items-center justify-center text-[8px] font-bold text-orange-500">
+                          {trader.score}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Large Transactions */}
+                <div className="p-4 space-y-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                    <ArrowRightLeft className="w-3 h-3" /> GRANDES TX
+                  </h4>
+                  <div className="space-y-3">
+                    {largeTransactions.slice(0, 4).map((tx, i) => (
+                      <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors">
+                        <div>
+                          <p className="text-[10px] font-bold text-on-surface">{tx.symbol}</p>
+                          <p className="text-[8px] text-on-surface-variant font-mono">{tx.address}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className={cn(
+                            "text-[10px] font-black uppercase",
+                            tx.type === "Acumulación" ? "text-orange-500" : 
+                            tx.type === "Depósito" ? "text-yellow-500" : "text-secondary"
+                          )}>
+                            {tx.type}
+                          </p>
+                          <p className="text-[8px] text-on-surface-variant">{tx.time}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-surface-container-high rounded-xl p-8 relative overflow-hidden group">
-          <div className="relative z-10 space-y-6">
-            <h3 className="font-headline text-xl font-bold flex items-center gap-2">
-              <Brain className="w-6 h-6 text-primary" />
-              INFORMACIÓN DE IA
-            </h3>
-            <p className="text-on-surface-variant leading-relaxed italic">
-              "{sentiment}"
-            </p>
-            <div className="flex gap-4">
-              <div className="bg-surface-container rounded-lg p-3 flex-1 text-center">
-                <p className="text-[10px] font-label uppercase text-on-surface-variant mb-1">Deslizamiento</p>
-                <p className="font-bold text-primary">0.01%</p>
-              </div>
-              <div className="bg-surface-container rounded-lg p-3 flex-1 text-center">
-                <p className="text-[10px] font-label uppercase text-on-surface-variant mb-1">Ejecución</p>
-                <p className="font-bold text-tertiary">14ms</p>
-              </div>
             </div>
-            <button 
-              onClick={() => alert("¡Próximamente! La versión PRO estará disponible pronto.")}
-              className="w-full py-4 bg-inverse-surface text-inverse-on-surface rounded-full font-extrabold uppercase tracking-widest text-sm active:scale-95 transition-all"
-            >
-              Mejorar a Pro
-            </button>
           </div>
-          <div className="absolute -bottom-10 -right-10 w-40 h-40 border-8 border-primary/10 rounded-full opacity-20 transition-transform duration-700 group-hover:scale-150"></div>
-          <div className="absolute -top-10 -left-10 w-24 h-24 bg-primary/10 blur-2xl rounded-full"></div>
+
+          {/* Impact News Panel */}
+          <div className="bg-[#0a0c10] border border-outline-variant/10 rounded-2xl p-6 space-y-6 shadow-2xl">
+            <div className="flex items-center gap-3 border-b border-outline-variant/10 pb-4">
+              <Newspaper className="w-5 h-5 text-on-surface-variant" />
+              <h3 className="text-sm font-black uppercase tracking-widest text-on-surface">
+                NOTICIAS
+              </h3>
+            </div>
+
+            <div className="space-y-6">
+              {economicEvents.slice(0, 3).map((news, i) => (
+                <div key={i} className="space-y-2 group cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-black text-on-surface group-hover:text-primary transition-colors">
+                      {news.event}
+                    </h4>
+                    <span className="text-[10px] text-on-surface-variant font-mono">
+                      {news.time}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <span className={cn(
+                      "text-[10px] font-black uppercase",
+                      news.impact === "CRITICAL" ? "text-secondary" : "text-orange-500"
+                    )}>
+                      {news.impact === "CRITICAL" ? "Alto" : "Medio"}
+                    </span>
+                    <div className="flex items-center gap-0.5">
+                      <Star className="w-3 h-3 text-orange-500 fill-orange-500" />
+                      <span className="text-[10px] font-bold text-on-surface-variant ml-1">{news.probability}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

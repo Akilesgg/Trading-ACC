@@ -30,7 +30,9 @@ import {
   X,
   Activity,
   Shield,
-  Target
+  Target,
+  Users,
+  Newspaper
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./AuthProvider";
@@ -41,6 +43,8 @@ import Market from "./pages/Market";
 import Analysis from "./pages/Analysis";
 import SignalDetail from "./pages/SignalDetail";
 import Terminal from "./pages/Terminal";
+import CopyTrading from "./pages/CopyTrading";
+import News from "./pages/News";
 
 const LoginScreen = () => {
   const { login } = useAuth();
@@ -87,6 +91,8 @@ const TopAppBar = () => {
     { icon: LayoutDashboard, label: "Panel Principal", path: "/dashboard", desc: "Vista general de señales y mercado" },
     { icon: BarChart3, label: "Mercados Spot", path: "/market", desc: "Precios en tiempo real y heatmap" },
     { icon: Target, label: "Analizador IA", path: "/terminal", desc: "Análisis técnico profundo con Wyckoff" },
+    { icon: Users, label: "Copy Trading", path: "/copy-trading", desc: "Sigue a ballenas y top traders" },
+    { icon: Newspaper, label: "Noticias", path: "/news", desc: "Impacto económico y geopolítico" },
     { icon: TrendingUp, label: "Informes de Análisis", path: "/analysis", desc: "Sentimiento global y reportes profundos" },
     { icon: Shield, label: "Seguridad", path: "/dashboard", desc: "Configuración de cuenta y llaves API" },
     { icon: HelpCircle, label: "Soporte", path: "/dashboard", desc: "Centro de ayuda y tutoriales" },
@@ -213,7 +219,8 @@ const BottomNavBar = () => {
     { icon: LayoutDashboard, label: "Panel", path: "/dashboard" },
     { icon: BarChart3, label: "Mercado", path: "/market" },
     { icon: Target, label: "Analizador", path: "/terminal" },
-    { icon: TrendingUp, label: "Informes", path: "/analysis" },
+    { icon: Users, label: "Copy", path: "/copy-trading" },
+    { icon: Newspaper, label: "Noticias", path: "/news" },
   ];
 
   return (
@@ -266,6 +273,8 @@ export default function App() {
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/signal/:symbol" element={<SignalDetail />} />
               <Route path="/terminal" element={<Terminal />} />
+              <Route path="/copy-trading" element={<CopyTrading />} />
+              <Route path="/news" element={<News />} />
               {/* Fallbacks */}
               <Route path="/signals" element={<Dashboard />} />
             </Routes>

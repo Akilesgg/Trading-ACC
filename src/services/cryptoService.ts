@@ -59,40 +59,40 @@ export async function fetchEconomicEvents() {
   // Mocking economic calendar data as it usually requires paid APIs
   return [
     { 
-      event: "FOMC Meeting", 
+      event: "Reunión de Emergencia de la OTAN", 
       impact: "CRITICAL", 
-      time: "14:00 EST", 
-      date: "2025-03-19", 
-      description: "Decisión de tasas de interés.",
+      time: "14:30", 
+      date: "Hoy", 
+      description: "Discusión sobre nuevas sanciones comerciales y tensiones en fronteras orientales. Alta probabilidad de impacto en el precio del petróleo y activos de refugio.",
       effect: "Volatilidad extrema",
       probability: 95
     },
     { 
-      event: "Retail Sales", 
-      impact: "HIGH", 
-      time: "08:30 EST", 
-      date: "2025-03-16", 
-      description: "Ventas minoristas.",
-      effect: "Indicador de fortaleza económica",
-      probability: 60
+      event: "Decisión de Tasas (FED)", 
+      impact: "CRITICAL", 
+      time: "20:00", 
+      date: "Mañana", 
+      description: "El mercado espera una pausa en las tasas. Cualquier sorpresa podría causar liquidaciones masivas en el mercado cripto.",
+      effect: "Cambio de Tendencia",
+      probability: 88
     },
     { 
-      event: "PPI Data", 
+      event: "Cumbre G7 sobre Activos Digitales", 
       impact: "HIGH", 
-      time: "08:30 EST", 
-      date: "2025-03-14", 
-      description: "Inflación mayorista.",
-      effect: "Anticipa tendencia de inflación",
-      probability: 65
+      time: "09:00", 
+      date: "2 Abr", 
+      description: "Propuesta de marco regulatorio global para stablecoins y exchanges. Posible presión regulatoria a corto plazo.",
+      effect: "Corrección Técnica",
+      probability: 75
     },
     { 
-      event: "G7 Summit", 
-      impact: "MEDIUM", 
-      time: "10:00 GMT", 
-      date: "2025-03-22", 
-      description: "Reunión de líderes mundiales.",
-      effect: "Impacto geopolítico en divisas",
-      probability: 45
+      event: "Conflicto en Oriente Medio", 
+      impact: "CRITICAL", 
+      time: "En curso", 
+      date: "Hoy", 
+      description: "Escalada de tensiones afecta las rutas de suministro globales. Impacto directo en el sentimiento de riesgo (Risk-Off).",
+      effect: "Fuga hacia Calidad (BTC/Oro)",
+      probability: 92
     },
   ];
 }
