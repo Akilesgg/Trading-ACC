@@ -39,6 +39,31 @@ export async function fetchKlines(symbol: string, interval: string = "1h", limit
   }));
 }
 
+export function connectTickerStream(symbol: string, onMessage: (data: any) => void): WebSocket {
+  const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@ticker`);
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    onMessage({
+      symbol: data.s,
+      price: data.c,
+      priceChangePercent: data.P,
+      highPrice: data.h,
+      lowPrice: data.l,
+      volume: data.v,
+    });
+  };
+  return ws;
+}
+
+export async function fetchEconomicEvents() {
+  // Mocking economic calendar data as it usually requires paid APIs
+  return [
+    { event: "CPI (Consumer Price Index)", impact: "HIGH", time: "14:30", date: "Hoy" },
+    { event: "FOMC Meeting Minutes", impact: "CRITICAL", time: "20:00", date: "Mañana" },
+    { event: "Unemployment Claims", impact: "MEDIUM", time: "13:30", date: "Jueves" },
+  ];
+}
+
 export async function fetchCryptoData() {
   const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT", "AVAXUSDT"];
   const tickers = await fetchTickers(symbols);

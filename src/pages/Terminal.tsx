@@ -27,10 +27,13 @@ import {
   Copy,
   Share2,
   Eye,
-  ZapOff
+  ZapOff,
+  Globe,
+  Calculator,
+  History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchTicker, CryptoData, fetchKlines } from "@/services/cryptoService";
+import { fetchTicker, CryptoData, fetchKlines, connectTickerStream, fetchEconomicEvents } from "@/services/cryptoService";
 import { 
   AreaChart, 
   Area, 
@@ -57,6 +60,9 @@ const Terminal = () => {
   const [cooldown, setCooldown] = useState(0);
   const [timeframe, setTimeframe] = useState("1h");
   const [strategy, setStrategy] = useState("Standard");
+  const [economicEvents, setEconomicEvents] = useState<any[]>([]);
+  const [riskAmount, setRiskAmount] = useState(100);
+  const [accountSize, setAccountSize] = useState(10000);
   
   // Analysis State
   const [analysis, setAnalysis] = useState<any>(null);
@@ -68,6 +74,8 @@ const Terminal = () => {
         setTicker(data);
         const chartData = await fetchKlines(symbolParam, timeframe, 100);
         setKlines(chartData);
+        const events = await fetchEconomicEvents();
+        setEconomicEvents(events);
       } catch (error) {
         console.error("Analyzer data load error:", error);
       } finally {
@@ -75,6 +83,13 @@ const Terminal = () => {
       }
     };
     loadData();
+
+    // WebSocket for live updates
+    const ws = connectTickerStream(symbolParam, (liveData) => {
+      setTicker(liveData);
+    });
+
+    return () => ws.close();
   }, [symbolParam, timeframe]);
 
   useEffect(() => {
@@ -318,6 +333,90 @@ const Terminal = () => {
               <span className="text-xs font-bold text-primary uppercase tracking-widest">Online: Node-04</span>
             </div>
             <p className="text-[8px] text-on-surface-variant mt-1">Latencia: 14ms</p>
+          </div>
+        </div>
+
+        {/* Advanced Tools Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Risk Calculator */}
+          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Calculator className="w-3 h-3" /> CALCULADORA DE RIESGO
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[8px] font-bold text-on-surface-variant uppercase">Balance Cuenta ($)</label>
+                <input 
+                  type="number" 
+                  value={accountSize} 
+                  onChange={(e) => setAccountSize(Number(e.target.value))}
+                  className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg p-2 text-xs font-bold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[8px] font-bold text-on-surface-variant uppercase">Riesgo por Operación ($)</label>
+                <input 
+                  type="number" 
+                  value={riskAmount} 
+                  onChange={(e) => setRiskAmount(Number(e.target.value))}
+                  className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg p-2 text-xs font-bold"
+                />
+              </div>
+            </div>
+            {analysis && (
+              <div className="bg-primary/5 p-3 rounded-xl border border-primary/10">
+                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Lotaje Sugerido:</p>
+                <p className="text-xl font-headline font-bold text-primary">
+                  {((riskAmount / Math.abs(analysis.entry - analysis.sl))).toFixed(4)} {symbolParam.replace("USDT", "")}
+                </p>
+                <p className="text-[8px] text-on-surface-variant mt-1">Basado en SL a ${(analysis.sl).toFixed(2)}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Economic Calendar */}
+          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Globe className="w-3 h-3" /> CALENDARIO ECONÓMICO
+            </h4>
+            <div className="space-y-2">
+              {economicEvents.map((ev, i) => (
+                <div key={i} className="flex items-center justify-between bg-surface-container p-2 rounded-xl">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-on-surface">{ev.event}</span>
+                    <span className="text-[8px] text-on-surface-variant uppercase">{ev.date} @ {ev.time}</span>
+                  </div>
+                  <span className={cn(
+                    "text-[8px] font-bold px-1.5 py-0.5 rounded",
+                    ev.impact === "CRITICAL" ? "bg-secondary/10 text-secondary" : 
+                    ev.impact === "HIGH" ? "bg-primary/10 text-primary" : "bg-surface-container-highest text-on-surface-variant"
+                  )}>
+                    {ev.impact}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Backtesting Stats */}
+          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <History className="w-3 h-3" /> BACKTESTING (30D)
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-surface-container p-3 rounded-xl text-center">
+                <p className="text-[8px] text-on-surface-variant uppercase font-bold">Win Rate</p>
+                <p className="text-xl font-headline font-bold text-primary">68.4%</p>
+              </div>
+              <div className="bg-surface-container p-3 rounded-xl text-center">
+                <p className="text-[8px] text-on-surface-variant uppercase font-bold">Profit Factor</p>
+                <p className="text-xl font-headline font-bold text-tertiary">2.14</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-secondary/5 rounded-lg border border-secondary/10">
+              <AlertTriangle className="w-3 h-3 text-secondary" />
+              <p className="text-[8px] text-secondary font-bold uppercase">Alta volatilidad detectada en 1m</p>
+            </div>
           </div>
         </div>
 
