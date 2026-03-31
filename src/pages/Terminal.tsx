@@ -66,6 +66,12 @@ const Terminal = () => {
   
   // Analysis State
   const [analysis, setAnalysis] = useState<any>(null);
+  const [mtfBias, setMtfBias] = useState<any>({
+    "1m": "NEUTRAL",
+    "5m": "BULLISH",
+    "15m": "BULLISH",
+    "1h": "BEARISH"
+  });
 
   useEffect(() => {
     const loadData = async () => {
@@ -119,9 +125,20 @@ const Terminal = () => {
     
     // Simulate complex analysis based on strategy and timeframe
     setTimeout(() => {
+      const adxVal = Math.floor(Math.random() * 30) + 15; // 15-45
+      const isChop = adxVal < 20;
       const isBullish = Math.random() > 0.5;
-      const volatility = price * 0.015;
       const isBTC = symbolParam.includes("BTC");
+
+      // Timeframe based volatility/TP distance
+      let tpMultiplier = 1.0;
+      if (timeframe === "1m") tpMultiplier = 0.3;
+      else if (timeframe === "5m") tpMultiplier = 0.6;
+      else if (timeframe === "15m") tpMultiplier = 1.2;
+      else if (timeframe === "1h") tpMultiplier = 2.5;
+      else if (timeframe === "4h") tpMultiplier = 5.0;
+
+      const volatility = price * 0.005 * tpMultiplier;
 
       // Strategy Logic
       let strategyName = strategy;
@@ -133,51 +150,86 @@ const Terminal = () => {
       const newAnalysis = {
         type: isBullish ? "LONG" : "SHORT",
         entry: price,
-        sl: isBullish ? price - volatility : price + volatility,
-        tp1: isBullish ? price + volatility * 1.7 : price - volatility * 1.7,
-        tp2: isBullish ? price + volatility * 2.5 : price - volatility * 2.5,
-        tp3: isBullish ? price + volatility * 4.0 : price - volatility * 4.0,
-        ratio: "1:1.7",
-        score: Math.floor(Math.random() * 30) + 60, // 60-90
+        sl: isBullish ? price - (volatility * 0.8) : price + (volatility * 0.8),
+        tp1: isBullish ? price + volatility : price - volatility,
+        tp2: isBullish ? price + volatility * 1.8 : price - volatility * 1.8,
+        tp3: isBullish ? price + volatility * 3.0 : price - volatility * 3.0,
+        ratio: `1:${(3.0 / 0.8).toFixed(1)}`,
+        rr: 3.0 / 0.8,
+        score: isChop ? Math.floor(Math.random() * 20) + 40 : Math.floor(Math.random() * 30) + 65,
         sentiment: isBullish ? "BULLISH" : "BEARISH",
         strategy: strategyName,
+        context: {
+          trend: adxVal > 25 ? "STRONG ↑" : "WEAK →",
+          adx: adxVal,
+          vol: Math.random() > 0.5 ? "HIGH" : "NORMAL",
+          structure: Math.random() > 0.7 ? "BOS (Break of Structure)" : "CHoCH (Change of Character)",
+          zone: Math.random() > 0.5 ? "LVN BREAK" : "HVN REJECTION",
+          bias: isBullish ? "LONG" : "SHORT",
+          cvd: (Math.random() * 1000 - 500).toFixed(0),
+          delta: (Math.random() * 200 - 100).toFixed(0)
+        },
         indicators: {
           rsi: { val: (Math.random() * 40 + 30).toFixed(1), status: isBullish ? "ALCISTA" : "BAJISTA" },
           macd: { val: isBullish ? "0.45" : "-0.45", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
           ema: { val: timeframe === "1m" ? `12/${emaPeriod}` : "20/50", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
           vwap: { val: (price * 0.999).toFixed(2), status: isBullish ? "POR ENCIMA" : "POR DEBAJO", color: isBullish ? "text-primary" : "text-secondary" },
           vol: { val: "A: 1.2%", status: "MOMENTUM +", color: "text-primary" },
-          adx: { val: "28.5", status: "TENDENCIA FUERTE", color: "text-primary" },
-          atr: { val: (price * 0.004).toFixed(2), status: "VOLATILIDAD ALTA", color: "text-primary" }
+          adx: { val: adxVal.toString(), status: adxVal > 25 ? "TENDENCIA FUERTE" : "RANGO / CHOP", color: adxVal > 25 ? "text-primary" : "text-on-surface-variant" },
+          atr: { val: (volatility / 2).toFixed(2), status: "NORMAL", color: "text-primary" }
         },
         volumeProfile: [
-          { price: price * 1.02, vol: 80 },
-          { price: price * 1.01, vol: 45 },
-          { price: price * 1.00, vol: 100 },
-          { price: price * 0.99, vol: 60 },
-          { price: price * 0.98, vol: 30 }
+          { price: price * 1.02, vol: Math.floor(Math.random() * 40) + 60 },
+          { price: price * 1.01, vol: Math.floor(Math.random() * 30) + 40 },
+          { price: price * 1.00, vol: Math.floor(Math.random() * 20) + 20 },
+          { price: price * 0.99, vol: Math.floor(Math.random() * 50) + 30 },
+          { price: price * 0.98, vol: Math.floor(Math.random() * 40) + 50 }
         ],
         fvgs: [
           { price: (price * 0.985).toFixed(2), type: "BULLISH", status: "OPEN" },
           { price: (price * 1.015).toFixed(2), type: "BEARISH", status: "MITIGATED" }
         ],
         correlation: {
-          btc: "0.85",
-          eth: "0.92",
-          sp500: "0.45"
+          btc: (Math.random() * 0.2 + 0.75).toFixed(2),
+          eth: (Math.random() * 0.2 + 0.70).toFixed(2),
+          sp500: (Math.random() * 0.3 + 0.40).toFixed(2)
         }
       };
       
       setAnalysis(newAnalysis);
       setAnalyzing(false);
-      setCooldown(30); // 30 seconds wait-off
+      setCooldown(15); 
+      
+      setMtfBias({
+        "1m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
+        "5m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
+        "15m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
+        "1h": Math.random() > 0.5 ? "BULLISH" : "BEARISH"
+      });
     }, 1500);
   };
 
   const copySignal = () => {
     if (!analysis) return;
-    const text = `SIGNAL: ${symbolParam} ${analysis.type}\nEntry: ${analysis.entry}\nTP1: ${analysis.tp1}\nTP2: ${analysis.tp2}\nTP3: ${analysis.tp3}\nSL: ${analysis.sl}`;
+    const text = `🚀 ZCOIN ANALYZER - SEÑAL INSTITUCIONAL
+-----------------------------------
+📊 ACTIVO: ${symbolParam}
+🕒 TEMPORALIDAD: ${timeframe.toUpperCase()}
+🎯 TIPO: ${analysis.type} (${analysis.strategy})
+-----------------------------------
+✅ ENTRADA: $${analysis.entry.toLocaleString()}
+🛑 STOP LOSS: $${analysis.sl.toLocaleString()}
+-----------------------------------
+💰 TAKE PROFIT 1: $${analysis.tp1.toLocaleString()}
+💰 TAKE PROFIT 2: $${analysis.tp2.toLocaleString()}
+💰 TAKE PROFIT 3: $${analysis.tp3.toLocaleString()}
+-----------------------------------
+⚖️ RIESGO/BENEFICIO: ${analysis.ratio}
+🔥 CONFIANZA: ${analysis.score}%
+-----------------------------------
+💡 NOTA: Gestiona tu riesgo. No arriesgues más del 1-2% por operación.`;
     navigator.clipboard.writeText(text);
+    // Could add a toast here
   };
 
   if (loading || !ticker) return (
@@ -366,30 +418,47 @@ const Terminal = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[8px] font-bold text-on-surface-variant uppercase">Balance Cuenta ($)</label>
-                <input 
-                  type="number" 
-                  value={accountSize} 
-                  onChange={(e) => setAccountSize(Number(e.target.value))}
-                  className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg p-2 text-xs font-bold"
-                />
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-on-surface-variant">$</span>
+                  <input 
+                    type="number" 
+                    value={accountSize} 
+                    onChange={(e) => setAccountSize(Number(e.target.value))}
+                    className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg pl-6 pr-2 py-2 text-xs font-bold focus:border-primary/50 outline-none transition-all"
+                  />
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[8px] font-bold text-on-surface-variant uppercase">Riesgo por Operación ($)</label>
-                <input 
-                  type="number" 
-                  value={riskAmount} 
-                  onChange={(e) => setRiskAmount(Number(e.target.value))}
-                  className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg p-2 text-xs font-bold"
-                />
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-on-surface-variant">$</span>
+                  <input 
+                    type="number" 
+                    value={riskAmount} 
+                    onChange={(e) => setRiskAmount(Number(e.target.value))}
+                    className="w-full bg-surface-container-high border border-outline-variant/20 rounded-lg pl-6 pr-2 py-2 text-xs font-bold focus:border-primary/50 outline-none transition-all"
+                  />
+                </div>
               </div>
             </div>
             {analysis && (
-              <div className="bg-primary/5 p-3 rounded-xl border border-primary/10">
-                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1">Lotaje Sugerido:</p>
-                <p className="text-xl font-headline font-bold text-primary">
-                  {((riskAmount / Math.abs(analysis.entry - analysis.sl))).toFixed(4)} {symbolParam.replace("USDT", "")}
-                </p>
-                <p className="text-[8px] text-on-surface-variant mt-1">Basado en SL a ${(analysis.sl).toFixed(2)}</p>
+              <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <Calculator className="w-12 h-12" />
+                </div>
+                <p className="text-[10px] text-on-surface-variant uppercase font-bold mb-1 relative z-10">Lotaje Sugerido:</p>
+                <div className="flex items-baseline gap-2 relative z-10">
+                  <p className="text-2xl font-headline font-black text-primary">
+                    {((riskAmount / Math.abs(analysis.entry - analysis.sl))).toFixed(4)}
+                  </p>
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">{symbolParam.replace("USDT", "")}</span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-outline-variant/5 flex justify-between items-center relative z-10">
+                  <span className="text-[8px] text-on-surface-variant uppercase font-bold">SL Distancia:</span>
+                  <span className="text-[10px] font-bold text-secondary">
+                    {((Math.abs(analysis.entry - analysis.sl) / analysis.entry) * 100).toFixed(2)}%
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -441,9 +510,85 @@ const Terminal = () => {
         </div>
 
         {/* Analysis Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Order Blocks & FVG */}
-          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Left Column: Context & MTF */}
+          <div className="space-y-6">
+            {/* Quick Context Panel */}
+            <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-primary/10 transition-colors"></div>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2 relative z-10">
+                <Brain className="w-3 h-3" /> CONTEXTO INSTITUCIONAL
+              </h4>
+              <div className="space-y-3 relative z-10">
+                {[
+                  { label: "TREND", val: analysis?.context?.trend || "---", color: "text-on-surface" },
+                  { label: "ADX", val: analysis?.context?.adx || "---", color: "text-primary" },
+                  { label: "VOL", val: analysis?.context?.vol || "---", color: "text-tertiary" },
+                  { label: "STRUCTURE", val: analysis?.context?.structure || "---", color: "text-on-surface" },
+                  { label: "ZONE", val: analysis?.context?.zone || "---", color: "text-primary" },
+                  { label: "BIAS", val: analysis?.context?.bias || "---", color: analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary" },
+                ].map((item) => (
+                  <div key={item.label} className="flex justify-between items-center py-1.5 border-b border-outline-variant/5">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">{item.label}</span>
+                    <span className={cn("text-[10px] font-black uppercase", item.color)}>{item.val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* MTF Bias Panel */}
+            <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                <Activity className="w-3 h-3" /> MULTI-TIMEFRAME BIAS
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(mtfBias).map(([tf, bias]: [string, any]) => (
+                  <div key={tf} className="bg-surface-container p-3 rounded-xl flex flex-col items-center gap-2 border border-outline-variant/5 hover:border-primary/20 transition-colors">
+                    <span className="text-[10px] font-bold text-on-surface-variant">{tf}</span>
+                    <div className={cn(
+                      "w-3 h-3 rounded-full shadow-[0_0_12px]",
+                      bias === "BULLISH" ? "bg-primary shadow-primary/50" : "bg-secondary shadow-secondary/50"
+                    )}></div>
+                    <span className={cn("text-[8px] font-black uppercase", bias === "BULLISH" ? "text-primary" : "text-secondary")}>{bias}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Order Flow (CVD/Delta) */}
+            <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                <Zap className="w-3 h-3" /> ORDER FLOW (CVD/DELTA)
+              </h4>
+              <div className="space-y-4">
+                <div className="bg-surface-container p-4 rounded-xl space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase">CVD Acumulado</span>
+                    <span className={cn("text-xs font-black", parseFloat(analysis?.context?.cvd || "0") > 0 ? "text-primary" : "text-secondary")}>
+                      {analysis?.context?.cvd || "0"}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div 
+                      className={cn("h-full transition-all duration-1000", parseFloat(analysis?.context?.cvd || "0") > 0 ? "bg-primary" : "bg-secondary")} 
+                      style={{ width: `${Math.min(Math.abs(parseFloat(analysis?.context?.cvd || "0")) / 5, 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center px-2">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">Delta Vela</span>
+                  <span className={cn("text-xs font-black", parseFloat(analysis?.context?.delta || "0") > 0 ? "text-primary" : "text-secondary")}>
+                    {analysis?.context?.delta || "0"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Original Analysis Grid Content (3 columns wide) */}
+          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {/* Order Blocks & FVG */}
+            <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center justify-between">
               <div className="flex items-center gap-2"><Shield className="w-3 h-3" /> ESTRUCTURA</div>
               <span className="text-[8px] bg-primary/10 px-1.5 py-0.5 rounded">SMC</span>
@@ -563,6 +708,7 @@ const Terminal = () => {
             </div>
           </div>
         </div>
+      </div>
 
         {/* Indicators Section */}
         <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
@@ -678,13 +824,18 @@ const Terminal = () => {
 
                 <div className="space-y-3">
                   {[
-                    { label: "TAKE PROFIT 1", val: analysis.tp1, color: "text-tertiary" },
-                    { label: "TAKE PROFIT 2", val: analysis.tp2, color: "text-tertiary" },
-                    { label: "TAKE PROFIT 3", val: analysis.tp3, color: "text-tertiary" }
+                    { label: "TAKE PROFIT 1", val: analysis.tp1, color: "text-tertiary", icon: <Target className="w-4 h-4" /> },
+                    { label: "TAKE PROFIT 2", val: analysis.tp2, color: "text-tertiary", icon: <Target className="w-4 h-4" /> },
+                    { label: "TAKE PROFIT 3", val: analysis.tp3, color: "text-tertiary", icon: <Target className="w-4 h-4" /> }
                   ].map((tp, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-surface-container rounded-xl">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{tp.label}:</span>
-                      <span className={cn("text-sm font-bold", tp.color)}>${tp.val.toLocaleString()}</span>
+                    <div key={i} className="flex justify-between items-center p-4 bg-surface-container rounded-xl border border-outline-variant/5 hover:border-tertiary/30 transition-all group/tp">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-tertiary/10 rounded-lg text-tertiary group-hover/tp:scale-110 transition-transform">
+                          {tp.icon}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{tp.label}</span>
+                      </div>
+                      <span className={cn("text-lg font-black", tp.color)}>${tp.val.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
