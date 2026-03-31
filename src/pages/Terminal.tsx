@@ -195,8 +195,18 @@ const Terminal = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen pt-16 pb-24 bg-surface-container-lowest text-on-surface overflow-x-hidden"
+      className={cn(
+        "min-h-screen pt-16 pb-24 text-on-surface overflow-x-hidden transition-colors duration-1000",
+        analysis?.sentiment === "BULLISH" ? "bg-primary/5" : analysis?.sentiment === "BEARISH" ? "bg-secondary/5" : "bg-surface-container-lowest"
+      )}
     >
+      {/* Dynamic Background Glow */}
+      {analysis && (
+        <div className={cn(
+          "fixed inset-0 pointer-events-none opacity-20 blur-[120px] transition-colors duration-1000",
+          analysis.sentiment === "BULLISH" ? "bg-primary" : "bg-secondary"
+        )} style={{ clipPath: "circle(30% at 50% 50%)" }} />
+      )}
       {/* Top Header / Search */}
       <div className="px-4 py-4 border-b border-outline-variant/10 bg-surface-container-low sticky top-16 z-30">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -277,10 +287,15 @@ const Terminal = () => {
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Market Overview Row */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+          <div className={cn(
+            "p-4 rounded-2xl border transition-all duration-500",
+            analysis?.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30 shadow-lg shadow-primary/5" : 
+            analysis?.sentiment === "BEARISH" ? "bg-secondary/10 border-secondary/30 shadow-lg shadow-secondary/5" : 
+            "bg-surface-container-low border-outline-variant/10"
+          )}>
             <div className="flex justify-between items-start mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Precio Actual</span>
-              <Activity className="w-4 h-4 text-primary" />
+              <Activity className={cn("w-4 h-4", isPositive ? "text-primary" : "text-secondary")} />
             </div>
             <p className="text-2xl font-headline font-bold">${parseFloat(ticker.price).toLocaleString()}</p>
             <p className={cn("text-xs font-bold mt-1", isPositive ? "text-primary" : "text-secondary")}>
@@ -316,12 +331,17 @@ const Terminal = () => {
             </div>
           </div>
 
-          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 flex flex-col justify-center items-center text-center">
+          <div className={cn(
+            "p-4 rounded-2xl border transition-all duration-500 flex flex-col justify-center items-center text-center",
+            analysis?.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30 shadow-lg shadow-primary/5" : 
+            analysis?.sentiment === "BEARISH" ? "bg-secondary/10 border-secondary/30 shadow-lg shadow-secondary/5" : 
+            "bg-surface-container-low border-outline-variant/10"
+          )}>
             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Sentimiento IA</span>
             <div className="flex items-center gap-2">
-              <Gauge className={cn("w-6 h-6", isPositive ? "text-primary" : "text-secondary")} />
-              <span className={cn("text-xl font-bold font-headline", isPositive ? "text-primary" : "text-secondary")}>
-                {isPositive ? "ALCISTA" : "BAJISTA"}
+              <Gauge className={cn("w-6 h-6", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")} />
+              <span className={cn("text-xl font-bold font-headline", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                {analysis?.sentiment || (isPositive ? "ALCISTA" : "BAJISTA")}
               </span>
             </div>
           </div>
@@ -573,9 +593,52 @@ const Terminal = () => {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+            className="space-y-6"
           >
-            <div className="lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-6">
+            {/* Signal Hero Banner */}
+            <div className={cn(
+              "p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl overflow-hidden relative",
+              analysis.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30" : "bg-secondary/10 border-secondary/30"
+            )}>
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-32 h-32" /> : <TrendingDown className="w-32 h-32" />}
+              </div>
+              
+              <div className="flex items-center gap-6 z-10">
+                <div className={cn(
+                  "w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg",
+                  analysis.sentiment === "BULLISH" ? "bg-primary text-on-primary" : "bg-secondary text-on-secondary"
+                )}>
+                  {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-10 h-10" /> : <TrendingDown className="w-10 h-10" />}
+                </div>
+                <div>
+                  <h2 className={cn("text-4xl font-headline font-black tracking-tighter", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                    {analysis.sentiment === "BULLISH" ? "SEÑAL ALCISTA" : "SEÑAL BAJISTA"}
+                  </h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Confianza del Sistema:</span>
+                    <span className={cn("text-lg font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>{analysis.score}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-end gap-2 z-10">
+                <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Ratio R/B:</span>
+                  <span className="text-sm font-black text-tertiary">{analysis.ratio}</span>
+                </div>
+                <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estrategia:</span>
+                  <span className="text-sm font-black text-primary uppercase">{analysis.strategy}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className={cn(
+              "lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border-2 space-y-6 shadow-xl",
+              analysis.sentiment === "BULLISH" ? "border-primary/20" : "border-secondary/20"
+            )}>
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
@@ -653,15 +716,56 @@ const Terminal = () => {
                     <div className="h-full bg-primary" style={{ width: `${analysis.score}%` }}></div>
                   </div>
                 </div>
+
+                {/* Risk/Reward Visualizer */}
+                <div className="pt-4 border-t border-outline-variant/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Relación Riesgo / Beneficio</span>
+                    <span className="text-sm font-black text-primary">1 : {analysis.rr.toFixed(1)}</span>
+                  </div>
+                  <div className="flex h-2 rounded-full overflow-hidden">
+                    <div className="bg-secondary w-1/4 opacity-80"></div>
+                    <div className="bg-primary flex-1 opacity-80"></div>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <span className="text-[8px] font-bold text-secondary uppercase">Riesgo</span>
+                    <span className="text-[8px] font-bold text-primary uppercase">Beneficio</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="space-y-6">
-              <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+              {/* Signal Status Card */}
+              <div className={cn(
+                "p-6 rounded-3xl border-2 flex flex-col items-center text-center space-y-4 shadow-2xl relative overflow-hidden",
+                analysis.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30" : "bg-secondary/10 border-secondary/30"
+              )}>
+                <div className={cn(
+                  "w-24 h-24 rounded-full flex items-center justify-center animate-pulse shadow-2xl",
+                  analysis.sentiment === "BULLISH" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                )}>
+                  {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-12 h-12" /> : <TrendingDown className="w-12 h-12" />}
+                </div>
+                <div>
+                  <p className={cn("text-xs font-black uppercase tracking-widest mb-1", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                    Estado del Mercado
+                  </p>
+                  <h3 className={cn("text-3xl font-headline font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                    {analysis.sentiment === "BULLISH" ? "ALCISTA" : "BAJISTA"}
+                  </h3>
+                </div>
+                <div className="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                  <div className={cn("h-full transition-all duration-1000", analysis.sentiment === "BULLISH" ? "bg-primary" : "bg-secondary")} style={{ width: `${analysis.score}%` }}></div>
+                </div>
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Confianza: {analysis.score}%</p>
+              </div>
+
+              <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                   <BarChart3 className="w-3 h-3" /> GRÁFICO DE ANÁLISIS
                 </h4>
-                <div className="h-64">
+                <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={klines}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#22262b" vertical={false} />
@@ -700,7 +804,8 @@ const Terminal = () => {
                 <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               </div>
             </div>
-          </motion.div>
+          </div>
+        </motion.div>
         )}
 
         {!analysis && !analyzing && (

@@ -161,58 +161,78 @@ const Dashboard = () => {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tickers.map((ticker) => (
-            <div key={ticker.symbol} className="bg-surface-container-low rounded-xl overflow-hidden group border border-outline-variant/10">
-              <div className="p-6 space-y-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center">
-                      <Zap className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-headline font-bold text-lg">{ticker.symbol.replace("USDT", " / USDT")}</h4>
-                      <div className="flex items-center gap-2">
-                        <p className="text-xs text-on-surface-variant font-label uppercase">Activo Cripto</p>
-                        <Star 
-                          className={cn(
-                            "w-3 h-3 transition-colors cursor-pointer",
-                            watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
-                          )} 
-                          onClick={() => toggleWatchlist(ticker.symbol)}
-                        />
+          {tickers.map((ticker) => {
+            const isBullish = parseFloat(ticker.priceChangePercent) > 0;
+            return (
+              <div 
+                key={ticker.symbol} 
+                className={cn(
+                  "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500",
+                  isBullish ? "border-primary/10 hover:border-primary/40 shadow-lg shadow-primary/5" : "border-secondary/10 hover:border-secondary/40 shadow-lg shadow-secondary/5"
+                )}
+              >
+                <div className="p-6 space-y-6">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+                        isBullish ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                      )}>
+                        {isBullish ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
+                      </div>
+                      <div>
+                        <h4 className="font-headline font-bold text-lg">{ticker.symbol.replace("USDT", " / USDT")}</h4>
+                        <div className="flex items-center gap-2">
+                          <span className={cn(
+                            "text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest",
+                            isBullish ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                          )}>
+                            {isBullish ? "Bullish" : "Bearish"}
+                          </span>
+                          <Star 
+                            className={cn(
+                              "w-3 h-3 transition-colors cursor-pointer",
+                              watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
+                            )} 
+                            onClick={() => toggleWatchlist(ticker.symbol)}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-headline font-bold text-lg">${parseFloat(ticker.price).toLocaleString()}</p>
-                    <p className={cn("text-xs font-bold", parseFloat(ticker.priceChangePercent) >= 0 ? "text-primary" : "text-secondary")}>
-                      {parseFloat(ticker.priceChangePercent) > 0 ? "+" : ""}{ticker.priceChangePercent}%
-                    </p>
-                  </div>
-                </div>
-                {/* Timeframe Matrix */}
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    { label: "1M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-                    { label: "5M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-                    { label: "15M", icon: Minus, color: "text-tertiary", bg: "bg-surface-container-highest" },
-                    { label: "1H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
-                  ].map((tf) => (
-                    <div key={tf.label} className={cn("flex flex-col items-center p-2 rounded-lg border border-outline-variant/10", tf.bg)}>
-                      <span className="text-[10px] font-label text-on-surface-variant mb-1">{tf.label}</span>
-                      <tf.icon className={cn("w-4 h-4", tf.color)} />
+                    <div className="text-right">
+                      <p className="font-headline font-bold text-lg">${parseFloat(ticker.price).toLocaleString()}</p>
+                      <p className={cn("text-xs font-bold", isBullish ? "text-primary" : "text-secondary")}>
+                        {isBullish ? "+" : ""}{ticker.priceChangePercent}%
+                      </p>
                     </div>
-                  ))}
+                  </div>
+                  {/* Timeframe Matrix */}
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: "1M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+                      { label: "5M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+                      { label: "15M", icon: Minus, color: "text-tertiary", bg: "bg-surface-container-highest" },
+                      { label: "1H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
+                    ].map((tf) => (
+                      <div key={tf.label} className={cn("flex flex-col items-center p-2 rounded-lg border border-outline-variant/10", tf.bg)}>
+                        <span className="text-[10px] font-label text-on-surface-variant mb-1">{tf.label}</span>
+                        <tf.icon className={cn("w-4 h-4", tf.color)} />
+                      </div>
+                    ))}
+                  </div>
+                  <Link 
+                    to={`/terminal?symbol=${ticker.symbol}`}
+                    className={cn(
+                      "block w-full py-3 rounded-xl border font-bold uppercase tracking-widest text-xs text-center transition-all duration-300",
+                      isBullish ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-on-primary" : "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary hover:text-on-secondary"
+                    )}
+                  >
+                    ANALIZAR AHORA
+                  </Link>
                 </div>
-                <Link 
-                  to={`/signal/${ticker.symbol}`}
-                  className="block w-full py-3 rounded-xl bg-surface-container-high border border-outline-variant/20 font-bold uppercase tracking-widest text-xs text-center group-hover:bg-primary group-hover:text-on-primary transition-all duration-300"
-                >
-                  EJECUTAR SEÑAL
-                </Link>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
