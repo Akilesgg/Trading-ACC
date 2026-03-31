@@ -48,7 +48,7 @@ import {
 const Terminal = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const symbolParam = searchParams.get("symbol") || "BTCUSDT";
+  const symbolParam = (searchParams.get("symbol") || "BTCUSDT").toUpperCase();
   const [searchSymbol, setSearchSymbol] = useState(symbolParam);
   const [ticker, setTicker] = useState<CryptoData | null>(null);
   const [klines, setKlines] = useState<any[]>([]);
@@ -56,6 +56,7 @@ const Terminal = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [timeframe, setTimeframe] = useState("1h");
+  const [strategy, setStrategy] = useState("Standard");
   
   // Analysis State
   const [analysis, setAnalysis] = useState<any>(null);
@@ -92,32 +93,47 @@ const Terminal = () => {
 
   const runAnalysis = () => {
     if (!ticker || cooldown > 0) return;
+    
+    const price = parseFloat(ticker.price);
+    if (isNaN(price)) {
+      console.error("Invalid ticker price:", ticker.price);
+      return;
+    }
+
     setAnalyzing(true);
     
-    // Simulate complex analysis
+    // Simulate complex analysis based on strategy and timeframe
     setTimeout(() => {
-      const price = parseFloat(ticker.price);
       const isBullish = Math.random() > 0.5;
-      const volatility = price * 0.02;
+      const volatility = price * 0.015;
+      const isBTC = symbolParam.includes("BTC");
+
+      // Strategy Logic
+      let strategyName = strategy;
+      let emaPeriod = isBTC ? 400 : 800;
+      
+      if (timeframe === "1m") strategyName = "Pupupu Scalping";
+      if (timeframe === "5m") strategyName = "Reto Trading";
 
       const newAnalysis = {
         type: isBullish ? "LONG" : "SHORT",
         entry: price,
         sl: isBullish ? price - volatility : price + volatility,
-        tp1: isBullish ? price + volatility * 0.8 : price - volatility * 0.8,
-        tp2: isBullish ? price + volatility * 1.5 : price - volatility * 1.5,
-        tp3: isBullish ? price + volatility * 2.5 : price - volatility * 2.5,
-        ratio: "1:2.8",
-        score: Math.floor(Math.random() * 40) + 50, // 50-90
+        tp1: isBullish ? price + volatility * 1.7 : price - volatility * 1.7,
+        tp2: isBullish ? price + volatility * 2.5 : price - volatility * 2.5,
+        tp3: isBullish ? price + volatility * 4.0 : price - volatility * 4.0,
+        ratio: "1:1.7",
+        score: Math.floor(Math.random() * 30) + 60, // 60-90
         sentiment: isBullish ? "BULLISH" : "BEARISH",
+        strategy: strategyName,
         indicators: {
-          rsi: { val: (Math.random() * 40 + 30).toFixed(1), status: "NEUTRAL" },
-          macd: { val: "-9.53", status: "ALCISTA", color: "text-primary" },
-          ema: { val: "20/50", status: "BAJISTA", color: "text-secondary" },
-          vwap: { val: "66671.72", status: "POR DEBAJO", color: "text-secondary" },
-          vol: { val: "A: 0.0%", status: "MOMENTUM -", color: "text-on-surface-variant" },
-          adx: { val: "24.5", status: "TENDENCIA DÉBIL", color: "text-on-surface-variant" },
-          atr: { val: (price * 0.005).toFixed(2), status: "VOLATILIDAD NORMAL", color: "text-primary" }
+          rsi: { val: (Math.random() * 40 + 30).toFixed(1), status: isBullish ? "ALCISTA" : "BAJISTA" },
+          macd: { val: isBullish ? "0.45" : "-0.45", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
+          ema: { val: timeframe === "1m" ? `12/${emaPeriod}` : "20/50", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
+          vwap: { val: (price * 0.999).toFixed(2), status: isBullish ? "POR ENCIMA" : "POR DEBAJO", color: isBullish ? "text-primary" : "text-secondary" },
+          vol: { val: "A: 1.2%", status: "MOMENTUM +", color: "text-primary" },
+          adx: { val: "28.5", status: "TENDENCIA FUERTE", color: "text-primary" },
+          atr: { val: (price * 0.004).toFixed(2), status: "VOLATILIDAD ALTA", color: "text-primary" }
         },
         volumeProfile: [
           { price: price * 1.02, vol: 80 },
@@ -196,6 +212,21 @@ const Terminal = () => {
                 )}
               >
                 {tf}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 bg-surface-container-high p-1 rounded-xl w-full md:w-auto overflow-x-auto no-scrollbar">
+            {["Standard", "Scalping", "Swing"].map((strat) => (
+              <button 
+                key={strat} 
+                onClick={() => setStrategy(strat)}
+                className={cn(
+                  "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap",
+                  strategy === strat ? "bg-tertiary text-on-tertiary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
+                )}
+              >
+                {strat}
               </button>
             ))}
           </div>
@@ -447,9 +478,12 @@ const Terminal = () => {
           >
             <div className="lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-6">
               <div className="flex justify-between items-center">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                  <Target className="w-3 h-3" /> NIVELES DE TRADING ({timeframe.toUpperCase()})
-                </h4>
+                <div className="space-y-1">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Target className="w-3 h-3" /> NIVELES DE TRADING ({timeframe.toUpperCase()})
+                  </h4>
+                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estrategia: <span className="text-tertiary">{analysis.strategy}</span></p>
+                </div>
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={copySignal}

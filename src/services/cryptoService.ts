@@ -10,7 +10,15 @@ export interface CryptoData {
 export async function fetchTicker(symbol: string): Promise<CryptoData> {
   const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
   if (!response.ok) throw new Error("Failed to fetch ticker");
-  return response.json();
+  const data = await response.json();
+  return {
+    symbol: data.symbol,
+    price: data.lastPrice,
+    priceChangePercent: data.priceChangePercent,
+    highPrice: data.highPrice,
+    lowPrice: data.lowPrice,
+    volume: data.volume,
+  };
 }
 
 export async function fetchTickers(symbols: string[]): Promise<CryptoData[]> {
