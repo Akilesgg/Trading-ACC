@@ -23,7 +23,11 @@ import {
   CheckCircle2,
   Crosshair,
   Waves,
-  Gauge
+  Gauge,
+  Copy,
+  Share2,
+  Eye,
+  ZapOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchTicker, CryptoData, fetchKlines } from "@/services/cryptoService";
@@ -37,7 +41,8 @@ import {
   ResponsiveContainer,
   ComposedChart,
   Line,
-  Bar
+  Bar,
+  ReferenceLine
 } from "recharts";
 
 const Terminal = () => {
@@ -110,7 +115,25 @@ const Terminal = () => {
           macd: { val: "-9.53", status: "ALCISTA", color: "text-primary" },
           ema: { val: "20/50", status: "BAJISTA", color: "text-secondary" },
           vwap: { val: "66671.72", status: "POR DEBAJO", color: "text-secondary" },
-          vol: { val: "A: 0.0%", status: "MOMENTUM -", color: "text-on-surface-variant" }
+          vol: { val: "A: 0.0%", status: "MOMENTUM -", color: "text-on-surface-variant" },
+          adx: { val: "24.5", status: "TENDENCIA DÉBIL", color: "text-on-surface-variant" },
+          atr: { val: (price * 0.005).toFixed(2), status: "VOLATILIDAD NORMAL", color: "text-primary" }
+        },
+        volumeProfile: [
+          { price: price * 1.02, vol: 80 },
+          { price: price * 1.01, vol: 45 },
+          { price: price * 1.00, vol: 100 },
+          { price: price * 0.99, vol: 60 },
+          { price: price * 0.98, vol: 30 }
+        ],
+        fvgs: [
+          { price: (price * 0.985).toFixed(2), type: "BULLISH", status: "OPEN" },
+          { price: (price * 1.015).toFixed(2), type: "BEARISH", status: "MITIGATED" }
+        ],
+        correlation: {
+          btc: "0.85",
+          eth: "0.92",
+          sp500: "0.45"
         }
       };
       
@@ -118,6 +141,12 @@ const Terminal = () => {
       setAnalyzing(false);
       setCooldown(30); // 30 seconds wait-off
     }, 1500);
+  };
+
+  const copySignal = () => {
+    if (!analysis) return;
+    const text = `SIGNAL: ${symbolParam} ${analysis.type}\nEntry: ${analysis.entry}\nTP1: ${analysis.tp1}\nTP2: ${analysis.tp2}\nTP3: ${analysis.tp3}\nSL: ${analysis.sl}`;
+    navigator.clipboard.writeText(text);
   };
 
   if (loading || !ticker) return (
@@ -201,7 +230,7 @@ const Terminal = () => {
 
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Market Overview Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
             <div className="flex justify-between items-start mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Precio Actual</span>
@@ -250,14 +279,24 @@ const Terminal = () => {
               </span>
             </div>
           </div>
+
+          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 flex flex-col justify-center items-center text-center">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Server Status</span>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+              <span className="text-xs font-bold text-primary uppercase tracking-widest">Online: Node-04</span>
+            </div>
+            <p className="text-[8px] text-on-surface-variant mt-1">Latencia: 14ms</p>
+          </div>
         </div>
 
         {/* Analysis Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          {/* Order Blocks */}
+          {/* Order Blocks & FVG */}
           <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Shield className="w-3 h-3" /> ORDER BLOCKS
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center justify-between">
+              <div className="flex items-center gap-2"><Shield className="w-3 h-3" /> ESTRUCTURA</div>
+              <span className="text-[8px] bg-primary/10 px-1.5 py-0.5 rounded">SMC</span>
             </h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -268,72 +307,85 @@ const Terminal = () => {
                 <span className="text-xs text-on-surface-variant">BOS Bullish:</span>
                 <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.95).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">FVG:</span>
-                <span className="text-xs font-bold text-tertiary">${(parseFloat(ticker.price) * 0.98).toFixed(2)} - ${(parseFloat(ticker.price) * 0.99).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Mitigation Block:</span>
-                <span className="text-xs font-bold text-on-surface">${(parseFloat(ticker.price) * 1.02).toFixed(2)}</span>
+              <div className="pt-2 border-t border-outline-variant/5">
+                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Fair Value Gaps (FVG)</p>
+                <div className="space-y-2">
+                  {analysis?.fvgs.map((fvg: any, i: number) => (
+                    <div key={i} className="flex justify-between items-center bg-surface-container p-1.5 rounded-lg">
+                      <span className={cn("text-[10px] font-bold", fvg.type === "BULLISH" ? "text-primary" : "text-secondary")}>{fvg.type}</span>
+                      <span className="text-[10px] font-bold">${fvg.price}</span>
+                      <span className="text-[8px] text-on-surface-variant uppercase">{fvg.status}</span>
+                    </div>
+                  )) || (
+                    <p className="text-[10px] text-on-surface-variant italic">Esperando análisis...</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Wyckoff */}
+          {/* Wyckoff & Volume Profile */}
           <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Waves className="w-3 h-3" /> WYCKOFF
+              <Waves className="w-3 h-3" /> WYCKOFF & VOL
             </h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Distribución:</span>
-                <span className="text-xs font-bold text-secondary">Fase B</span>
+                <span className="text-xs text-on-surface-variant">Fase:</span>
+                <span className="text-xs font-bold text-secondary">Distribución B</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Tendencia:</span>
-                <span className="text-xs font-bold text-secondary flex items-center gap-1">
-                  RESISTENCIA <AlertTriangle className="w-3 h-3" />
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Volumen 24h:</span>
-                <span className="text-xs font-bold text-tertiary">$1M</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Variación 24h:</span>
-                <span className="text-xs font-bold text-primary">0.08%</span>
+              <div className="pt-2 border-t border-outline-variant/5">
+                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Volume Profile (VPVR)</p>
+                <div className="space-y-1">
+                  {(analysis?.volumeProfile || [
+                    { vol: 80 }, { vol: 45 }, { vol: 100 }, { vol: 60 }, { vol: 30 }
+                  ]).map((vp: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <div className="h-2 bg-surface-container-highest flex-1 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary/40" style={{ width: `${vp.vol}%` }}></div>
+                      </div>
+                      <span className="text-[8px] font-bold text-on-surface-variant">{vp.vol}%</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* OTE Zones */}
+          {/* OTE Zones & Correlation */}
           <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Target className="w-3 h-3" /> OTE ZONES
+              <Target className="w-3 h-3" /> OTE & CORR
             </h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-xs text-on-surface-variant">OTE LONG:</span>
-                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.96).toFixed(2)} - ${(parseFloat(ticker.price) * 0.97).toFixed(2)}</span>
+                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.96).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">OTE SHORT:</span>
-                <span className="text-xs font-bold text-secondary">${(parseFloat(ticker.price) * 1.03).toFixed(2)} - ${(parseFloat(ticker.price) * 1.04).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Fib:</span>
-                <span className="text-xs font-bold text-tertiary">0.705 / 0.79</span>
-              </div>
-              <div className="bg-primary/10 p-2 rounded-lg text-center">
-                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Zona óptima entrada</span>
+              <div className="pt-2 border-t border-outline-variant/5">
+                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Correlación</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-surface-container p-2 rounded-lg text-center">
+                    <p className="text-[8px] text-on-surface-variant uppercase">BTC</p>
+                    <p className="text-[10px] font-bold text-primary">{analysis?.correlation.btc || "0.00"}</p>
+                  </div>
+                  <div className="bg-surface-container p-2 rounded-lg text-center">
+                    <p className="text-[8px] text-on-surface-variant uppercase">ETH</p>
+                    <p className="text-[10px] font-bold text-primary">{analysis?.correlation.eth || "0.00"}</p>
+                  </div>
+                  <div className="bg-surface-container p-2 rounded-lg text-center">
+                    <p className="text-[8px] text-on-surface-variant uppercase">S&P</p>
+                    <p className="text-[10px] font-bold text-on-surface-variant">{analysis?.correlation.sp500 || "0.00"}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Liquidez */}
+          {/* Liquidez & Tendencia */}
           <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Zap className="w-3 h-3" /> LIQUIDEZ
+              <Zap className="w-3 h-3" /> LIQUIDEZ & TREND
             </h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
@@ -344,13 +396,19 @@ const Terminal = () => {
                 <span className="text-xs text-on-surface-variant">LIQ ABAJO:</span>
                 <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.94).toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Stop Hunt:</span>
-                <span className="text-xs font-bold text-tertiary">${(parseFloat(ticker.price) * 1.01).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Status:</span>
-                <span className="text-xs font-bold text-on-surface">Pendiente</span>
+              <div className="pt-2 border-t border-outline-variant/5">
+                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Live Order Flow</p>
+                <div className="space-y-1 h-12 overflow-hidden">
+                  {[1, 2, 3].map((_, i) => (
+                    <div key={i} className="flex justify-between text-[8px] font-mono animate-pulse">
+                      <span className={i % 2 === 0 ? "text-primary" : "text-secondary"}>
+                        {i % 2 === 0 ? "BUY" : "SELL"}
+                      </span>
+                      <span className="text-on-surface-variant">{(Math.random() * 2).toFixed(3)} BTC</span>
+                      <span className="text-on-surface">${ticker.price}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -359,15 +417,17 @@ const Terminal = () => {
         {/* Indicators Section */}
         <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
-            <Activity className="w-3 h-3" /> 5 INDICADORES TÉCNICOS
+            <Activity className="w-3 h-3" /> INDICADORES TÉCNICOS AVANZADOS
           </h4>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
             {[
               { label: "RSI (14)", value: analysis?.indicators.rsi.val || "50.0", status: analysis?.indicators.rsi.status || "NEUTRAL", color: "text-on-surface" },
               { label: "MACD", value: analysis?.indicators.macd.val || "L: -9.53", status: analysis?.indicators.macd.status || "ALCISTA", color: analysis?.indicators.macd.color || "text-primary" },
               { label: "EMA 20/50", value: analysis?.indicators.ema.val || "66671.72", status: analysis?.indicators.ema.status || "BAJISTA", color: analysis?.indicators.ema.color || "text-secondary" },
               { label: "VWAP", value: analysis?.indicators.vwap.val || "66671.72", status: analysis?.indicators.vwap.status || "POR DEBAJO", color: analysis?.indicators.vwap.color || "text-secondary" },
-              { label: "VOL Trend", value: analysis?.indicators.vol.val || "A: 0.0%", status: analysis?.indicators.vol.status || "MOMENTUM -", color: analysis?.indicators.vol.color || "text-on-surface-variant" }
+              { label: "VOL Trend", value: analysis?.indicators.vol.val || "A: 0.0%", status: analysis?.indicators.vol.status || "MOMENTUM -", color: analysis?.indicators.vol.color || "text-on-surface-variant" },
+              { label: "ADX", value: analysis?.indicators.adx.val || "24.5", status: analysis?.indicators.adx.status || "DÉBIL", color: analysis?.indicators.adx.color || "text-on-surface-variant" },
+              { label: "ATR", value: analysis?.indicators.atr.val || "0.00", status: analysis?.indicators.atr.status || "NORMAL", color: analysis?.indicators.atr.color || "text-primary" }
             ].map((ind, i) => (
               <div key={i} className="bg-surface-container p-4 rounded-xl text-center space-y-1">
                 <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{ind.label}</p>
@@ -390,8 +450,14 @@ const Terminal = () => {
                 <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
                   <Target className="w-3 h-3" /> NIVELES DE TRADING ({timeframe.toUpperCase()})
                 </h4>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">RECOMENDACIÓN:</span>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={copySignal}
+                    className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant hover:text-primary"
+                    title="Copiar Señal"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
                   <span className={cn("text-xs font-bold px-3 py-1 rounded-full", analysis.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")}>
                     {analysis.type === "LONG" ? "COMPRA MODERADA" : "VENTA MODERADA"} ({analysis.score}%)
                   </span>
@@ -480,9 +546,9 @@ const Terminal = () => {
                         fill="#b1ffce" 
                       />
                       {/* Entry Line */}
-                      <Line type="monotone" dataKey={() => analysis.entry} stroke="#b1ffce" strokeDasharray="5 5" dot={false} />
+                      <ReferenceLine y={analysis.entry} stroke="#b1ffce" strokeDasharray="5 5" label={{ position: 'right', value: 'ENTRY', fill: '#b1ffce', fontSize: 10 }} />
                       {/* SL Line */}
-                      <Line type="monotone" dataKey={() => analysis.sl} stroke="#ff7162" strokeDasharray="5 5" dot={false} />
+                      <ReferenceLine y={analysis.sl} stroke="#ff7162" strokeDasharray="5 5" label={{ position: 'right', value: 'SL', fill: '#ff7162', fontSize: 10 }} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>

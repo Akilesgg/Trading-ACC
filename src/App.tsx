@@ -41,7 +41,6 @@ import Market from "./pages/Market";
 import Analysis from "./pages/Analysis";
 import SignalDetail from "./pages/SignalDetail";
 import Terminal from "./pages/Terminal";
-import Wallet from "./pages/Wallet";
 
 const LoginScreen = () => {
   const { login } = useAuth();
@@ -89,7 +88,6 @@ const TopAppBar = () => {
     { icon: BarChart3, label: "Mercados Spot", path: "/market", desc: "Precios en tiempo real y heatmap" },
     { icon: Target, label: "Analizador IA", path: "/terminal", desc: "Análisis técnico profundo con Wyckoff" },
     { icon: TrendingUp, label: "Informes de Análisis", path: "/analysis", desc: "Sentimiento global y reportes profundos" },
-    { icon: WalletIcon, label: "Billetera", path: "/wallet", desc: "Gestiona tus activos y balances" },
     { icon: Shield, label: "Seguridad", path: "/dashboard", desc: "Configuración de cuenta y llaves API" },
     { icon: HelpCircle, label: "Soporte", path: "/dashboard", desc: "Centro de ayuda y tutoriales" },
   ];
@@ -112,7 +110,6 @@ const TopAppBar = () => {
             <Link to="/dashboard" className={cn("hover:text-primary transition-colors", location.pathname === "/dashboard" && "text-primary")}>Señales</Link>
             <Link to="/terminal" className={cn("hover:text-primary transition-colors", location.pathname === "/terminal" && "text-primary")}>Analizador</Link>
             <Link to="/analysis" className={cn("hover:text-primary transition-colors", location.pathname === "/analysis" && "text-primary")}>Informes</Link>
-            <Link to="/wallet" className={cn("hover:text-primary transition-colors", location.pathname === "/wallet" && "text-primary")}>Billetera</Link>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col items-end mr-2">
@@ -217,7 +214,6 @@ const BottomNavBar = () => {
     { icon: BarChart3, label: "Mercado", path: "/market" },
     { icon: Target, label: "Analizador", path: "/terminal" },
     { icon: TrendingUp, label: "Informes", path: "/analysis" },
-    { icon: WalletIcon, label: "Billetera", path: "/wallet" },
   ];
 
   return (
@@ -270,7 +266,6 @@ export default function App() {
               <Route path="/analysis" element={<Analysis />} />
               <Route path="/signal/:symbol" element={<SignalDetail />} />
               <Route path="/terminal" element={<Terminal />} />
-              <Route path="/wallet" element={<Wallet />} />
               {/* Fallbacks */}
               <Route path="/signals" element={<Dashboard />} />
             </Routes>
