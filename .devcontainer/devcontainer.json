@@ -1,0 +1,20 @@
+{
+  "name": "Trading ACC Codespace",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:20",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "forwardPorts": [3000],
+  "postCreateCommand": "npm install",
+  "portsAttributes": {
+    "3000": {
+      "label": "Trading ACC Terminal",
+      "onAutoForward": "openPreview"
+    }
+  }
+}

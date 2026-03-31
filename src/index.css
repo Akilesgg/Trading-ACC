@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Space Grotesk", sans-serif;
+  --font-body: "Manrope", sans-serif;
+  --font-label: "Manrope", sans-serif;
+
+  --color-surface-container-highest: #22262b;
+  --color-error-container: #9f0519;
+  --color-surface-container-low: #101417;
+  --color-surface: #0b0e11;
+  --color-on-tertiary: #005561;
+  --color-surface-bright: #282d31;
+  --color-inverse-primary: #006d43;
+  --color-secondary-fixed: #ffc3bb;
+  --color-on-surface-variant: #a9abaf;
+  --color-surface-container-lowest: #000000;
+  --color-on-secondary-container: #fff6f4;
+  --color-secondary-dim: #e2241f;
+  --color-on-error-container: #ffa8a3;
+  --color-on-background: #f8f9fe;
+  --color-surface-container-high: #1c2024;
+  --color-on-error: #490006;
+  --color-surface-tint: #b1ffce;
+  --color-surface-dim: #0b0e11;
+  --color-on-secondary-fixed: #700003;
+  --color-on-primary-fixed: #00472a;
+  --color-inverse-on-surface: #535559;
+  --color-tertiary-fixed: #00e0ff;
+  --color-outline-variant: #45484c;
+  --color-tertiary-fixed-dim: #00d1ee;
+  --color-secondary-fixed-dim: #ffb0a5;
+  --color-primary-fixed-dim: #00ef99;
+  --color-inverse-surface: #f8f9fe;
+  --color-on-tertiary-container: #004b57;
+  --color-error: #ff716c;
+  --color-on-tertiary-fixed-variant: #005562;
+  --color-on-surface: #f8f9fe;
+  --color-on-secondary: #4a0001;
+  --color-secondary: #ff7162;
+  --color-on-tertiary-fixed: #00363f;
+  --color-primary-dim: #00ef99;
+  --color-tertiary: #81e9ff;
+  --color-primary-fixed: #00ffa3;
+  --color-tertiary-container: #00e0ff;
+  --color-surface-variant: #22262b;
+  --color-primary: #b1ffce;
+  --color-on-primary: #00663e;
+  --color-primary-container: #00ffa3;
+  --color-tertiary-dim: #00d1ee;
+  --color-surface-container: #161a1e;
+  --color-on-primary-container: #005c38;
+  --color-on-secondary-fixed-variant: #a60007;
+  --color-secondary-container: #c0000a;
+  --color-outline: #737679;
+  --color-error-dim: #d7383b;
+  --color-on-primary-fixed-variant: #00673f;
+  --color-background: #0b0e11;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-body;
+  }
+}
+
+.glass-card {
+  @apply bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10;
+}
+
+.wyckoff-label {
+  @apply bg-primary/10 border border-primary/20 backdrop-blur-sm px-3 py-1 rounded-lg;
+}
+

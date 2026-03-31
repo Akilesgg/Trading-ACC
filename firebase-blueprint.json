@@ -1,0 +1,64 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "displayName": { "type": "string", "description": "Display name" },
+        "email": { "type": "string", "format": "email", "description": "User email" },
+        "photoURL": { "type": "string", "format": "uri", "description": "Profile picture URL" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp" },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "Last login timestamp" },
+        "role": { "type": "string", "enum": ["admin", "user"], "description": "User role" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "Watchlist": {
+      "title": "Watchlist",
+      "description": "User's favorite crypto symbols",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID who owns this watchlist" },
+        "symbols": { 
+          "type": "array", 
+          "items": { "type": "string" },
+          "description": "List of crypto symbols (e.g., BTCUSDT)" 
+        },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" }
+      },
+      "required": ["uid", "symbols", "updatedAt"]
+    },
+    "Trade": {
+      "title": "Trade",
+      "description": "Executed trade record",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID who executed the trade" },
+        "symbol": { "type": "string", "description": "Crypto symbol (e.g., BTCUSDT)" },
+        "side": { "type": "string", "enum": ["buy", "sell"], "description": "Trade side" },
+        "type": { "type": "string", "enum": ["limit", "market"], "description": "Order type" },
+        "price": { "type": "number", "description": "Execution price" },
+        "amount": { "type": "number", "description": "Amount traded" },
+        "total": { "type": "number", "description": "Total value in USDT" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Execution timestamp" }
+      },
+      "required": ["uid", "symbol", "side", "type", "price", "amount", "total", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents"
+    },
+    "/watchlists/{userId}": {
+      "schema": "Watchlist",
+      "description": "User's individual watchlist"
+    },
+    "/trades/{tradeId}": {
+      "schema": "Trade",
+      "description": "Global trade history (filtered by uid in rules)"
+    }
+  }
+}
