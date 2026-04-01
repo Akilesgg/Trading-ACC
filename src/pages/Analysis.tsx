@@ -25,6 +25,16 @@ import { cn } from "@/lib/utils";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
 import { fetchTickers, CryptoData } from "@/services/cryptoService";
 
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
+
 const Analysis = () => {
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
   const [lastUpdate, setLastUpdate] = useState<string>(new Date().toLocaleTimeString());
@@ -32,6 +42,7 @@ const Analysis = () => {
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<Record<string, "Standard" | "Scalping" | "Swing">>({});
 
   const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"];
 
@@ -48,6 +59,7 @@ const Analysis = () => {
       if (!analysis["BTCUSDT"]) {
         const btcAnalysis = await analyzeMarket("BTCUSDT", data[0].price, data[0].priceChangePercent);
         setAnalysis({ "BTCUSDT": btcAnalysis });
+        setAnalysisMode({ "BTCUSDT": "Standard" });
       }
     } catch (error) {
       console.error("Analysis data load error:", error);
@@ -61,13 +73,26 @@ const Analysis = () => {
     loadData();
   }, []);
 
-  const handleAnalyze = async (symbol: string) => {
+  const handleAnalyze = async (symbol: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") => {
     const ticker = tickers.find(t => t.symbol === symbol);
     if (!ticker) return;
     
-    setAnalysis(prev => ({ ...prev, [symbol]: "Generando análisis profundo..." }));
-    const result = await analyzeMarket(symbol, ticker.price, ticker.priceChangePercent);
+    setAnalysisMode(prev => ({ ...prev, [symbol]: mode }));
+    setAnalysis(prev => ({ ...prev, [symbol]: `Generando análisis ${mode === "Standard" ? "profundo" : mode.toLowerCase()}...` }));
+    const result = await analyzeMarket(symbol, ticker.price, ticker.priceChangePercent, mode);
     setAnalysis(prev => ({ ...prev, [symbol]: result }));
+  };
+
+  const getChartData = (price: string) => {
+    const basePrice = parseFloat(price);
+    return [
+      { name: '1M', price: basePrice * (1 + (Math.random() * 0.01 - 0.005)) },
+      { name: '5M', price: basePrice * (1 + (Math.random() * 0.01 - 0.005)) },
+      { name: '15M', price: basePrice * (1 + (Math.random() * 0.01 - 0.005)) },
+      { name: '1H', price: basePrice * (1 + (Math.random() * 0.01 - 0.005)) },
+      { name: '4H', price: basePrice * (1 + (Math.random() * 0.01 - 0.005)) },
+      { name: '1D', price: basePrice * (1 + (Math.random() * 0.01 - 0.005)) },
+    ];
   };
 
   const trendingDiscussions = [
@@ -87,7 +112,18 @@ const Analysis = () => {
     >
       {/* AI Market Pulse */}
       <section className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 transition-transform duration-1000 group-hover:scale-110"></div>
+        {/* Discrete Arrows in the laterals */}
+        <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-around p-4 opacity-10 group-hover:opacity-30 transition-opacity pointer-events-none">
+          <TrendingUp className="w-6 h-6 text-primary" />
+          <TrendingUp className="w-6 h-6 text-primary" />
+          <TrendingUp className="w-6 h-6 text-primary" />
+        </div>
+        <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-around p-4 opacity-10 group-hover:opacity-30 transition-opacity pointer-events-none">
+          <TrendingUp className="w-6 h-6 text-primary" />
+          <TrendingUp className="w-6 h-6 text-primary" />
+          <TrendingUp className="w-6 h-6 text-primary" />
+        </div>
+        
         <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-center">
           <div className="relative">
             <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center shadow-[0_20px_40px_rgba(0,255,163,0.2)]">
@@ -178,38 +214,77 @@ const Analysis = () => {
                     <Activity className="w-4 h-4" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">Estado de Ruptura</span>
                   </div>
-                  <div className="wyckoff-label">
-                    <span className={cn(
-                      "text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-primary/10",
-                      parseFloat(ticker.priceChangePercent) > 2 ? "text-primary animate-pulse" : "text-on-surface-variant"
-                    )}>
-                      {parseFloat(ticker.priceChangePercent) > 2 ? "Ruptura Confirmada" : "En Consolidación"}
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[8px] text-on-surface-variant font-bold uppercase tracking-widest italic opacity-60">Analizando ingredientes activos...</span>
+                    <div className="wyckoff-label">
+                      <span className={cn(
+                        "text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-primary/10",
+                        parseFloat(ticker.priceChangePercent) > 2 ? "text-primary animate-pulse" : "text-on-surface-variant"
+                      )}>
+                        {parseFloat(ticker.priceChangePercent) > 2 ? "Ruptura Confirmada" : "En Consolidación"}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="prose prose-invert max-w-none">
-                  <p className="text-on-surface-variant leading-relaxed text-sm">
+                  <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap">
                     {analysis[ticker.symbol] || "Aún no se ha generado ningún análisis. Haz clic en analizar para comenzar."}
-                  </p>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t border-outline-variant/10">
+                {/* Strategy Chart */}
+                <div className="h-48 w-full bg-surface-container-high/20 rounded-xl p-4 border border-outline-variant/10">
+                  <p className="text-[8px] font-bold uppercase tracking-widest text-on-surface-variant mb-2">Análisis de Temporalidades</p>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={getChartData(ticker.price)}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                      <XAxis dataKey="name" stroke="#666" fontSize={10} />
+                      <YAxis hide />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', fontSize: '10px' }}
+                        itemStyle={{ color: '#00ffa3' }}
+                      />
+                      <Line type="monotone" dataKey="price" stroke="#00ffa3" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between pt-4 border-t border-outline-variant/10 gap-4">
                   <div className="flex gap-2">
-                    <button className="p-2 hover:bg-surface-container-high rounded-lg transition-colors">
-                      <MessageSquare className="w-4 h-4 text-on-surface-variant" />
+                    <button 
+                      onClick={() => handleAnalyze(ticker.symbol, "Scalping")}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all active:scale-95",
+                        analysisMode[ticker.symbol] === "Scalping" ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10"
+                      )}
+                    >
+                      Scalping
                     </button>
-                    <button className="p-2 hover:bg-surface-container-high rounded-lg transition-colors">
-                      <Share2 className="w-4 h-4 text-on-surface-variant" />
+                    <button 
+                      onClick={() => handleAnalyze(ticker.symbol, "Swing")}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all active:scale-95",
+                        analysisMode[ticker.symbol] === "Swing" ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10"
+                      )}
+                    >
+                      Swing
                     </button>
-                    <button className="p-2 hover:bg-surface-container-high rounded-lg transition-colors">
-                      <Bookmark className="w-4 h-4 text-on-surface-variant" />
+                    <button 
+                      onClick={() => handleAnalyze(ticker.symbol, "Standard")}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[8px] font-bold uppercase tracking-widest transition-all active:scale-95",
+                        analysisMode[ticker.symbol] === "Standard" ? "bg-primary text-on-primary" : "bg-surface-container-high text-on-surface-variant hover:bg-primary/10"
+                      )}
+                    >
+                      Estándar
                     </button>
                   </div>
                   <button 
-                    onClick={() => handleAnalyze(ticker.symbol)}
-                    className="px-6 py-2 bg-primary text-on-primary rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-primary-dim transition-all active:scale-95"
+                    onClick={() => handleAnalyze(ticker.symbol, "Standard")}
+                    className="px-6 py-2 bg-primary text-on-primary rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-primary-dim transition-all active:scale-95 flex items-center gap-2"
                   >
+                    <Brain className="w-3 h-3" />
                     Análisis Profundo
                   </button>
                 </div>
