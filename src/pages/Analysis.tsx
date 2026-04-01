@@ -18,7 +18,8 @@ import {
   Bookmark,
   ChevronRight,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Star
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
@@ -26,29 +27,37 @@ import { fetchTickers, CryptoData } from "@/services/cryptoService";
 
 const Analysis = () => {
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
+  const [lastUpdate, setLastUpdate] = useState<string>(new Date().toLocaleTimeString());
   const [analysis, setAnalysis] = useState<Record<string, string>>({});
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT"];
+  const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"];
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await fetchTickers(symbols);
-        setTickers(data);
-        const aiSentiment = await getMarketSentiment();
-        setSentiment(aiSentiment);
-        
-        // Initial analysis for BTC
+  const loadData = async () => {
+    setRefreshing(true);
+    try {
+      const data = await fetchTickers(symbols);
+      setTickers(data);
+      const aiSentiment = await getMarketSentiment();
+      setSentiment(aiSentiment);
+      setLastUpdate(new Date().toLocaleTimeString());
+      
+      // Initial analysis for BTC if not already there
+      if (!analysis["BTCUSDT"]) {
         const btcAnalysis = await analyzeMarket("BTCUSDT", data[0].price, data[0].priceChangePercent);
         setAnalysis({ "BTCUSDT": btcAnalysis });
-      } catch (error) {
-        console.error("Analysis data load error:", error);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Analysis data load error:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     loadData();
   }, []);
 
@@ -61,6 +70,14 @@ const Analysis = () => {
     setAnalysis(prev => ({ ...prev, [symbol]: result }));
   };
 
+  const trendingDiscussions = [
+    { tag: "#BTC", title: "¿Ha llegado el ciclo a su fin?", comments: 142, likes: 890, source: "https://twitter.com/search?q=%23BTC", author: "@CryptoWhale" },
+    { tag: "#SOL", title: "Ruptura de Solana confirmada", comments: 56, likes: 320, source: "https://twitter.com/search?q=%23SOL", author: "@SolanaDaily" },
+    { tag: "#ETH", title: "Análisis de entradas de ETF de Ethereum", comments: 89, likes: 540, source: "https://twitter.com/search?q=%23ETH", author: "@VitalikButerin" },
+    { tag: "#BNB", title: "Nuevos proyectos en Launchpool", comments: 45, likes: 210, source: "https://twitter.com/search?q=%23BNB", author: "@Binance" },
+    { tag: "#XRP", title: "Actualización legal de Ripple", comments: 230, likes: 1200, source: "https://twitter.com/search?q=%23XRP", author: "@RippleNews" },
+  ];
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
@@ -72,18 +89,34 @@ const Analysis = () => {
       <section className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 transition-transform duration-1000 group-hover:scale-110"></div>
         <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-center">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center shadow-[0_20px_40px_rgba(0,255,163,0.2)]">
-            <Brain className="w-12 h-12 text-on-primary-fixed" />
+          <div className="relative">
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center shadow-[0_20px_40px_rgba(0,255,163,0.2)]">
+              <Brain className="w-12 h-12 text-on-primary-fixed" />
+            </div>
+            <div className="absolute -bottom-2 -right-2 bg-surface-container-highest p-1.5 rounded-full border border-outline-variant/20">
+              <RefreshCw 
+                className={cn("w-4 h-4 text-primary cursor-pointer", refreshing && "animate-spin")} 
+                onClick={loadData}
+              />
+            </div>
           </div>
           <div className="flex-1 space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold font-label uppercase tracking-widest text-primary-dim">Inteligencia de Mercado IA</span>
-              <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold font-label uppercase tracking-widest text-primary-dim">Inteligencia de Mercado IA</span>
+                <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+              </div>
+              <div className="flex items-center gap-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest bg-surface-container-high px-3 py-1 rounded-full">
+                <Activity className="w-3 h-3" />
+                Actualizado: {lastUpdate}
+              </div>
             </div>
             <h2 className="font-headline text-3xl font-bold tracking-tight">INFORME DE SENTIMIENTO GLOBAL</h2>
-            <p className="text-on-surface-variant leading-relaxed text-lg italic">
-              "{sentiment}"
-            </p>
+            <div className="p-6 bg-surface-container-high/30 rounded-xl border border-outline-variant/10">
+              <p className="text-on-surface-variant leading-relaxed text-lg italic">
+                "{sentiment}"
+              </p>
+            </div>
             <div className="flex flex-wrap gap-4 pt-2">
               <div className="flex items-center gap-2 px-4 py-2 bg-surface-container-high rounded-full border border-outline-variant/20">
                 <Globe className="w-4 h-4 text-primary" />
@@ -93,6 +126,14 @@ const Analysis = () => {
                 <Zap className="w-4 h-4 text-tertiary" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Modelo: Gemini 3 Flash</span>
               </div>
+              <button 
+                onClick={loadData}
+                disabled={refreshing}
+                className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full border border-primary/20 hover:bg-primary/20 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
+              >
+                <RefreshCw className={cn("w-3 h-3", refreshing && "animate-spin")} />
+                Actualizar Sentimiento
+              </button>
             </div>
           </div>
         </div>
@@ -102,15 +143,18 @@ const Analysis = () => {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="font-headline text-xl font-bold uppercase tracking-wide">Análisis Profundo de Activos</h3>
-          <button className="flex items-center gap-2 text-primary hover:text-primary-dim transition-colors">
-            <RefreshCw className="w-4 h-4" />
+          <button 
+            onClick={loadData}
+            className="flex items-center gap-2 text-primary hover:text-primary-dim transition-colors"
+          >
+            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
             <span className="text-xs font-bold uppercase tracking-widest">Actualizar Todo</span>
           </button>
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {tickers.map((ticker) => (
-            <div key={ticker.symbol} className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/10 flex flex-col">
+            <div key={ticker.symbol} className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/10 flex flex-col hover:border-primary/20 transition-all">
               <div className="p-6 bg-surface-container-high/50 flex justify-between items-center border-b border-outline-variant/10">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
@@ -173,20 +217,30 @@ const Analysis = () => {
       {/* Community Insights */}
       <section className="space-y-6">
         <h3 className="font-headline text-xl font-bold uppercase tracking-wide">Discusiones en Tendencia</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { tag: "#BTC", title: "¿Ha llegado el ciclo a su fin?", comments: 142, likes: 890 },
-            { tag: "#SOL", title: "Ruptura de Solana confirmada", comments: 56, likes: 320 },
-            { tag: "#ETH", title: "Análisis de entradas de ETF de Ethereum", comments: 89, likes: 540 },
-          ].map((post, i) => (
-            <div key={i} className="bg-surface-container-high p-6 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all cursor-pointer group">
-              <span className="text-[10px] font-bold text-primary-dim uppercase tracking-widest mb-2 block">{post.tag}</span>
-              <h4 className="font-bold text-sm mb-4 group-hover:text-primary transition-colors">{post.title}</h4>
-              <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-label uppercase tracking-widest">
-                <span>{post.comments} Comentarios</span>
-                <span>{post.likes} Me gusta</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {trendingDiscussions.map((post, i) => (
+            <a 
+              key={i} 
+              href={post.source}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-surface-container-high p-6 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all cursor-pointer group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-primary-dim uppercase tracking-widest">{post.tag}</span>
+                  <span className="text-[8px] text-on-surface-variant font-bold uppercase tracking-widest">{post.author}</span>
+                </div>
+                <h4 className="font-bold text-sm mb-4 group-hover:text-primary transition-colors leading-tight">{post.title}</h4>
               </div>
-            </div>
+              <div className="flex items-center justify-between text-[10px] text-on-surface-variant font-label uppercase tracking-widest pt-4 border-t border-outline-variant/5">
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {post.comments}</span>
+                  <span className="flex items-center gap-1"><Star className="w-3 h-3" /> {post.likes}</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-primary opacity-0 group-hover:opacity-100 transition-all transform group-hover:translate-x-1" />
+              </div>
+            </a>
           ))}
         </div>
       </section>
