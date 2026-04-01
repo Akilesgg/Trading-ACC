@@ -22,21 +22,25 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       
       ES OBLIGATORIO que el informe use EXACTAMENTE estos encabezados en negrita y mayúsculas:
       
+      **CONTEXTO Y EXPLICACIÓN BREVE**: (Proporciona un resumen ejecutivo de la situación actual del activo en 2-3 frases)
+
       **ESTRATEGIA**: (Describe la estrategia técnica recomendada: ALCISTA o BAJISTA)
       
       **FASE WYCKOFF**: (Identifica la fase actual según la teoría de Wyckoff: ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN. Proporciona una breve explicación de por qué se encuentra en esa fase)
       
-      **JUSTIFICACIÓN DE ENTRADA**: (Explica detalladamente por qué el precio de entrada, el Stop Loss y los tres Take Profits están situados en esos niveles específicos basándote en la estructura de mercado, liquidez y volumen. Sé extremadamente detallado)
+      **JUSTIFICACIÓN TÉCNICA**: (Explica detalladamente por qué el precio de entrada, el Stop Loss y los tres Take Profits están situados en esos niveles específicos basándote en la estructura de mercado, liquidez y volumen. Sé extremadamente detallado)
       
-      **JUSTIFICACIÓN ALCISTA/BAJISTA**: (Explica detalladamente por qué la estructura actual justifica la postura tomada)
+      **ANÁLISIS DE ESTRUCTURA**: (Explica detalladamente por qué la estructura actual justifica la postura tomada)
       
       **NIVELES OPERATIVOS**: 
-      ENTRADA: [precio]
-      STOP LOSS: [precio]
-      TAKE PROFIT 1: [precio]
-      TAKE PROFIT 2: [precio]
-      TAKE PROFIT 3: [precio]
+      ENTRADA: [precio numérico sin símbolos]
+      STOP LOSS: [precio numérico sin símbolos]
+      TAKE PROFIT 1: [precio numérico sin símbolos]
+      TAKE PROFIT 2: [precio numérico sin símbolos]
+      TAKE PROFIT 3: [precio numérico sin símbolos]
       
+      **NIVEL DE CONFIANZA**: (Un número del 1 al 100 indicando la seguridad de la señal)
+
       **METÁFORA TÉCNICA**: (Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que impulsan el precio)
       
       Asegúrate de que la descripción sea detallada y profesional. No uses otros formatos.`,

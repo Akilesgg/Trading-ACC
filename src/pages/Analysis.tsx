@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, Reorder, AnimatePresence } from "motion/react";
 import { 
   Brain, 
   Zap, 
@@ -27,7 +27,9 @@ import {
   BarChart3,
   Layers,
   Users,
-  ArrowRightLeft
+  ArrowRightLeft,
+  X,
+  GripVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
@@ -136,6 +138,16 @@ const Analysis = () => {
   const [topTraders, setTopTraders] = useState<any[]>([]);
   const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
   const [selectedTraderStrategy, setSelectedTraderStrategy] = useState<any>(null);
+  const [showHotSignal, setShowHotSignal] = useState(false);
+  const [hotSignalData, setHotSignalData] = useState<any>(null);
+  const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem("analysis_module_order");
+    return saved ? JSON.parse(saved) : ["context", "wyckoff", "strategy", "levels", "objectives", "justification", "raw"];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("analysis_module_order", JSON.stringify(moduleOrder));
+  }, [moduleOrder]);
 
   const analysisSections = parseAnalysis(analysis);
 
@@ -210,6 +222,20 @@ const Analysis = () => {
       const result = await analyzeMarket(selectedSymbol, currentTicker.price, currentTicker.priceChangePercent, selectedMode);
       setAnalysis(result);
       setLastUpdate(new Date().toLocaleTimeString());
+
+      // Check for hot signal
+      const sections = parseAnalysis(result);
+      const confidence = parseInt(sections["NIVEL DE CONFIANZA"] || "0");
+      if (confidence >= 80) {
+        setHotSignalData({
+          symbol: selectedSymbol,
+          price: currentTicker.price,
+          confidence,
+          strategy: sections["ESTRATEGIA"],
+          context: sections["CONTEXTO Y EXPLICACIÓN BREVE"]
+        });
+        setShowHotSignal(true);
+      }
     } catch (error) {
       console.error("Analysis run error:", error);
     } finally {
@@ -436,212 +462,256 @@ const Analysis = () => {
           </div>
 
           {/* Right Column: AI Detailed Analysis */}
-          <div className="lg:col-span-2 space-y-6">
-            {analysisSections ? (
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+          <div className="lg:col-span-2">
+            {analysisSections && Object.keys(analysisSections).length > 0 ? (
+              <>
+                <Reorder.Group 
+                axis="y" 
+                values={moduleOrder} 
+                onReorder={setModuleOrder}
                 className="space-y-6"
               >
-                {/* Wyckoff Analysis Section */}
-                <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                      <Layers className="w-3 h-3" /> ANALIZADOR WYCKOFF (ESTADO ACTUAL)
-                    </h4>
-                    <span className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-widest">
-                      {analysisSections["FASE WYCKOFF"]?.split(":")[0] || "ANALIZANDO"}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                    <div className="space-y-4">
-                      <p className="text-sm text-on-surface-variant leading-relaxed">
-                        {analysisSections["FASE WYCKOFF"]}
-                      </p>
-                      <div className="flex items-center gap-4 pt-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Soporte</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-secondary rounded-full"></div>
-                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Resistencia</span>
-                        </div>
-                      </div>
+                {moduleOrder.map((moduleId) => (
+                  <Reorder.Item 
+                    key={moduleId} 
+                    value={moduleId}
+                    className="relative group"
+                  >
+                    <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-2">
+                      <GripVertical className="w-6 h-6 text-on-surface-variant/50" />
                     </div>
                     
-                    <div className="h-48 w-full bg-surface-container-high/20 rounded-xl p-4 border border-outline-variant/10 relative">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
-                          <XAxis dataKey="name" hide />
-                          <YAxis hide domain={['auto', 'auto']} />
-                          <Line type="monotone" dataKey="price" stroke="#fff" strokeWidth={2} dot={false} />
-                          {/* Wyckoff Arrows (White) */}
-                          <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
-                          <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
-                          <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-                        <p className="text-[40px] font-black text-white uppercase tracking-tighter rotate-12">WYCKOFF THEORY</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Strategy Banner with Arrows */}
-                <div className="bg-surface-container-low border-2 border-outline-variant/10 p-8 rounded-2xl relative overflow-hidden flex flex-col items-center text-center">
-                  <div className="mb-4">
-                    {analysisSections["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA") ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <TrendingUp className="w-20 h-20 text-primary animate-bounce" />
-                        <span className="text-4xl font-black text-primary uppercase tracking-tighter">ALCISTA</span>
-                      </div>
-                    ) : analysisSections["ESTRATEGIA"]?.toUpperCase().includes("BAJISTA") ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <TrendingDown className="w-20 h-20 text-secondary animate-bounce" />
-                        <span className="text-4xl font-black text-secondary uppercase tracking-tighter">BAJISTA</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2">
-                        <Minus className="w-20 h-20 text-on-surface-variant" />
-                        <span className="text-4xl font-black text-on-surface-variant uppercase tracking-tighter">NEUTRAL</span>
+                    {moduleId === "context" && analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"] && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <MessageSquare className="w-3 h-3" /> CONTEXTO Y RESUMEN
+                        </h4>
+                        <p className="text-sm text-on-surface leading-relaxed">
+                          {analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}
+                        </p>
                       </div>
                     )}
-                  </div>
-                  <div className="max-w-xl">
-                    <p className="text-sm text-on-surface-variant leading-relaxed italic">
-                      {analysisSections["ESTRATEGIA"]}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Levels Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                      <Target className="w-3 h-3" /> NIVELES OPERATIVOS
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="p-4 bg-surface-container rounded-xl border-l-4 border-primary">
-                        <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Entrada Sugerida</p>
-                        <p className="text-xl font-headline font-black text-on-surface">
-                          {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+\.?\d*)/i)?.[1] || "---"}
-                        </p>
-                      </div>
-                      <div className="p-4 bg-surface-container rounded-xl border-l-4 border-secondary">
-                        <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Stop Loss</p>
-                        <p className="text-xl font-headline font-black text-secondary">
-                          {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+\.?\d*)/i)?.[1] || "---"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                      <TrendingUp className="w-3 h-3" /> OBJETIVOS (TAKE PROFITS)
-                    </h4>
-                    <div className="space-y-3">
-                      {[1, 2, 3].map(i => (
-                        <div key={i} className="flex justify-between items-center p-3 bg-surface-container rounded-xl border border-outline-variant/5">
-                          <span className="text-[10px] font-bold text-on-surface-variant uppercase">TP {i}</span>
-                          <span className="text-sm font-black text-primary">
-                            {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+\\.?\\d*)`, 'i'))?.[1] || "---"}
+                    {moduleId === "wyckoff" && analysisSections["FASE WYCKOFF"] && (
+                      <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                            <Layers className="w-3 h-3" /> ANALIZADOR WYCKOFF (ESTADO ACTUAL)
+                          </h4>
+                          <span className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-widest">
+                            {analysisSections["FASE WYCKOFF"]?.split(":")[0] || "ANALIZANDO"}
                           </span>
                         </div>
-                      ))}
-                    </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                          <div className="space-y-4">
+                            <p className="text-sm text-on-surface-variant leading-relaxed">
+                              {analysisSections["FASE WYCKOFF"]}
+                            </p>
+                            <div className="flex items-center gap-4 pt-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                                <span className="text-[8px] font-bold text-on-surface-variant uppercase">Soporte</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-secondary rounded-full"></div>
+                                <span className="text-[8px] font-bold text-on-surface-variant uppercase">Resistencia</span>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="h-48 w-full bg-surface-container-high/20 rounded-xl p-4 border border-outline-variant/10 relative">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                <XAxis dataKey="name" hide />
+                                <YAxis hide domain={['auto', 'auto']} />
+                                <Line type="monotone" dataKey="price" stroke="#fff" strokeWidth={2} dot={false} />
+                                {/* Wyckoff Arrows (White) */}
+                                <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                                <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                                <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {moduleId === "strategy" && analysisSections["ESTRATEGIA"] && (
+                      <div className="bg-surface-container-low border-2 border-outline-variant/10 p-8 rounded-2xl relative overflow-hidden flex flex-col items-center text-center">
+                        <div className="mb-4">
+                          {analysisSections["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA") ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <TrendingUp className="w-20 h-20 text-primary animate-bounce" />
+                              <span className="text-4xl font-black text-primary uppercase tracking-tighter">ALCISTA</span>
+                            </div>
+                          ) : analysisSections["ESTRATEGIA"]?.toUpperCase().includes("BAJISTA") ? (
+                            <div className="flex flex-col items-center gap-2">
+                              <TrendingDown className="w-20 h-20 text-secondary animate-bounce" />
+                              <span className="text-4xl font-black text-secondary uppercase tracking-tighter">BAJISTA</span>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center gap-2">
+                              <Minus className="w-20 h-20 text-on-surface-variant" />
+                              <span className="text-4xl font-black text-on-surface-variant uppercase tracking-tighter">NEUTRAL</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="max-w-xl">
+                          <p className="text-sm text-on-surface-variant leading-relaxed italic">
+                            {analysisSections["ESTRATEGIA"]}
+                          </p>
+                        </div>
+                        {analysisSections["NIVEL DE CONFIANZA"] && (
+                          <div className="mt-4 flex items-center gap-2">
+                            <div className="w-32 h-2 bg-surface-container rounded-full overflow-hidden">
+                              <div 
+                                className="h-full bg-primary" 
+                                style={{ width: `${analysisSections["NIVEL DE CONFIANZA"]}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                              CONFIANZA: {analysisSections["NIVEL DE CONFIANZA"]}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {moduleId === "levels" && analysisSections["NIVELES OPERATIVOS"] && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <Target className="w-3 h-3" /> NIVELES OPERATIVOS
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="p-4 bg-surface-container rounded-xl border-l-4 border-primary">
+                            <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Entrada Sugerida</p>
+                            <p className="text-xl font-headline font-black text-on-surface">
+                              {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || "---"}
+                            </p>
+                          </div>
+                          <div className="p-4 bg-surface-container rounded-xl border-l-4 border-secondary">
+                            <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Stop Loss</p>
+                            <p className="text-xl font-headline font-black text-secondary">
+                              {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || "---"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {moduleId === "objectives" && analysisSections["NIVELES OPERATIVOS"] && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <TrendingUp className="w-3 h-3" /> OBJETIVOS (TAKE PROFITS)
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {[1, 2, 3].map(i => (
+                            <div key={i} className="flex flex-col p-3 bg-surface-container rounded-xl border border-outline-variant/5">
+                              <span className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">TP {i}</span>
+                              <span className="text-sm font-black text-primary">
+                                {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {moduleId === "justification" && (analysisSections["JUSTIFICACIÓN TÉCNICA"] || analysisSections["ANÁLISIS DE ESTRUCTURA"]) && (
+                      <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <Activity className="w-3 h-3" /> JUSTIFICACIÓN TÉCNICA EXHAUSTIVA
+                        </h4>
+                        <div className="space-y-6">
+                          {analysisSections["ANÁLISIS DE ESTRUCTURA"] && (
+                            <div>
+                              <p className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest">Análisis de Estructura</p>
+                              <p className="text-sm text-on-surface-variant leading-relaxed">
+                                {analysisSections["ANÁLISIS DE ESTRUCTURA"]}
+                              </p>
+                            </div>
+                          )}
+                          {analysisSections["JUSTIFICACIÓN TÉCNICA"] && (
+                            <div className="pt-6 border-t border-outline-variant/5">
+                              <p className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest">Lógica de Niveles</p>
+                              <p className="text-sm text-on-surface-variant leading-relaxed">
+                                {analysisSections["JUSTIFICACIÓN TÉCNICA"]}
+                              </p>
+                            </div>
+                          )}
+                          {analysisSections["METÁFORA TÉCNICA"] && (
+                            <div className="pt-6 border-t border-outline-variant/5 flex items-center gap-3">
+                              <Flame className="w-5 h-5 text-primary animate-pulse" />
+                              <div>
+                                <p className="text-[8px] font-black text-primary uppercase tracking-widest">Metáfora Técnica</p>
+                                <p className="text-[10px] text-on-surface-variant italic leading-tight">
+                                  {analysisSections["METÁFORA TÉCNICA"]}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {moduleId === "raw" && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                        <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest flex items-center gap-2">
+                          <Brain className="w-3 h-3" /> CAMPO DE ANÁLISIS IA (RAW)
+                        </h4>
+                        <div className="p-4 bg-surface-container-high/50 rounded-xl border border-outline-variant/10 max-h-40 overflow-y-auto">
+                          <pre className="text-[10px] text-on-surface-variant whitespace-pre-wrap font-mono leading-relaxed">
+                            {analysis}
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+
+              <div className="pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row gap-4">
+                <div className="flex gap-2 w-full">
+                  <button 
+                    onClick={shareToTelegram}
+                    className="flex-1 px-6 py-3 bg-[#0088cc] text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-[#0077b5] transition-all"
+                  >
+                    <MessageSquare className="w-4 h-4" /> Alerta Telegram
+                  </button>
+                  <button 
+                    onClick={() => toast.success("Análisis guardado en favoritos")}
+                    className="p-3 bg-surface-container-high rounded-xl border border-outline-variant/20 text-on-surface-variant hover:text-primary transition-all"
+                  >
+                    <Star className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Recent Alerts Feed */}
+              <div className="pt-6 border-t border-outline-variant/10">
+                <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-4 tracking-widest flex items-center gap-2">
+                  <Bell className="w-3 h-3" /> ALERTAS DE TELEGRAM RECIENTES
+                </h4>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-surface-container rounded-lg border border-outline-variant/5">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <p className="text-[10px] text-on-surface-variant">
+                      <span className="font-bold text-on-surface">ALERTA ENVIADA:</span> {selectedSymbol} {selectedMode} - Niveles confirmados
+                    </p>
+                    <span className="ml-auto text-[8px] text-on-surface-variant opacity-50">AHORA</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-surface-container/50 rounded-lg border border-outline-variant/5 opacity-50">
+                    <div className="w-2 h-2 rounded-full bg-on-surface-variant" />
+                    <p className="text-[10px] text-on-surface-variant">
+                      <span className="font-bold text-on-surface">ALERTA ENVIADA:</span> BTC/USDT SCALPING - TP1 Alcanzado
+                    </p>
+                    <span className="ml-auto text-[8px] text-on-surface-variant opacity-50">15M AGO</span>
                   </div>
                 </div>
-
-                {/* Justification */}
-                <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6">
-                  <div className="space-y-4">
-                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                      <Activity className="w-3 h-3" /> JUSTIFICACIÓN TÉCNICA EXHAUSTIVA
-                    </h4>
-                    <div className="space-y-6">
-                      <div>
-                        <p className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest">Análisis de Estructura</p>
-                        <p className="text-sm text-on-surface-variant leading-relaxed">
-                          {analysisSections["JUSTIFICACIÓN ALCISTA/BAJISTA"]}
-                        </p>
-                      </div>
-                      <div className="pt-6 border-t border-outline-variant/5">
-                        <p className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest">Lógica de Niveles</p>
-                        <p className="text-sm text-on-surface-variant leading-relaxed">
-                          {analysisSections["JUSTIFICACIÓN DE ENTRADA"]}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Raw AI Analysis Field */}
-                  <div className="pt-6 border-t border-outline-variant/10">
-                    <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest flex items-center gap-2">
-                      <Brain className="w-3 h-3" /> CAMPO DE ANÁLISIS IA (RAW)
-                    </h4>
-                    <div className="p-4 bg-surface-container-high/50 rounded-xl border border-outline-variant/10 max-h-40 overflow-y-auto">
-                      <pre className="text-[10px] text-on-surface-variant whitespace-pre-wrap font-mono leading-relaxed">
-                        {analysis}
-                      </pre>
-                    </div>
-                  </div>
-
-                  <div className="pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row gap-4">
-                    <div className="flex-1 flex items-center gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10">
-                      <Flame className="w-5 h-5 text-primary animate-pulse" />
-                      <div>
-                        <p className="text-[8px] font-black text-primary uppercase tracking-widest">Metáfora Técnica</p>
-                        <p className="text-[10px] text-on-surface-variant italic leading-tight">
-                          {analysisSections["METÁFORA TÉCNICA"]}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={shareToTelegram}
-                        className="px-6 py-3 bg-[#0088cc] text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:bg-[#0077b5] transition-all"
-                      >
-                        <MessageSquare className="w-4 h-4" /> Alerta Telegram
-                      </button>
-                      <button 
-                        onClick={() => toast.success("Análisis guardado en favoritos")}
-                        className="p-3 bg-surface-container-high rounded-xl border border-outline-variant/20 text-on-surface-variant hover:text-primary transition-all"
-                      >
-                        <Star className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Recent Alerts Feed */}
-                  <div className="pt-6 border-t border-outline-variant/10">
-                    <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-4 tracking-widest flex items-center gap-2">
-                      <Bell className="w-3 h-3" /> ALERTAS DE TELEGRAM RECIENTES
-                    </h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3 p-3 bg-surface-container rounded-lg border border-outline-variant/5">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                        <p className="text-[10px] text-on-surface-variant">
-                          <span className="font-bold text-on-surface">ALERTA ENVIADA:</span> {selectedSymbol} {selectedMode} - Niveles confirmados
-                        </p>
-                        <span className="ml-auto text-[8px] text-on-surface-variant opacity-50">AHORA</span>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-surface-container/50 rounded-lg border border-outline-variant/5 opacity-50">
-                        <div className="w-2 h-2 rounded-full bg-on-surface-variant" />
-                        <p className="text-[10px] text-on-surface-variant">
-                          <span className="font-bold text-on-surface">ALERTA ENVIADA:</span> BTC/USDT SCALPING - TP1 Alcanzado
-                        </p>
-                        <span className="ml-auto text-[8px] text-on-surface-variant opacity-50">15M AGO</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+              </div>
+            </>
             ) : (
               <div className="h-full flex flex-col items-center justify-center bg-surface-container-low rounded-2xl border border-dashed border-outline-variant/30 p-12 text-center space-y-4">
                 <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center">
@@ -899,6 +969,89 @@ const Analysis = () => {
           ))}
         </div>
       </section>
+
+      {/* Hot Signal Notification Modal */}
+      <AnimatePresence>
+        {showHotSignal && hotSignalData && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-surface-container-highest border-2 border-primary/50 rounded-3xl p-8 max-w-md w-full shadow-[0_0_50px_rgba(0,255,163,0.3)] relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent animate-pulse" />
+              
+              <button 
+                onClick={() => setShowHotSignal(false)}
+                className="absolute top-4 right-4 p-2 text-on-surface-variant hover:text-on-surface transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center animate-pulse">
+                    <Flame className="w-12 h-12 text-primary" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 bg-primary text-on-primary text-[10px] font-black px-2 py-1 rounded-full animate-bounce">
+                    HOT!
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-2xl font-black text-on-surface uppercase tracking-tighter">¡SEÑAL DE ALTA CONFIANZA!</h3>
+                  <p className="text-sm text-on-surface-variant leading-relaxed">
+                    Nuestra IA ha detectado una oportunidad con un nivel de confianza excepcional.
+                  </p>
+                </div>
+
+                <div className="w-full bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Activo</span>
+                    <span className="text-xl font-black text-primary">{hotSignalData.symbol}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Precio Actual</span>
+                    <span className="text-xl font-black text-on-surface">${hotSignalData.price}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Confianza</span>
+                    <span className="text-xl font-black text-primary">{hotSignalData.confidence}%</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estrategia</span>
+                    <span className={cn(
+                      "text-sm font-black uppercase tracking-widest",
+                      hotSignalData.strategy.includes("ALCISTA") ? "text-primary" : "text-secondary"
+                    )}>
+                      {hotSignalData.strategy}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-full grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => setShowHotSignal(false)}
+                    className="px-6 py-4 bg-surface-container-high text-on-surface rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-surface-container-highest transition-all"
+                  >
+                    Ver Detalles
+                  </button>
+                  <button 
+                    onClick={() => {
+                      shareToTelegram();
+                      setShowHotSignal(false);
+                    }}
+                    className="px-6 py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-xs hover:shadow-[0_0_20px_rgba(0,255,163,0.4)] transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare className="w-4 h-4" /> Telegram
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
