@@ -142,7 +142,7 @@ const Analysis = () => {
   const [hotSignalData, setHotSignalData] = useState<any>(null);
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("analysis_module_order");
-    return saved ? JSON.parse(saved) : ["context", "wyckoff", "strategy", "levels", "objectives", "justification", "raw"];
+    return saved ? JSON.parse(saved) : ["context", "wyckoff", "strategy", "indicators", "levels", "objectives", "justification", "raw"];
   });
 
   useEffect(() => {
@@ -337,19 +337,30 @@ const Analysis = () => {
               </div>
             </div>
 
-            <div className="space-y-1 w-full md:w-40">
+            <div className="space-y-1 w-full md:w-auto flex-1">
               <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Estrategia</label>
-              <div className="relative">
-                <select 
-                  value={selectedMode}
-                  onChange={(e) => setSelectedMode(e.target.value as any)}
-                  className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 pl-4 pr-10 appearance-none focus:outline-none focus:border-primary transition-all text-sm font-bold"
-                >
-                  <option value="Standard">Estándar</option>
-                  <option value="Scalping">Scalping</option>
-                  <option value="Swing">Swing</option>
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
+              <div className="flex gap-2">
+                {[
+                  { id: "Standard", label: "Estándar", tf: "1h" },
+                  { id: "Scalping", label: "Scalping", tf: "5m" },
+                  { id: "Swing", label: "Swing", tf: "4h" }
+                ].map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => {
+                      setSelectedMode(mode.id as any);
+                      setSelectedTimeframe(mode.tf);
+                    }}
+                    className={cn(
+                      "flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all border",
+                      selectedMode === mode.id 
+                        ? "bg-primary text-on-primary border-primary shadow-lg shadow-primary/20" 
+                        : "bg-surface-container-high text-on-surface-variant border-outline-variant/20 hover:border-primary/50"
+                    )}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -440,20 +451,26 @@ const Analysis = () => {
             {/* Quick Indicators */}
             <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                <BarChart3 className="w-3 h-3" /> INDICADORES RECOMENDADOS
+                <BarChart3 className="w-3 h-3" /> INDICADORES TOP 2026 ({selectedTimeframe.toUpperCase()})
               </h4>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: "RSI (14)", val: (Math.random() * 40 + 30).toFixed(1), status: "NEUTRAL" },
                   { label: "MACD", val: "0.45", status: "ALCISTA" },
+                  { label: "EMA 20", val: ticker ? (parseFloat(ticker.price) * 1.001).toFixed(2) : "---", status: "RESISTENCIA" },
+                  { label: "EMA 50", val: ticker ? (parseFloat(ticker.price) * 0.995).toFixed(2) : "---", status: "SOPORTE" },
                   { label: "EMA 200", val: ticker ? (parseFloat(ticker.price) * 0.98).toFixed(2) : "---", status: "SOPORTE" },
+                  { label: "B. BOLLINGER", val: "2.5%", status: "VOLATILIDAD" },
                   { label: "VWAP", val: ticker ? (parseFloat(ticker.price) * 0.99).toFixed(2) : "---", status: "NEUTRAL" },
+                  { label: "STOCH RSI", val: "82.4", status: "SOBRECOMPRA" },
+                  { label: "ADX (25)", val: "32.1", status: "TENDENCIA" },
+                  { label: "VOLUME", val: "ALTO", status: "CONFIRMADO" },
                 ].map((ind) => (
-                  <div key={ind.label} className="flex justify-between items-center p-3 bg-surface-container rounded-xl">
-                    <span className="text-[10px] font-bold text-on-surface-variant uppercase">{ind.label}</span>
-                    <div className="text-right">
-                      <p className="text-xs font-black text-on-surface">{ind.val}</p>
-                      <p className="text-[8px] font-bold text-primary uppercase">{ind.status}</p>
+                  <div key={ind.label} className="p-2 bg-surface-container rounded-lg border border-outline-variant/5">
+                    <span className="text-[8px] font-bold text-on-surface-variant uppercase block mb-1">{ind.label}</span>
+                    <div className="flex justify-between items-end">
+                      <p className="text-[10px] font-black text-on-surface leading-none">{ind.val}</p>
+                      <p className="text-[7px] font-bold text-primary uppercase leading-none">{ind.status}</p>
                     </div>
                   </div>
                 ))}
@@ -579,6 +596,22 @@ const Analysis = () => {
                       </div>
                     )}
 
+                    {moduleId === "indicators" && analysisSections["INDICADORES TÉCNICOS (TOP 2026)"] && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <BarChart3 className="w-3 h-3" /> INDICADORES TÉCNICOS (TOP 2026)
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {analysisSections["INDICADORES TÉCNICOS (TOP 2026)"].split("\n").filter(line => line.trim()).map((line, idx) => (
+                            <div key={idx} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-on-surface-variant uppercase">{line.split(":")[0]?.replace(/^[-\s*]+/, "")}</span>
+                              <span className="text-[10px] font-black text-primary text-right">{line.split(":")[1] || "ACTIVO"}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {moduleId === "levels" && analysisSections["NIVELES OPERATIVOS"] && (
                       <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
                         <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
@@ -588,13 +621,15 @@ const Analysis = () => {
                           <div className="p-4 bg-surface-container rounded-xl border-l-4 border-primary">
                             <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Entrada Sugerida</p>
                             <p className="text-xl font-headline font-black text-on-surface">
-                              {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || "---"}
+                              {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
+                               analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
                             </p>
                           </div>
                           <div className="p-4 bg-surface-container rounded-xl border-l-4 border-secondary">
                             <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Stop Loss</p>
                             <p className="text-xl font-headline font-black text-secondary">
-                              {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || "---"}
+                              {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
+                               analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
                             </p>
                           </div>
                         </div>
@@ -611,7 +646,8 @@ const Analysis = () => {
                             <div key={i} className="flex flex-col p-3 bg-surface-container rounded-xl border border-outline-variant/5">
                               <span className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">TP {i}</span>
                               <span className="text-sm font-black text-primary">
-                                {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}
+                                {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || 
+                                 analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}
                               </span>
                             </div>
                           ))}
@@ -672,13 +708,35 @@ const Analysis = () => {
                 ))}
               </Reorder.Group>
 
-              <div className="pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row gap-4">
+              <div className="pt-8 border-t border-outline-variant/10 flex flex-col gap-4">
+                <div className="flex flex-col gap-2 p-4 bg-surface-container rounded-xl border border-outline-variant/10">
+                  <h5 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
+                    <Shield className="w-3 h-3" /> CONFIGURACIÓN TELEGRAM (BOT PRIVADO)
+                  </h5>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input 
+                      type="text" 
+                      placeholder="Bot Token"
+                      defaultValue={localStorage.getItem("telegramToken") || ""}
+                      onChange={(e) => localStorage.setItem("telegramToken", e.target.value)}
+                      className="bg-surface-container-high border border-outline-variant/20 rounded-lg px-3 py-2 text-[10px] font-bold focus:outline-none focus:border-primary"
+                    />
+                    <input 
+                      type="text" 
+                      placeholder="Chat ID"
+                      defaultValue={localStorage.getItem("telegramChatId") || ""}
+                      onChange={(e) => localStorage.setItem("telegramChatId", e.target.value)}
+                      className="bg-surface-container-high border border-outline-variant/20 rounded-lg px-3 py-2 text-[10px] font-bold focus:outline-none focus:border-primary"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex gap-2 w-full">
                   <button 
                     onClick={shareToTelegram}
                     className="flex-1 px-6 py-3 bg-[#0088cc] text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-[#0077b5] transition-all"
                   >
-                    <MessageSquare className="w-4 h-4" /> Alerta Telegram
+                    <MessageSquare className="w-4 h-4" /> Enviar Alerta Telegram
                   </button>
                   <button 
                     onClick={() => toast.success("Análisis guardado en favoritos")}

@@ -26,7 +26,9 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
 
       **ESTRATEGIA**: (Describe la estrategia técnica recomendada: ALCISTA o BAJISTA)
       
-      **FASE WYCKOFF**: (Identifica la fase actual según la teoría de Wyckoff: ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN. Proporciona una breve explicación de por qué se encuentra en esa fase)
+      **FASE WYCKOFF**: (Menciona explícitamente la temporalidad analizada. Identifica la fase actual según la teoría de Wyckoff: ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN. Proporciona una explicación detallada de por qué se encuentra en esa fase y QUÉ SE ESPERA que haga el precio a continuación según esta estructura)
+      
+      **INDICADORES TÉCNICOS (TOP 2026)**: (Lista de 8 a 10 indicadores clave incluyendo RSI, MACD, EMAs (20, 50, 200), Bandas de Bollinger, Volumen, etc. Explica brevemente qué indica cada uno en la temporalidad actual)
       
       **JUSTIFICACIÓN TÉCNICA**: (Explica detalladamente por qué el precio de entrada, el Stop Loss y los tres Take Profits están situados en esos niveles específicos basándote en la estructura de mercado, liquidez y volumen. Sé extremadamente detallado)
       
