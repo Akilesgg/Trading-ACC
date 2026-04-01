@@ -20,13 +20,17 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       ${modePrompt}
       Responde siempre en ESPAÑOL. Mantén un tono profesional y detallado.
       
-      ES OBLIGATORIO que el informe use EXACTAMENTE estos encabezados en negrita:
+      ES OBLIGATORIO que el informe use EXACTAMENTE estos encabezados en negrita y mayúsculas:
       
-      ESTRATEGIA: (Describe la estrategia técnica recomendada para este activo según el modo ${mode})
+      **ESTRATEGIA**: (Describe la estrategia técnica recomendada para este activo según el modo ${mode})
       
-      JUSTIFICACIÓN ALCISTA: (Explica detalladamente por qué la estructura actual justifica una postura alcista o los riesgos si es bajista)
+      **JUSTIFICACIÓN DE ENTRADA**: (Explica detalladamente por qué el precio de entrada, el Stop Loss y los tres Take Profits están situados en esos niveles específicos basándote en la estructura de mercado, liquidez y volumen. Sé extremadamente detallado)
       
-      METÁFORA TÉCNICA: (Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que impulsan el precio)
+      **JUSTIFICACIÓN ALCISTA/BAJISTA**: (Explica detalladamente por qué la estructura actual justifica la postura tomada)
+      
+      **NIVELES OPERATIVOS**: (Especifica el precio de entrada, Stop Loss y 3 niveles de Take Profit)
+      
+      **METÁFORA TÉCNICA**: (Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que impulsan el precio)
       
       Asegúrate de que la descripción sea detallada y profesional. No uses otros formatos.`,
       config: {

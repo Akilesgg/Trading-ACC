@@ -231,16 +231,24 @@ const Analysis = () => {
                   <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap bg-surface-container-high/20 p-6 rounded-xl border border-outline-variant/5">
                     {analysis[ticker.symbol] ? (
                       analysis[ticker.symbol].split('\n').map((line, i) => {
-                        if (line.includes(':')) {
-                          const [header, ...rest] = line.split(':');
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine) return <div key={i} className="h-4" />;
+                        
+                        if (trimmedLine.startsWith('**') && trimmedLine.includes(':')) {
+                          const [header, ...rest] = trimmedLine.replace(/\*\*/g, '').split(':');
                           return (
-                            <p key={i} className="mb-2">
-                              <span className="text-primary font-black uppercase tracking-widest text-[10px] block mb-1">{header}:</span>
-                              {rest.join(':')}
-                            </p>
+                            <div key={i} className="mb-6 last:mb-0">
+                              <h4 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2 flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                                {header}
+                              </h4>
+                              <p className="text-on-surface-variant text-xs leading-relaxed font-medium pl-3.5 border-l border-outline-variant/20">
+                                {rest.join(':').trim()}
+                              </p>
+                            </div>
                           );
                         }
-                        return <p key={i} className="mb-2">{line}</p>;
+                        return <p key={i} className="text-on-surface-variant text-xs leading-relaxed mb-4 last:mb-0">{trimmedLine}</p>;
                       })
                     ) : (
                       "Aún no se ha generado ningún análisis. Haz clic en analizar para comenzar."

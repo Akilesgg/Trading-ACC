@@ -156,9 +156,28 @@ const SignalDetail = () => {
               </div>
             </div>
             <div className="prose prose-invert max-w-none">
-              <p className="text-on-surface-variant leading-relaxed text-lg italic">
-                "{analysis}"
-              </p>
+              <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap bg-surface-container-high/20 p-6 rounded-xl border border-outline-variant/5">
+                {analysis.split('\n').map((line, i) => {
+                  const trimmedLine = line.trim();
+                  if (!trimmedLine) return <div key={i} className="h-4" />;
+                  
+                  if (trimmedLine.startsWith('**') && trimmedLine.includes(':')) {
+                    const [header, ...rest] = trimmedLine.replace(/\*\*/g, '').split(':');
+                    return (
+                      <div key={i} className="mb-6 last:mb-0">
+                        <h4 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2 flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                          {header}
+                        </h4>
+                        <p className="text-on-surface-variant text-xs leading-relaxed font-medium pl-3.5 border-l border-outline-variant/20">
+                          {rest.join(':').trim()}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return <p key={i} className="text-on-surface-variant text-xs leading-relaxed mb-4 last:mb-0">{trimmedLine}</p>;
+                })}
+              </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
               {[

@@ -143,6 +143,39 @@ const Dashboard = () => {
   ];
 
   const [showNotifSettings, setShowNotifSettings] = useState(false);
+  const [telegramToken, setTelegramToken] = useState(localStorage.getItem("telegramToken") || "8287353475:AAE90JqwdWnwoJSrr9OaNIphmKtmuy0Qu0Q");
+  const [telegramChatId, setTelegramChatId] = useState(localStorage.getItem("telegramChatId") || "-1003045390811");
+  const [isSendingTest, setIsSendingTest] = useState(false);
+
+  const saveSettings = () => {
+    localStorage.setItem("telegramToken", telegramToken);
+    localStorage.setItem("telegramChatId", telegramChatId);
+    setShowNotifSettings(false);
+  };
+
+  const sendTestTelegram = async () => {
+    if (!telegramToken || !telegramChatId) return;
+    setIsSendingTest(true);
+    try {
+      const message = "🔔 *PRUEBA DE ALERTA KINETIC*\n\nTu bot de Telegram ha sido vinculado correctamente. Recibirás alertas de rupturas y análisis de IA aquí.";
+      const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: telegramChatId,
+          text: message,
+          parse_mode: "Markdown"
+        })
+      });
+      alert("¡Mensaje de prueba enviado con éxito!");
+    } catch (error) {
+      console.error("Error sending telegram:", error);
+      alert("Error al enviar el mensaje. Verifica el Token y el Chat ID.");
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -193,9 +226,11 @@ const Dashboard = () => {
                     </div>
 
                     <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
-                      <p className="text-[9px] font-bold text-primary uppercase mb-1">¿Cómo funcionan las alertas?</p>
+                      <p className="text-[9px] font-bold text-primary uppercase mb-1">INSTRUCCIONES PRECISAS</p>
                       <p className="text-[9px] text-on-surface-variant leading-relaxed">
-                        Cuando el sistema detecta una <span className="text-primary font-bold">RUPTURA (BREAKOUT)</span> confirmada en cualquier activo, enviará automáticamente un mensaje a tu Telegram con el precio, el porcentaje de cambio y el análisis de IA.
+                        1. El sistema ya tiene pre-configurados tus datos.<br/>
+                        2. Presiona <span className="text-primary font-bold">"ENVIAR PRUEBA"</span> para verificar la conexión.<br/>
+                        3. Las alertas se enviarán <span className="text-primary font-bold">AUTOMÁTICAMENTE</span> cuando la IA detecte una ruptura confirmada con una confianza {'>'} 80%.
                       </p>
                     </div>
                     
@@ -203,18 +238,28 @@ const Dashboard = () => {
                       <input 
                         type="text" 
                         placeholder="Telegram Bot Token" 
+                        value={telegramToken}
+                        onChange={(e) => setTelegramToken(e.target.value)}
                         className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-[10px] focus:outline-none focus:border-primary/50"
                       />
                       <input 
                         type="text" 
                         placeholder="Chat ID" 
+                        value={telegramChatId}
+                        onChange={(e) => setTelegramChatId(e.target.value)}
                         className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-[10px] focus:outline-none focus:border-primary/50"
                       />
                     </div>
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <button className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-colors">Vincular Telegram</button>
+                    <button 
+                      onClick={sendTestTelegram}
+                      disabled={isSendingTest}
+                      className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-colors disabled:opacity-50"
+                    >
+                      {isSendingTest ? "Enviando..." : "Enviar Prueba"}
+                    </button>
                     <button className="flex-1 py-2 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-colors">Vincular Discord</button>
                   </div>
                 </div>
@@ -245,7 +290,7 @@ const Dashboard = () => {
               </div>
 
               <button 
-                onClick={() => setShowNotifSettings(false)}
+                onClick={saveSettings}
                 className="w-full py-4 bg-primary text-on-primary rounded-full font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20 active:scale-95 transition-all"
               >
                 Guardar Configuración

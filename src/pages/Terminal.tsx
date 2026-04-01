@@ -3,6 +3,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { 
   ArrowLeft, 
+  ArrowUpRight,
+  ArrowDownRight,
   TrendingUp, 
   TrendingDown, 
   Minus, 
@@ -48,6 +50,7 @@ import {
   fetchTopTraders,
   fetchLargeTransactions
 } from "@/services/cryptoService";
+import { analyzeMarket } from "@/services/geminiService";
 import { 
   AreaChart, 
   Area, 
@@ -146,90 +149,100 @@ const Terminal = () => {
 
     setAnalyzing(true);
     
-    // Simulate complex analysis based on strategy and timeframe
-    setTimeout(() => {
-      const adxVal = Math.floor(Math.random() * 30) + 15; // 15-45
-      const isChop = adxVal < 20;
-      const isBullish = Math.random() > 0.5;
-      const isBTC = symbolParam.includes("BTC");
+    // Call AI Analysis
+    const fetchAIAnalysis = async () => {
+      try {
+        const aiResponse = await analyzeMarket(symbolParam, ticker.price, ticker.priceChangePercent, strategy as any);
+        
+        const adxVal = Math.floor(Math.random() * 30) + 15; // 15-45
+        const isChop = adxVal < 20;
+        const isBullish = aiResponse.includes("ALCISTA") || aiResponse.includes("LONG") || Math.random() > 0.5;
+        const isBTC = symbolParam.includes("BTC");
 
-      // Timeframe based volatility/TP distance
-      let tpMultiplier = 1.0;
-      if (timeframe === "1m") tpMultiplier = 0.3;
-      else if (timeframe === "5m") tpMultiplier = 0.6;
-      else if (timeframe === "15m") tpMultiplier = 1.2;
-      else if (timeframe === "1h") tpMultiplier = 2.5;
-      else if (timeframe === "4h") tpMultiplier = 5.0;
+        // Timeframe based volatility/TP distance
+        let tpMultiplier = 1.0;
+        if (timeframe === "1m") tpMultiplier = 0.3;
+        else if (timeframe === "5m") tpMultiplier = 0.6;
+        else if (timeframe === "15m") tpMultiplier = 1.2;
+        else if (timeframe === "1h") tpMultiplier = 2.5;
+        else if (timeframe === "4h") tpMultiplier = 5.0;
 
-      const volatility = price * 0.005 * tpMultiplier;
+        const volatility = price * 0.005 * tpMultiplier;
 
-      // Strategy Logic
-      let strategyName = strategy;
-      let emaPeriod = isBTC ? 400 : 800;
-      
-      if (timeframe === "1m") strategyName = "Pupupu Scalping";
-      if (timeframe === "5m") strategyName = "Reto Trading";
+        // Strategy Logic
+        let strategyName = strategy;
+        let emaPeriod = isBTC ? 400 : 800;
+        
+        if (timeframe === "1m") strategyName = "Pupupu Scalping";
+        if (timeframe === "5m") strategyName = "Reto Trading";
 
-      const newAnalysis = {
-        type: isBullish ? "LONG" : "SHORT",
-        entry: price,
-        sl: isBullish ? price - (volatility * 0.8) : price + (volatility * 0.8),
-        tp1: isBullish ? price + volatility : price - volatility,
-        tp2: isBullish ? price + volatility * 1.8 : price - volatility * 1.8,
-        tp3: isBullish ? price + volatility * 3.0 : price - volatility * 3.0,
-        ratio: `1:${(3.0 / 0.8).toFixed(1)}`,
-        rr: 3.0 / 0.8,
-        score: isChop ? Math.floor(Math.random() * 20) + 40 : Math.floor(Math.random() * 30) + 65,
-        sentiment: isBullish ? "BULLISH" : "BEARISH",
-        strategy: strategyName,
-        context: {
-          trend: adxVal > 25 ? "STRONG ↑" : "WEAK →",
-          adx: adxVal,
-          vol: Math.random() > 0.5 ? "HIGH" : "NORMAL",
-          structure: Math.random() > 0.7 ? "BOS (Break of Structure)" : "CHoCH (Change of Character)",
-          zone: Math.random() > 0.5 ? "LVN BREAK" : "HVN REJECTION",
-          bias: isBullish ? "LONG" : "SHORT",
-          cvd: (Math.random() * 1000 - 500).toFixed(0),
-          delta: (Math.random() * 200 - 100).toFixed(0)
-        },
-        indicators: {
-          rsi: { val: (Math.random() * 40 + 30).toFixed(1), status: isBullish ? "ALCISTA" : "BAJISTA" },
-          macd: { val: isBullish ? "0.45" : "-0.45", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
-          ema: { val: timeframe === "1m" ? `12/${emaPeriod}` : "20/50", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
-          vwap: { val: (price * 0.999).toFixed(2), status: isBullish ? "POR ENCIMA" : "POR DEBAJO", color: isBullish ? "text-primary" : "text-secondary" },
-          vol: { val: "A: 1.2%", status: "MOMENTUM +", color: "text-primary" },
-          adx: { val: adxVal.toString(), status: adxVal > 25 ? "TENDENCIA FUERTE" : "RANGO / CHOP", color: adxVal > 25 ? "text-primary" : "text-on-surface-variant" },
-          atr: { val: (volatility / 2).toFixed(2), status: "NORMAL", color: "text-primary" }
-        },
-        volumeProfile: [
-          { price: price * 1.02, vol: Math.floor(Math.random() * 40) + 60 },
-          { price: price * 1.01, vol: Math.floor(Math.random() * 30) + 40 },
-          { price: price * 1.00, vol: Math.floor(Math.random() * 20) + 20 },
-          { price: price * 0.99, vol: Math.floor(Math.random() * 50) + 30 },
-          { price: price * 0.98, vol: Math.floor(Math.random() * 40) + 50 }
-        ],
-        fvgs: [
-          { price: (price * 0.985).toFixed(2), type: "BULLISH", status: "OPEN" },
-          { price: (price * 1.015).toFixed(2), type: "BEARISH", status: "MITIGATED" }
-        ],
-        correlation: {
-          btc: (Math.random() * 0.2 + 0.75).toFixed(2),
-          eth: (Math.random() * 0.2 + 0.70).toFixed(2),
-          sp500: (Math.random() * 0.3 + 0.40).toFixed(2)
-        }
-      };
-      
-      setAnalysis(newAnalysis);
-      setAnalyzing(false);
-      setCooldown(15); 
-      
-      setMtfBias({
-        "1m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
-        "5m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
-        "15m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
-        "1h": Math.random() > 0.5 ? "BULLISH" : "BEARISH"
-      });
-    }, 1500);
+        const newAnalysis = {
+          type: isBullish ? "LONG" : "SHORT",
+          entry: price,
+          sl: isBullish ? price - (volatility * 0.8) : price + (volatility * 0.8),
+          tp1: isBullish ? price + volatility : price - volatility,
+          tp2: isBullish ? price + volatility * 1.8 : price - volatility * 1.8,
+          tp3: isBullish ? price + volatility * 3.0 : price - volatility * 3.0,
+          ratio: `1:${(3.0 / 0.8).toFixed(1)}`,
+          rr: 3.0 / 0.8,
+          score: isChop ? Math.floor(Math.random() * 20) + 40 : Math.floor(Math.random() * 30) + 65,
+          sentiment: isBullish ? "BULLISH" : "BEARISH",
+          strategy: strategyName,
+          description: aiResponse,
+          context: {
+            trend: adxVal > 25 ? "STRONG ↑" : "WEAK →",
+            adx: adxVal,
+            vol: Math.random() > 0.5 ? "HIGH" : "NORMAL",
+            structure: Math.random() > 0.7 ? "BOS (Break of Structure)" : "CHoCH (Change of Character)",
+            zone: Math.random() > 0.5 ? "LVN BREAK" : "HVN REJECTION",
+            bias: isBullish ? "LONG" : "SHORT",
+            cvd: (Math.random() * 1000 - 500).toFixed(0),
+            delta: (Math.random() * 200 - 100).toFixed(0)
+          },
+          indicators: {
+            rsi: { val: (Math.random() * 40 + 30).toFixed(1), status: isBullish ? "ALCISTA" : "BAJISTA" },
+            macd: { val: isBullish ? "0.45" : "-0.45", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
+            ema: { val: timeframe === "1m" ? `12/${emaPeriod}` : "20/50", status: isBullish ? "ALCISTA" : "BAJISTA", color: isBullish ? "text-primary" : "text-secondary" },
+            vwap: { val: (price * 0.999).toFixed(2), status: isBullish ? "POR ENCIMA" : "POR DEBAJO", color: isBullish ? "text-primary" : "text-secondary" },
+            vol: { val: "A: 1.2%", status: "MOMENTUM +", color: "text-primary" },
+            adx: { val: adxVal.toString(), status: adxVal > 25 ? "TENDENCIA FUERTE" : "RANGO / CHOP", color: adxVal > 25 ? "text-primary" : "text-on-surface-variant" },
+            atr: { val: (volatility / 2).toFixed(2), status: "NORMAL", color: "text-primary" }
+          },
+          volumeProfile: [
+            { price: price * 1.02, vol: Math.floor(Math.random() * 40) + 60 },
+            { price: price * 1.01, vol: Math.floor(Math.random() * 30) + 40 },
+            { price: price * 1.00, vol: Math.floor(Math.random() * 20) + 20 },
+            { price: price * 0.99, vol: Math.floor(Math.random() * 50) + 30 },
+            { price: price * 0.98, vol: Math.floor(Math.random() * 40) + 50 }
+          ],
+          fvgs: [
+            { price: (price * 0.985).toFixed(2), type: "BULLISH", status: "OPEN" },
+            { price: (price * 1.015).toFixed(2), type: "BEARISH", status: "MITIGATED" }
+          ],
+          correlation: {
+            btc: (Math.random() * 0.2 + 0.75).toFixed(2),
+            eth: (Math.random() * 0.2 + 0.70).toFixed(2),
+            sp500: (Math.random() * 0.3 + 0.40).toFixed(2)
+          }
+        };
+        
+        setAnalysis(newAnalysis);
+        setAnalyzing(false);
+        setCooldown(15); 
+        
+        setMtfBias({
+          "1m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
+          "5m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
+          "15m": Math.random() > 0.5 ? "BULLISH" : "BEARISH",
+          "1h": Math.random() > 0.5 ? "BULLISH" : "BEARISH"
+        });
+      } catch (error) {
+        console.error("Analysis error:", error);
+        setAnalyzing(false);
+      }
+    };
+
+    fetchAIAnalysis();
   };
 
   const copySignal = () => {
@@ -275,13 +288,6 @@ const Terminal = () => {
         analysis?.sentiment === "BULLISH" ? "bg-primary/5" : analysis?.sentiment === "BEARISH" ? "bg-secondary/5" : "bg-surface-container-lowest"
       )}
     >
-      {/* Dynamic Background Glow */}
-      {analysis && (
-        <div className={cn(
-          "fixed inset-0 pointer-events-none opacity-20 blur-[120px] transition-colors duration-1000",
-          analysis.sentiment === "BULLISH" ? "bg-primary" : "bg-secondary"
-        )} style={{ clipPath: "circle(30% at 50% 50%)" }} />
-      )}
       {/* Top Header / Search */}
       <div className="px-4 py-4 border-b border-outline-variant/10 bg-surface-container-low sticky top-16 z-30">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-4 items-center justify-between">
@@ -983,24 +989,20 @@ const Terminal = () => {
               "p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl overflow-hidden relative",
               analysis.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30" : "bg-secondary/10 border-secondary/30"
             )}>
-              <div className="absolute top-0 right-0 p-4 opacity-10">
-                {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-32 h-32" /> : <TrendingDown className="w-32 h-32" />}
-              </div>
-              
               <div className="flex items-center gap-6 z-10">
                 <div className={cn(
-                  "w-20 h-20 rounded-2xl flex items-center justify-center shadow-lg",
+                  "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110",
                   analysis.sentiment === "BULLISH" ? "bg-primary text-on-primary" : "bg-secondary text-on-secondary"
                 )}>
-                  {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-10 h-10" /> : <TrendingDown className="w-10 h-10" />}
+                  {analysis.sentiment === "BULLISH" ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
                 </div>
                 <div>
-                  <h2 className={cn("text-4xl font-headline font-black tracking-tighter", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                  <h2 className={cn("text-3xl font-headline font-black tracking-tighter", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
                     {analysis.sentiment === "BULLISH" ? "SEÑAL ALCISTA" : "SEÑAL BAJISTA"}
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">Confianza del Sistema:</span>
-                    <span className={cn("text-lg font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>{analysis.score}%</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Confianza del Sistema:</span>
+                    <span className={cn("text-base font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>{analysis.score}%</span>
                   </div>
                 </div>
               </div>
@@ -1080,24 +1082,30 @@ const Terminal = () => {
 
               <div className="pt-6 border-t border-outline-variant/10 space-y-4">
                 <h5 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">JUSTIFICACIÓN DE ENTRADA ({analysis.type}):</h5>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    <span>RSI en {analysis.indicators.rsi.val} - Presión {analysis.type === "LONG" ? "compradora" : "vendedora"} sostenida.</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    <span>MACD mostrando {analysis.indicators.macd.status.toLowerCase()}, divergencia {analysis.type === "LONG" ? "positiva" : "negativa"}.</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    <span>EMA20/50 en cruce {analysis.type === "LONG" ? "alcista" : "bajista"}, tendencia confirmada.</span>
-                  </li>
-                  <li className="flex items-start gap-2 text-xs text-on-surface-variant">
-                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
-                    <span>Zonas OTE: Entrada óptima detectada en niveles de Fibonacci 0.705-0.79.</span>
-                  </li>
-                </ul>
+                <div className="bg-surface-container-high/30 p-6 rounded-2xl border border-outline-variant/10">
+                  <div className="prose prose-invert max-w-none">
+                    {analysis.description.split('\n').map((line: string, i: number) => {
+                      const trimmedLine = line.trim();
+                      if (!trimmedLine) return <div key={i} className="h-4" />;
+                      
+                      if (trimmedLine.startsWith('**') && trimmedLine.includes(':')) {
+                        const [header, ...rest] = trimmedLine.replace(/\*\*/g, '').split(':');
+                        return (
+                          <div key={i} className="mb-6 last:mb-0">
+                            <h4 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2 flex items-center gap-2">
+                              <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                              {header}
+                            </h4>
+                            <p className="text-on-surface-variant text-xs leading-relaxed font-medium pl-3.5 border-l border-outline-variant/20">
+                              {rest.join(':').trim()}
+                            </p>
+                          </div>
+                        );
+                      }
+                      return <p key={i} className="text-on-surface-variant text-xs leading-relaxed mb-4 last:mb-0">{trimmedLine}</p>;
+                    })}
+                  </div>
+                </div>
                 <div className="bg-surface-container p-3 rounded-xl">
                   <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">PUNTUACIÓN TOTAL: {analysis.score}%</p>
                   <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
@@ -1124,29 +1132,53 @@ const Terminal = () => {
             </div>
 
             <div className="space-y-6">
-              {/* Signal Status Card */}
+              {/* Signal Status Card - Elegant Arrows */}
               <div className={cn(
-                "p-6 rounded-3xl border-2 flex flex-col items-center text-center space-y-4 shadow-2xl relative overflow-hidden",
-                analysis.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30" : "bg-secondary/10 border-secondary/30"
+                "p-8 rounded-3xl border border-outline-variant/10 flex flex-col items-center text-center space-y-6 shadow-2xl relative overflow-hidden bg-surface-container-low",
               )}>
-                <div className={cn(
-                  "w-24 h-24 rounded-xl flex items-center justify-center animate-pulse shadow-2xl",
-                  analysis.sentiment === "BULLISH" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
-                )}>
-                  {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-12 h-12" /> : <TrendingDown className="w-12 h-12" />}
+                <div className="flex items-center gap-8">
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className={cn(
+                      "w-16 h-16 flex items-center justify-center",
+                      analysis.sentiment === "BULLISH" ? "text-primary" : "text-on-surface-variant/20"
+                    )}
+                  >
+                    <ArrowUpRight className="w-16 h-16 stroke-[3]" />
+                  </motion.div>
+                  <div className="h-12 w-px bg-outline-variant/20" />
+                  <motion.div 
+                    animate={{ y: [0, 10, 0] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className={cn(
+                      "w-16 h-16 flex items-center justify-center",
+                      analysis.sentiment === "BEARISH" ? "text-secondary" : "text-on-surface-variant/20"
+                    )}
+                  >
+                    <ArrowDownRight className="w-16 h-16 stroke-[3]" />
+                  </motion.div>
                 </div>
-                <div>
-                  <p className={cn("text-xs font-black uppercase tracking-widest mb-1", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
-                    Estado del Mercado
+                
+                <div className="space-y-1">
+                  <p className={cn("text-[10px] font-black uppercase tracking-[0.3em]", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                    Sesgo del Mercado
                   </p>
-                  <h3 className={cn("text-3xl font-headline font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                  <h3 className={cn("text-4xl font-headline font-black tracking-tighter", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
                     {analysis.sentiment === "BULLISH" ? "ALCISTA" : "BAJISTA"}
                   </h3>
                 </div>
-                <div className="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                  <div className={cn("h-full transition-all duration-1000", analysis.sentiment === "BULLISH" ? "bg-primary" : "bg-secondary")} style={{ width: `${analysis.score}%` }}></div>
+
+                <div className="flex items-center gap-4 w-full px-4">
+                  <div className="flex-1 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${analysis.score}%` }}
+                      className={cn("h-full", analysis.sentiment === "BULLISH" ? "bg-primary" : "bg-secondary")}
+                    />
+                  </div>
+                  <span className="text-[10px] font-bold font-mono text-on-surface-variant">{analysis.score}%</span>
                 </div>
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Confianza: {analysis.score}%</p>
               </div>
 
               <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
