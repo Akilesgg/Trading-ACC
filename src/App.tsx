@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import { Toaster } from "sonner";
 import { 
   LayoutDashboard, 
   BarChart3, 
@@ -260,6 +261,7 @@ export default function App() {
 
   return (
     <Router>
+      <Toaster position="top-right" theme="dark" richColors />
       <div className="min-h-screen flex flex-col">
         <TopAppBar />
         <main className="flex-1">

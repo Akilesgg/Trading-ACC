@@ -32,6 +32,8 @@ import {
 } from "@/services/cryptoService";
 import { getMarketSentiment } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
+import { sendTelegramAlert } from "@/services/telegramService";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const [tickers, setTickers] = useState<CryptoData[]>([]);
@@ -57,6 +59,27 @@ const Dashboard = () => {
       
       const data = await fetchTickers(symbols);
       setAllTickers(data);
+
+      // Check for automatic alerts (Breakouts > 5%)
+      data.forEach(ticker => {
+        const change = parseFloat(ticker.priceChangePercent);
+        if (change > 5) {
+          const lastAlert = localStorage.getItem(`alert_${ticker.symbol}`);
+          const now = Date.now();
+          // Cooldown of 4 hours to avoid spamming
+          if (!lastAlert || now - parseInt(lastAlert) > 14400000) {
+            sendTelegramAlert({
+              symbol: ticker.symbol,
+              price: ticker.price,
+              change: ticker.priceChangePercent,
+              type: "BREAKOUT",
+              confidence: 88,
+              analysis: "Ruptura de volumen detectada con fuerte impulso alcista en temporalidad diaria."
+            });
+            localStorage.setItem(`alert_${ticker.symbol}`, now.toString());
+          }
+        }
+      });
       
       const [whales, traders, txs, events] = await Promise.all([
         fetchWhaleMovements(),
@@ -151,30 +174,36 @@ const Dashboard = () => {
     localStorage.setItem("telegramToken", telegramToken);
     localStorage.setItem("telegramChatId", telegramChatId);
     setShowNotifSettings(false);
+    toast.success("Configuración guardada correctamente");
   };
 
   const sendTestTelegram = async () => {
-    if (!telegramToken || !telegramChatId) return;
-    setIsSendingTest(true);
-    try {
-      const message = "🔔 *PRUEBA DE ALERTA KINETIC*\n\nTu bot de Telegram ha sido vinculado correctamente. Recibirás alertas de rupturas y análisis de IA aquí.";
-      const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
-      await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: telegramChatId,
-          text: message,
-          parse_mode: "Markdown"
-        })
-      });
-      alert("¡Mensaje de prueba enviado con éxito!");
-    } catch (error) {
-      console.error("Error sending telegram:", error);
-      alert("Error al enviar el mensaje. Verifica el Token y el Chat ID.");
-    } finally {
-      setIsSendingTest(false);
+    if (!telegramToken || !telegramChatId) {
+      toast.error("Por favor, introduce el Token y el Chat ID");
+      return;
     }
+    
+    toast.promise(
+      (async () => {
+        const message = "🔔 *PRUEBA DE ALERTA KINETIC*\n\nTu bot de Telegram ha sido vinculado correctamente. Recibirás alertas de rupturas y análisis de IA aquí.";
+        const url = `https://api.telegram.org/bot${telegramToken}/sendMessage`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: telegramChatId,
+            text: message,
+            parse_mode: "Markdown"
+          })
+        });
+        if (!response.ok) throw new Error("Failed to send");
+      })(),
+      {
+        loading: 'Enviando mensaje de prueba...',
+        success: 'Mensaje enviado correctamente a Telegram',
+        error: 'Error al enviar el mensaje. Revisa el Token y el ID.',
+      }
+    );
   };
 
   return (

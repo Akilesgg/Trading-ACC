@@ -51,6 +51,8 @@ import {
   fetchLargeTransactions
 } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
+import { sendTelegramAlert } from "@/services/telegramService";
+import { toast } from "sonner";
 import { 
   AreaChart, 
   Area, 
@@ -265,7 +267,27 @@ const Terminal = () => {
 -----------------------------------
 💡 NOTA: Gestiona tu riesgo. No arriesgues más del 1-2% por operación.`;
     navigator.clipboard.writeText(text);
-    // Could add a toast here
+    toast.success("Señal copiada al portapapeles");
+  };
+
+  const shareToTelegram = async () => {
+    if (!analysis || !ticker) return;
+    
+    toast.promise(
+      sendTelegramAlert({
+        symbol: symbolParam,
+        price: ticker.price,
+        change: ticker.priceChangePercent,
+        type: analysis.sentiment === "BULLISH" ? "BULLISH" : "BEARISH",
+        confidence: analysis.score,
+        analysis: analysis.description
+      }),
+      {
+        loading: 'Enviando señal a Telegram...',
+        success: 'Señal enviada a Telegram correctamente',
+        error: 'Error al enviar la señal a Telegram',
+      }
+    );
   };
 
   if (loading || !ticker) return (
@@ -1038,6 +1060,13 @@ const Terminal = () => {
                     title="Copiar Señal"
                   >
                     <Copy className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={shareToTelegram}
+                    className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant hover:text-primary"
+                    title="Enviar a Telegram"
+                  >
+                    <Share2 className="w-4 h-4" />
                   </button>
                   <span className={cn("text-xs font-bold px-3 py-1 rounded-full", analysis.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")}>
                     {analysis.type === "LONG" ? "COMPRA MODERADA" : "VENTA MODERADA"} ({analysis.score}%)
