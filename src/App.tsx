@@ -92,7 +92,7 @@ const TopAppBar = () => {
     { icon: Target, label: "Analizador IA", path: "/terminal", desc: "Análisis técnico profundo con Wyckoff" },
     { icon: Users, label: "Copy Trading", path: "/copy-trading", desc: "Sigue a ballenas y top traders" },
     { icon: Newspaper, label: "Noticias", path: "/news", desc: "Impacto económico y geopolítico" },
-    { icon: TrendingUp, label: "Informes de Análisis", path: "/analysis", desc: "Sentimiento global y reportes profundos" },
+    { icon: TrendingUp, label: "Análisis IA", path: "/analysis", desc: "Análisis exhaustivo de activos con IA" },
     { icon: Shield, label: "Seguridad", path: "/dashboard", desc: "Configuración de cuenta y llaves API" },
     { icon: HelpCircle, label: "Soporte", path: "/dashboard", desc: "Centro de ayuda y tutoriales" },
   ];
@@ -114,7 +114,7 @@ const TopAppBar = () => {
             <Link to="/market" className={cn("hover:text-primary transition-colors", location.pathname === "/market" && "text-primary")}>Mercados</Link>
             <Link to="/dashboard" className={cn("hover:text-primary transition-colors", location.pathname === "/dashboard" && "text-primary")}>Señales</Link>
             <Link to="/terminal" className={cn("hover:text-primary transition-colors", location.pathname === "/terminal" && "text-primary")}>Analizador</Link>
-            <Link to="/analysis" className={cn("hover:text-primary transition-colors", location.pathname === "/analysis" && "text-primary")}>Informes</Link>
+            <Link to="/analysis" className={cn("hover:text-primary transition-colors", location.pathname === "/analysis" && "text-primary")}>Análisis</Link>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col items-end mr-2">

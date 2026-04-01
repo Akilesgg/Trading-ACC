@@ -22,13 +22,18 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       
       ES OBLIGATORIO que el informe use EXACTAMENTE estos encabezados en negrita y mayúsculas:
       
-      **ESTRATEGIA**: (Describe la estrategia técnica recomendada para este activo según el modo ${mode})
+      **ESTRATEGIA**: (Describe la estrategia técnica recomendada: ALCISTA o BAJISTA)
       
       **JUSTIFICACIÓN DE ENTRADA**: (Explica detalladamente por qué el precio de entrada, el Stop Loss y los tres Take Profits están situados en esos niveles específicos basándote en la estructura de mercado, liquidez y volumen. Sé extremadamente detallado)
       
       **JUSTIFICACIÓN ALCISTA/BAJISTA**: (Explica detalladamente por qué la estructura actual justifica la postura tomada)
       
-      **NIVELES OPERATIVOS**: (Especifica el precio de entrada, Stop Loss y 3 niveles de Take Profit)
+      **NIVELES OPERATIVOS**: 
+      ENTRADA: [precio]
+      STOP LOSS: [precio]
+      TAKE PROFIT 1: [precio]
+      TAKE PROFIT 2: [precio]
+      TAKE PROFIT 3: [precio]
       
       **METÁFORA TÉCNICA**: (Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que impulsan el precio)
       

@@ -37,7 +37,8 @@ import {
   MousePointer2,
   ArrowRightLeft,
   Newspaper,
-  Star
+  Star,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -85,6 +86,7 @@ const Terminal = () => {
   const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
   const [riskAmount, setRiskAmount] = useState(100);
   const [accountSize, setAccountSize] = useState(10000);
+  const [selectedTraderStrategy, setSelectedTraderStrategy] = useState<any>(null);
   
   // Analysis State
   const [analysis, setAnalysis] = useState<any>(null);
@@ -98,17 +100,19 @@ const Terminal = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await fetchTicker(symbolParam);
+        const [data, chartData, events, whales, traders, txs] = await Promise.all([
+          fetchTicker(symbolParam),
+          fetchKlines(symbolParam, timeframe, 100),
+          fetchEconomicEvents(),
+          fetchWhaleMovements(),
+          fetchTopTraders(),
+          fetchLargeTransactions()
+        ]);
         setTicker(data);
-        const chartData = await fetchKlines(symbolParam, timeframe, 100);
         setKlines(chartData);
-        const events = await fetchEconomicEvents();
         setEconomicEvents(events);
-        const whales = await fetchWhaleMovements();
         setWhaleMovements(whales);
-        const traders = await fetchTopTraders();
         setTopTraders(traders);
-        const txs = await fetchLargeTransactions();
         setLargeTransactions(txs);
       } catch (error) {
         console.error("Analyzer data load error:", error);
@@ -118,12 +122,33 @@ const Terminal = () => {
     };
     loadData();
 
+    // Auto-refresh every 2 minutes
+    const interval = setInterval(async () => {
+      try {
+        const [events, whales, traders, txs] = await Promise.all([
+          fetchEconomicEvents(),
+          fetchWhaleMovements(),
+          fetchTopTraders(),
+          fetchLargeTransactions()
+        ]);
+        setEconomicEvents(events);
+        setWhaleMovements(whales);
+        setTopTraders(traders);
+        setLargeTransactions(txs);
+      } catch (error) {
+        console.error("Auto-refresh error:", error);
+      }
+    }, 120000);
+
     // WebSocket for live updates
     const ws = connectTickerStream(symbolParam, (liveData) => {
       setTicker(liveData);
     });
 
-    return () => ws.close();
+    return () => {
+      ws.close();
+      clearInterval(interval);
+    };
   }, [symbolParam, timeframe]);
 
   useEffect(() => {
@@ -294,6 +319,26 @@ const Terminal = () => {
         error: 'Error al enviar la señal a Telegram',
       }
     );
+  };
+
+  const handleCopyStrategy = (trader: any) => {
+    const isLong = trader.trade.includes("LONG");
+    const entry = parseFloat(ticker?.price || "0");
+    const volatility = entry * 0.01;
+    
+    const strategyDetails = {
+      name: trader.name,
+      trade: trader.trade,
+      timeframe: "1h",
+      entry: entry,
+      sl: isLong ? entry - volatility : entry + volatility,
+      tp1: isLong ? entry + volatility * 1.5 : entry - volatility * 1.5,
+      tp2: isLong ? entry + volatility * 2.5 : entry - volatility * 2.5,
+      tp3: isLong ? entry + volatility * 4.0 : entry - volatility * 4.0,
+      justification: `Estrategia basada en el flujo de órdenes institucional detectado por ${trader.name}. Se observa una fuerte acumulación en zonas de descuento con confluencia en el perfil de volumen.`
+    };
+    setSelectedTraderStrategy(strategyDetails);
+    toast.info(`Estrategia de ${trader.name} cargada`);
   };
 
   if (loading || !ticker) return (
@@ -481,6 +526,69 @@ const Terminal = () => {
                 </div>
               </div>
 
+              {selectedTraderStrategy && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  className="bg-orange-500/5 border-b border-orange-500/20 p-6 relative"
+                >
+                  <button 
+                    onClick={() => setSelectedTraderStrategy(null)}
+                    className="absolute top-4 right-4 p-1 hover:bg-orange-500/10 rounded-full transition-colors"
+                  >
+                    <X className="w-4 h-4 text-orange-500" />
+                  </button>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div className="md:col-span-1 space-y-2">
+                      <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Trader</p>
+                      <p className="text-lg font-headline font-bold">{selectedTraderStrategy.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("text-[10px] font-black px-2 py-0.5 rounded", selectedTraderStrategy.trade.includes("LONG") ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")}>
+                          {selectedTraderStrategy.trade}
+                        </span>
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{selectedTraderStrategy.timeframe}</span>
+                      </div>
+                    </div>
+                    <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold text-on-surface-variant uppercase">Entrada</p>
+                        <p className="text-sm font-bold text-on-surface">${selectedTraderStrategy.entry.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold text-on-surface-variant uppercase">Stop Loss</p>
+                        <p className="text-sm font-bold text-secondary">${selectedTraderStrategy.sl.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold text-on-surface-variant uppercase">Take Profit 1</p>
+                        <p className="text-sm font-bold text-primary">${selectedTraderStrategy.tp1.toLocaleString()}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[8px] font-bold text-on-surface-variant uppercase">Take Profit 3</p>
+                        <p className="text-sm font-bold text-primary">${selectedTraderStrategy.tp3.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div className="md:col-span-1 border-l border-orange-500/10 pl-4 flex flex-col justify-between">
+                      <div>
+                        <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Justificación</p>
+                        <p className="text-[10px] text-on-surface-variant leading-relaxed italic">
+                          {selectedTraderStrategy.justification}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const text = `🚀 ESTRATEGIA COPIADA - ${selectedTraderStrategy.name}\nActivo: ${symbolParam}\nEntrada: $${selectedTraderStrategy.entry}\nSL: $${selectedTraderStrategy.sl}\nTP1: $${selectedTraderStrategy.tp1}\nTP2: $${selectedTraderStrategy.tp2}\nTP3: $${selectedTraderStrategy.tp3}\nJustificación: ${selectedTraderStrategy.justification}`;
+                          navigator.clipboard.writeText(text);
+                          toast.success("Estrategia copiada al portapapeles");
+                        }}
+                        className="mt-4 w-full py-2 bg-orange-500 text-black text-[10px] font-black uppercase rounded-lg hover:bg-orange-400 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Copy className="w-3 h-3" /> Copiar Señal Completa
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-outline-variant/10">
                 {/* Whale Movements */}
                 <div className="p-4 space-y-4">
@@ -526,22 +634,24 @@ const Terminal = () => {
                   </h4>
                   <div className="space-y-3">
                     {topTraders.map((trader, i) => (
-                      <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors">
+                      <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-2 rounded-lg transition-colors border border-transparent hover:border-orange-500/20">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 bg-surface-container rounded-xl flex items-center justify-center">
                             <Users className="w-3 h-3 text-on-surface-variant" />
                           </div>
                           <div>
                             <p className="text-[10px] font-bold text-on-surface">{trader.name}</p>
-                            <p className="text-[8px] text-on-surface-variant uppercase">{trader.exchange} | {trader.followers} seg</p>
+                            <p className="text-[8px] text-on-surface-variant uppercase">{trader.exchange}</p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end">
                           <p className={cn("text-[10px] font-black", trader.trade.includes("LONG") ? "text-primary" : "text-secondary")}>{trader.trade}</p>
-                          <p className="text-[10px] font-bold text-primary">{trader.profit}</p>
-                        </div>
-                        <div className="w-6 h-6 rounded-full border border-orange-500/30 flex items-center justify-center text-[8px] font-bold text-orange-500">
-                          {trader.score}
+                          <button 
+                            onClick={() => handleCopyStrategy(trader)}
+                            className="mt-1 px-2 py-0.5 bg-orange-500/10 hover:bg-orange-500 text-orange-500 hover:text-black text-[8px] font-black uppercase rounded transition-all"
+                          >
+                            Copiar Estrategia
+                          </button>
                         </div>
                       </div>
                     ))}
