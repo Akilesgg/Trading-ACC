@@ -103,21 +103,21 @@ export async function fetchEconomicEvents() {
 
 export async function fetchWhaleMovements() {
   return [
-    { symbol: "BTCUSDT", type: "BUY", amount: "$2450K", impact: "Alta", exchange: "Binance", time: "hace 2 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "ETHUSDT", type: "SELL", amount: "$1800K", impact: "Alta", exchange: "Bybit", time: "hace 5 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "BNBUSDT", type: "BUY", amount: "$950K", impact: "Media", exchange: "OKX", time: "hace 12 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "SOLUSDT", type: "BUY", amount: "$620K", impact: "Media", exchange: "Coinbase", time: "hace 18 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "XRPUSDT", type: "SELL", amount: "$870K", impact: "Alta", exchange: "Binance", time: "hace 25 min", sourceUrl: "https://whale-alert.io/" },
+    { symbol: "BTCUSDT", type: "COMPRA", amount: "$2450K", impact: "Alta", exchange: "Binance", time: "hace 2 min", sourceUrl: "https://whale-alert.io/" },
+    { symbol: "ETHUSDT", type: "VENTA", amount: "$1800K", impact: "Alta", exchange: "Bybit", time: "hace 5 min", sourceUrl: "https://whale-alert.io/" },
+    { symbol: "BNBUSDT", type: "COMPRA", amount: "$950K", impact: "Media", exchange: "OKX", time: "hace 12 min", sourceUrl: "https://whale-alert.io/" },
+    { symbol: "SOLUSDT", type: "COMPRA", amount: "$620K", impact: "Media", exchange: "Coinbase", time: "hace 18 min", sourceUrl: "https://whale-alert.io/" },
+    { symbol: "XRPUSDT", type: "VENTA", amount: "$870K", impact: "Alta", exchange: "Binance", time: "hace 25 min", sourceUrl: "https://whale-alert.io/" },
   ];
 }
 
 export async function fetchTopTraders() {
   return [
-    { name: "CryptoGod", exchange: "Binance", followers: "12.5K", trade: "LONG BTC", profit: "+12.4%", score: 94, sourceUrl: "https://www.binance.com/en/copy-trading" },
-    { name: "WhaleHunter", exchange: "Bybit", followers: "8.9K", trade: "SHORT ETH", profit: "+8.2%", score: 88, sourceUrl: "https://www.bybit.com/copyTrading" },
-    { name: "SmartMoney", exchange: "OKX", followers: "6.7K", trade: "LONG SOL", profit: "+15.7%", score: 85, sourceUrl: "https://www.okx.com/copy-trading" },
-    { name: "AlphaTrader", exchange: "Binance", followers: "15.4K", trade: "LONG BTC", profit: "+9.3%", score: 91, sourceUrl: "https://www.binance.com/en/copy-trading" },
-    { name: "MoonMaker", exchange: "Kucoin", followers: "5.2K", trade: "SHORT BNB", profit: "+5.8%", score: 72, sourceUrl: "https://www.kucoin.com/copy-trading" },
+    { name: "CryptoGod", exchange: "Binance", followers: "12.5K", trade: "LARGO BTC", profit: "+12.4%", score: 94, sourceUrl: "https://www.binance.com/en/copy-trading" },
+    { name: "WhaleHunter", exchange: "Bybit", followers: "8.9K", trade: "CORTO ETH", profit: "+8.2%", score: 88, sourceUrl: "https://www.bybit.com/copyTrading" },
+    { name: "SmartMoney", exchange: "OKX", followers: "6.7K", trade: "LARGO SOL", profit: "+15.7%", score: 85, sourceUrl: "https://www.okx.com/copy-trading" },
+    { name: "AlphaTrader", exchange: "Binance", followers: "15.4K", trade: "LARGO BTC", profit: "+9.3%", score: 91, sourceUrl: "https://www.binance.com/en/copy-trading" },
+    { name: "MoonMaker", exchange: "Kucoin", followers: "5.2K", trade: "CORTO BNB", profit: "+5.8%", score: 72, sourceUrl: "https://www.kucoin.com/copy-trading" },
   ];
 }
 

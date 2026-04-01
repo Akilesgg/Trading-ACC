@@ -176,10 +176,15 @@ const Analysis = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-primary-dim">
                     <Activity className="w-4 h-4" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Metodología Wyckoff</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Estado de Ruptura</span>
                   </div>
                   <div className="wyckoff-label">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Fase de Acumulación</span>
+                    <span className={cn(
+                      "text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-primary/10",
+                      parseFloat(ticker.priceChangePercent) > 2 ? "text-primary animate-pulse" : "text-on-surface-variant"
+                    )}>
+                      {parseFloat(ticker.priceChangePercent) > 2 ? "Ruptura Confirmada" : "En Consolidación"}
+                    </span>
                   </div>
                 </div>
                 

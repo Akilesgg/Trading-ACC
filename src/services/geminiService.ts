@@ -7,9 +7,9 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Analyze the current market situation for ${symbol}. Current price is ${price} with a 24h change of ${change}%. 
-      Provide a brief Wyckoff methodology analysis and overall sentiment. 
-      Keep it professional and concise, suitable for a trading terminal summary.`,
+      contents: `Analiza la situación actual del mercado para ${symbol}. El precio actual es ${price} con un cambio en 24h del ${change}%. 
+      Proporciona un análisis breve basado en la metodología Wyckoff y, lo más importante, identifica si hay una RUPTURA (breakout) inminente o confirmada. 
+      Responde siempre en ESPAÑOL. Mantén un tono profesional y conciso, adecuado para un resumen de terminal de trading.`,
       config: {
         tools: [{ googleSearch: {} }],
       },
@@ -17,7 +17,7 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
     return response.text;
   } catch (error) {
     console.error("Gemini analysis error:", error);
-    return "Analysis currently unavailable. Please check back later.";
+    return "Análisis no disponible actualmente. Por favor, inténtalo de nuevo más tarde.";
   }
 }
 
@@ -25,7 +25,7 @@ export async function getMarketSentiment() {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: "What is the current global crypto market sentiment? Provide a Fear & Greed index estimation and a brief explanation.",
+      contents: "¿Cuál es el sentimiento actual del mercado global de criptomonedas? Proporciona una estimación del índice de Miedo y Codicia y una breve explicación en ESPAÑOL.",
       config: {
         tools: [{ googleSearch: {} }],
       },
@@ -33,6 +33,6 @@ export async function getMarketSentiment() {
     return response.text;
   } catch (error) {
     console.error("Gemini sentiment error:", error);
-    return "Neutral sentiment based on recent trends.";
+    return "Sentimiento neutral basado en tendencias recientes.";
   }
 }

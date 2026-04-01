@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Zap, 
   TrendingUp, 
@@ -39,7 +39,7 @@ const Dashboard = () => {
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
   const [loading, setLoading] = useState(true);
   const { watchlist, toggleWatchlist } = useWatchlist();
-  const [filter, setFilter] = useState<"all" | "watchlist" | "bullish" | "bearish" | "neutral">("all");
+  const [filter, setFilter] = useState<"all" | "watchlist" | "bullish" | "bearish" | "neutral" | "breakout">("all");
   
   const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
   const [topTraders, setTopTraders] = useState<any[]>([]);
@@ -94,6 +94,8 @@ const Dashboard = () => {
       filtered = allTickers.filter(t => parseFloat(t.priceChangePercent) < -1);
     } else if (filter === "neutral") {
       filtered = allTickers.filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= 1);
+    } else if (filter === "breakout") {
+      filtered = allTickers.filter(t => parseFloat(t.priceChangePercent) > 3);
     }
     setTickers(filtered);
   }, [filter, allTickers, watchlist]);
@@ -101,18 +103,46 @@ const Dashboard = () => {
   const bullishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 1).length;
   const bearishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) < -1).length;
   const neutralCount = allTickers.filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= 1).length;
+  const breakoutCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 3).length;
 
   const signals = [
     { id: "bullish", label: "SEÑALES ALCISTAS", count: bullishCount, color: "text-primary" },
     { id: "bearish", label: "SEÑALES BAJISTAS", count: bearishCount, color: "text-secondary" },
+    { id: "breakout", label: "RUPTURAS (BREAKOUTS)", count: breakoutCount, color: "text-primary animate-pulse" },
     { id: "neutral", label: "NEUTRAL / LATERAL", count: neutralCount, color: "text-tertiary" },
   ];
+
+  const playAlert = () => {
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+    audio.play().catch(e => console.log("Audio play blocked by browser"));
+  };
+
+  const handleSignalClick = (id: any) => {
+    setFilter(id);
+    const element = document.getElementById("kinetic-matrix");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+    if (id === "breakout") playAlert();
+  };
+
+  const getStrategy = (timeframe: string) => {
+    switch(timeframe) {
+      case "1M": return "Scalping: Ruptura de Micro-rango";
+      case "5M": return "Intradía: Confirmación de Tendencia";
+      case "15M": return "Reversión: Agotamiento de Precio";
+      case "1H": return "Swing: Estructura de Mercado";
+      default: return "Estrategia Estándar";
+    }
+  };
 
   const velocityMoves = [
     { id: "01", pair: "AVAX / USDT", desc: "Volatilidad incrementada detectada", type: "COMPRA RÁPIDA", time: "hace 2m", color: "text-primary" },
     { id: "02", pair: "PEPE / USDT", desc: "Alerta de movimiento de ballenas", type: "SALIR AHORA", time: "hace 5m", color: "text-secondary" },
     { id: "03", pair: "LINK / USDT", desc: "Condición de sobreventa RSI", type: "COMPRA FUERTE", time: "hace 12m", color: "text-primary" },
   ];
+
+  const [showNotifSettings, setShowNotifSettings] = useState(false);
 
   return (
     <motion.div 
@@ -121,6 +151,81 @@ const Dashboard = () => {
       exit={{ opacity: 0, y: -20 }}
       className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8"
     >
+      {/* Notification Settings Modal */}
+      <AnimatePresence>
+        {showNotifSettings && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowNotifSettings(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface-container-low p-8 rounded-[2.5rem] z-[110] border border-outline-variant/20 shadow-2xl space-y-6"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-headline text-xl font-bold uppercase tracking-tight">Configuración de Alertas</h3>
+                <button onClick={() => setShowNotifSettings(false)} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+                  <Activity className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold uppercase tracking-widest">Notificaciones al Móvil</span>
+                    <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-black">ACTIVO</span>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed uppercase tracking-widest">
+                    Opciones disponibles: Telegram Bot, Discord Webhook, o Web Push (PWA).
+                  </p>
+                  <div className="flex gap-2 pt-2">
+                    <button className="flex-1 py-2 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-colors">Vincular Telegram</button>
+                    <button className="flex-1 py-2 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-colors">Vincular Discord</button>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold uppercase tracking-widest">Alertas Sonoras (PC)</span>
+                    <div className="w-10 h-5 bg-primary rounded-full relative">
+                      <div className="absolute right-1 top-1 w-3 h-3 bg-on-primary rounded-full shadow-sm"></div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed uppercase tracking-widest">
+                    Se reproducirá un sonido "Ping" cuando una señal entre en zona de ruptura.
+                  </p>
+                </div>
+
+                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold uppercase tracking-widest">Alertas Visuales</span>
+                    <div className="w-10 h-5 bg-primary rounded-full relative">
+                      <div className="absolute right-1 top-1 w-3 h-3 bg-on-primary rounded-full shadow-sm"></div>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed uppercase tracking-widest">
+                    Las tarjetas de activos parpadearán cuando se detecte una señal crítica.
+                  </p>
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowNotifSettings(false)}
+                className="w-full py-4 bg-primary text-on-primary rounded-full font-bold uppercase tracking-widest text-xs shadow-xl shadow-primary/20 active:scale-95 transition-all"
+              >
+                Guardar Configuración
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Hero: Market Pulse */}
       <section className="relative">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -129,9 +234,17 @@ const Dashboard = () => {
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-bold font-label uppercase tracking-widest text-primary-dim">Sentimiento del Mercado Global</span>
-                  <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold font-label uppercase tracking-widest text-primary-dim">Sentimiento del Mercado Global</span>
+                    <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+                  </div>
+                  <button 
+                    onClick={() => setShowNotifSettings(true)}
+                    className="p-2 bg-surface-container-highest rounded-xl border border-outline-variant/10 hover:bg-primary/10 transition-colors group"
+                  >
+                    <Bell className="w-4 h-4 text-on-surface-variant group-hover:text-primary" />
+                  </button>
                 </div>
                 <h2 className="font-headline text-[3.5rem] font-bold tracking-tight leading-none mb-4"><span className="text-primary">CODICIA</span> EXTREMA</h2>
               </div>
@@ -163,7 +276,7 @@ const Dashboard = () => {
               {signals.map((s) => (
                 <button 
                   key={s.label} 
-                  onClick={() => setFilter(s.id as any)}
+                  onClick={() => handleSignalClick(s.id as any)}
                   className={cn(
                     "w-full flex justify-between items-center p-3 rounded-lg transition-all active:scale-95",
                     filter === s.id ? "bg-primary/10 border border-primary/30" : "bg-surface-container hover:bg-surface-container-highest"
@@ -235,7 +348,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={cn("text-[10px] font-black", whale.type === "BUY" ? "text-primary" : "text-secondary")}>{whale.type}</p>
+                          <p className={cn("text-[10px] font-black", whale.type === "COMPRA" ? "text-primary" : "text-secondary")}>{whale.type}</p>
                           <p className="text-[10px] font-bold text-on-surface">{whale.amount}</p>
                         </div>
                       </a>
@@ -267,7 +380,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className={cn("text-[10px] font-black", trader.trade.includes("LONG") ? "text-primary" : "text-secondary")}>{trader.trade}</p>
+                          <p className={cn("text-[10px] font-black", trader.trade.includes("LARGO") ? "text-primary" : "text-secondary")}>{trader.trade}</p>
                         </div>
                         <div className="w-6 h-6 rounded-full border border-orange-500/30 flex items-center justify-center text-[8px] font-bold text-orange-500">
                           {trader.score}
@@ -360,7 +473,7 @@ const Dashboard = () => {
       </section>
 
       {/* Kinetic Matrix */}
-      <section className="space-y-6">
+      <section id="kinetic-matrix" className="space-y-6 scroll-mt-24">
         <div className="flex items-center justify-between">
           <h2 className="font-headline text-2xl font-bold tracking-tight uppercase">MATRIZ KINETIC</h2>
           <div className="flex bg-surface-container-highest rounded-full p-1">
@@ -411,7 +524,7 @@ const Dashboard = () => {
                             "text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest",
                             isBullish ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
                           )}>
-                            {isBullish ? "Bullish" : "Bearish"}
+                            {isBullish ? "Alcista" : "Bajista"}
                           </span>
                           <Star 
                             className={cn(
@@ -438,9 +551,18 @@ const Dashboard = () => {
                       { label: "15M", icon: Minus, color: "text-tertiary", bg: "bg-surface-container-highest" },
                       { label: "1H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
                     ].map((tf) => (
-                      <div key={tf.label} className={cn("flex flex-col items-center p-2 rounded-lg border border-outline-variant/10", tf.bg)}>
+                      <div 
+                        key={tf.label} 
+                        title={getStrategy(tf.label)}
+                        className={cn("flex flex-col items-center p-2 rounded-lg border border-outline-variant/10 group/tf relative", tf.bg)}
+                      >
                         <span className="text-[10px] font-label text-on-surface-variant mb-1">{tf.label}</span>
                         <tf.icon className={cn("w-4 h-4", tf.color)} />
+                        
+                        {/* Strategy Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 p-2 bg-surface-container-highest text-[8px] font-bold uppercase tracking-widest text-on-surface rounded opacity-0 group-hover/tf:opacity-100 transition-opacity pointer-events-none z-50 text-center border border-outline-variant/20 shadow-xl">
+                          {getStrategy(tf.label)}
+                        </div>
                       </div>
                     ))}
                   </div>
