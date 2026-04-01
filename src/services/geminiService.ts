@@ -18,14 +18,17 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       model: "gemini-3-flash-preview",
       contents: `Analiza la situación actual del mercado para ${symbol}. El precio actual es ${price} con un cambio en 24h del ${change}%. 
       ${modePrompt}
-      Responde siempre en ESPAÑOL. Mantén un tono profesional y detallado, adecuado para un resumen de terminal de trading. 
+      Responde siempre en ESPAÑOL. Mantén un tono profesional y detallado.
       
-      REQUISITOS DEL INFORME:
-      1. ESTRATEGIA: Describe la estrategia técnica recomendada para este activo según el modo seleccionado (${mode}).
-      2. JUSTIFICACIÓN ALCISTA: Explica detalladamente por qué la estructura actual justifica una postura alcista (o los riesgos si es bajista).
-      3. METÁFORA TÉCNICA: Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que actúan como el motor del movimiento (como moléculas que impulsan el precio).
+      ES OBLIGATORIO que el informe use EXACTAMENTE estos encabezados en negrita:
       
-      Asegúrate de que la descripción sea detallada y profesional.`,
+      ESTRATEGIA: (Describe la estrategia técnica recomendada para este activo según el modo ${mode})
+      
+      JUSTIFICACIÓN ALCISTA: (Explica detalladamente por qué la estructura actual justifica una postura alcista o los riesgos si es bajista)
+      
+      METÁFORA TÉCNICA: (Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que impulsan el precio)
+      
+      Asegúrate de que la descripción sea detallada y profesional. No uses otros formatos.`,
       config: {
         tools: [{ googleSearch: {} }],
       },

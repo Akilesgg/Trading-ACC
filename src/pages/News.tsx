@@ -141,8 +141,6 @@ const News: React.FC = () => {
                   </button>
                 </div>
               </div>
-              
-              <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-1000"></div>
             </motion.div>
           ))}
         </div>

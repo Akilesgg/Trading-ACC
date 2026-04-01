@@ -176,16 +176,45 @@ const Dashboard = () => {
               </div>
               
               <div className="space-y-4">
-                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 space-y-2">
+                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-bold uppercase tracking-widest">Notificaciones al Móvil</span>
                     <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded font-black">ACTIVO</span>
                   </div>
-                  <p className="text-[10px] text-on-surface-variant leading-relaxed uppercase tracking-widest">
-                    Opciones disponibles: Telegram Bot, Discord Webhook, o Web Push (PWA).
-                  </p>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <p className="text-[8px] font-bold text-primary uppercase tracking-widest">Configuración Telegram</p>
+                      <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                        1. Crea un bot con <span className="text-primary">@BotFather</span> en Telegram.<br/>
+                        2. Obtén tu <span className="text-primary">API Token</span>.<br/>
+                        3. Obtén tu <span className="text-primary">Chat ID</span> (usa @userinfobot).
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
+                      <p className="text-[9px] font-bold text-primary uppercase mb-1">¿Cómo funcionan las alertas?</p>
+                      <p className="text-[9px] text-on-surface-variant leading-relaxed">
+                        Cuando el sistema detecta una <span className="text-primary font-bold">RUPTURA (BREAKOUT)</span> confirmada en cualquier activo, enviará automáticamente un mensaje a tu Telegram con el precio, el porcentaje de cambio y el análisis de IA.
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-2">
+                      <input 
+                        type="text" 
+                        placeholder="Telegram Bot Token" 
+                        className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-[10px] focus:outline-none focus:border-primary/50"
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="Chat ID" 
+                        className="w-full bg-surface-container-highest border border-outline-variant/20 rounded-lg px-3 py-2 text-[10px] focus:outline-none focus:border-primary/50"
+                      />
+                    </div>
+                  </div>
+
                   <div className="flex gap-2 pt-2">
-                    <button className="flex-1 py-2 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-colors">Vincular Telegram</button>
+                    <button className="flex-1 py-2 bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-colors">Vincular Telegram</button>
                     <button className="flex-1 py-2 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-colors">Vincular Discord</button>
                   </div>
                 </div>
@@ -231,7 +260,6 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Ticker Card */}
           <div className="lg:col-span-2 bg-surface-container-low p-8 rounded-xl border-l-4 border-primary relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div>
                 <div className="flex items-center justify-between">
@@ -512,7 +540,7 @@ const Dashboard = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
                       <div className={cn(
-                        "w-12 h-12 rounded-full flex items-center justify-center transition-colors",
+                        "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
                         isBullish ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
                       )}>
                         {isBullish ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}

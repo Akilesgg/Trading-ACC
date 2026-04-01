@@ -438,7 +438,7 @@ const Terminal = () => {
             <div className="bg-[#0a0c10] border border-orange-500/30 rounded-2xl overflow-hidden shadow-2xl">
               <div className="bg-gradient-to-r from-orange-600/20 to-transparent p-4 border-b border-orange-500/20 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/20">
+                  <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
                     <Target className="w-5 h-5 text-black" />
                   </div>
                   <h3 className="text-sm font-black uppercase tracking-widest text-orange-500">
@@ -507,7 +507,7 @@ const Terminal = () => {
                     {topTraders.map((trader, i) => (
                       <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors">
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-surface-container rounded-full flex items-center justify-center">
+                          <div className="w-6 h-6 bg-surface-container rounded-xl flex items-center justify-center">
                             <Users className="w-3 h-3 text-on-surface-variant" />
                           </div>
                           <div>
@@ -753,7 +753,6 @@ const Terminal = () => {
           <div className="space-y-6">
             {/* Quick Context Panel */}
             <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-primary/10 transition-colors"></div>
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2 relative z-10">
                 <Brain className="w-3 h-3" /> CONTEXTO INSTITUCIONAL
               </h4>
@@ -1131,7 +1130,7 @@ const Terminal = () => {
                 analysis.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30" : "bg-secondary/10 border-secondary/30"
               )}>
                 <div className={cn(
-                  "w-24 h-24 rounded-full flex items-center justify-center animate-pulse shadow-2xl",
+                  "w-24 h-24 rounded-xl flex items-center justify-center animate-pulse shadow-2xl",
                   analysis.sentiment === "BULLISH" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
                 )}>
                   {analysis.sentiment === "BULLISH" ? <TrendingUp className="w-12 h-12" /> : <TrendingDown className="w-12 h-12" />}
@@ -1190,7 +1189,6 @@ const Terminal = () => {
                     "La estructura de mercado en {timeframe} sugiere una {analysis.type === "LONG" ? "acumulación" : "distribución"} fuerte. Los niveles de liquidez indican un posible movimiento hacia el TP2 en las próximas horas."
                   </p>
                 </div>
-                <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               </div>
             </div>
           </div>
@@ -1199,7 +1197,7 @@ const Terminal = () => {
 
         {!analysis && !analyzing && (
           <div className="py-20 text-center space-y-4">
-            <div className="w-20 h-20 bg-surface-container rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-surface-container rounded-xl flex items-center justify-center mx-auto mb-6">
               <Brain className="w-10 h-10 text-on-surface-variant/20" />
             </div>
             <h3 className="text-xl font-headline font-bold text-on-surface-variant">Listo para Analizar</h3>

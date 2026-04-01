@@ -126,7 +126,7 @@ const Analysis = () => {
         
         <div className="relative z-10 flex flex-col lg:flex-row gap-8 items-center">
           <div className="relative">
-            <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center shadow-[0_20px_40px_rgba(0,255,163,0.2)]">
+            <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-primary to-primary-dim flex items-center justify-center shadow-[0_20px_40px_rgba(0,255,163,0.2)]">
               <Brain className="w-12 h-12 text-on-primary-fixed" />
             </div>
             <div className="absolute -bottom-2 -right-2 bg-surface-container-highest p-1.5 rounded-full border border-outline-variant/20">
@@ -193,7 +193,7 @@ const Analysis = () => {
             <div key={ticker.symbol} className="bg-surface-container-low rounded-2xl overflow-hidden border border-outline-variant/10 flex flex-col hover:border-primary/20 transition-all">
               <div className="p-6 bg-surface-container-high/50 flex justify-between items-center border-b border-outline-variant/10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center">
                     <TrendingUp className="w-5 h-5 text-primary" />
                   </div>
                   <div>
@@ -228,8 +228,23 @@ const Analysis = () => {
                 </div>
                 
                 <div className="prose prose-invert max-w-none">
-                  <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap">
-                    {analysis[ticker.symbol] || "Aún no se ha generado ningún análisis. Haz clic en analizar para comenzar."}
+                  <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap bg-surface-container-high/20 p-6 rounded-xl border border-outline-variant/5">
+                    {analysis[ticker.symbol] ? (
+                      analysis[ticker.symbol].split('\n').map((line, i) => {
+                        if (line.includes(':')) {
+                          const [header, ...rest] = line.split(':');
+                          return (
+                            <p key={i} className="mb-2">
+                              <span className="text-primary font-black uppercase tracking-widest text-[10px] block mb-1">{header}:</span>
+                              {rest.join(':')}
+                            </p>
+                          );
+                        }
+                        return <p key={i} className="mb-2">{line}</p>;
+                      })
+                    ) : (
+                      "Aún no se ha generado ningún análisis. Haz clic en analizar para comenzar."
+                    )}
                   </div>
                 </div>
 
