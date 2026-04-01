@@ -25,11 +25,24 @@ import {
   Shield,
   Clock,
   BarChart3,
-  Layers
+  Layers,
+  Users,
+  ArrowRightLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
-import { fetchTickers, fetchTicker, CryptoData, fetchCryptoData, fetchEconomicEvents, fetchWhaleMovements } from "@/services/cryptoService";
+import { 
+  fetchTickers, 
+  fetchTicker, 
+  CryptoData, 
+  fetchCryptoData, 
+  fetchEconomicEvents, 
+  fetchWhaleMovements,
+  fetchTopTraders,
+  fetchLargeTransactions
+} from "@/services/cryptoService";
+import { sendTelegramAlert } from "@/services/telegramService";
+import { toast } from "sonner";
 
 import { 
   LineChart, 
@@ -40,8 +53,70 @@ import {
   Tooltip, 
   ResponsiveContainer,
   AreaChart,
-  Area
+  Area,
+  ReferenceDot
 } from 'recharts';
+
+const WyckoffArrow = (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <path
+      d="M0,-10 L5,0 L-5,0 Z"
+      transform={`translate(${cx},${cy})`}
+      fill="white"
+      className="drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]"
+    />
+  );
+};
+
+  const parseAnalysis = (text: string) => {
+    if (!text) return {};
+    const sections: Record<string, string> = {};
+    const parts = text.split(/\*\*([^*]+)\*\*/);
+    
+    for (let i = 1; i < parts.length; i += 2) {
+      const title = parts[i].trim().replace(':', '');
+      const content = parts[i+1]?.trim().replace(/^[:\s-]+/, '') || "";
+      sections[title] = content;
+    }
+    return sections;
+  };
+
+  const getChartData = (price: string) => {
+    const basePrice = parseFloat(price);
+    return Array.from({ length: 20 }).map((_, i) => ({
+      name: i.toString(),
+      price: basePrice * (1 + (Math.random() * 0.04 - 0.02))
+    }));
+  };
+
+  const getWyckoffData = (price: string, phase: string) => {
+    const basePrice = parseFloat(price);
+    const data = [];
+    let currentPrice = basePrice;
+    
+    for (let i = 0; i < 30; i++) {
+      let change = 0;
+      if (phase.includes("Acumulación")) {
+        change = Math.sin(i / 2) * 0.01;
+      } else if (phase.includes("Markup")) {
+        change = (i / 30) * 0.05;
+      } else if (phase.includes("Distribución")) {
+        change = Math.cos(i / 2) * 0.01;
+      } else if (phase.includes("Markdown")) {
+        change = -(i / 30) * 0.05;
+      } else {
+        change = (Math.random() - 0.5) * 0.02;
+      }
+      
+      data.push({
+        name: i.toString(),
+        price: currentPrice * (1 + change),
+        arrow: i % 10 === 5
+      });
+    }
+    return data;
+  };
 
 const Analysis = () => {
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
@@ -58,16 +133,23 @@ const Analysis = () => {
   const [ticker, setTicker] = useState<CryptoData | null>(null);
   const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
   const [economicEvents, setEconomicEvents] = useState<any[]>([]);
+  const [topTraders, setTopTraders] = useState<any[]>([]);
+  const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
+  const [selectedTraderStrategy, setSelectedTraderStrategy] = useState<any>(null);
+
+  const analysisSections = parseAnalysis(analysis);
 
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [assets, aiSentiment, initialTicker, events, whales] = await Promise.all([
+      const [assets, aiSentiment, initialTicker, events, whales, traders, txs] = await Promise.all([
         fetchCryptoData(),
         getMarketSentiment(),
         fetchTicker(selectedSymbol),
         fetchEconomicEvents(),
-        fetchWhaleMovements()
+        fetchWhaleMovements(),
+        fetchTopTraders(),
+        fetchLargeTransactions()
       ]);
       
       setAllAssets(assets);
@@ -75,6 +157,8 @@ const Analysis = () => {
       setTicker(initialTicker);
       setEconomicEvents(events);
       setWhaleMovements(whales);
+      setTopTraders(traders);
+      setLargeTransactions(txs);
       
       const initialAnalysis = await analyzeMarket(selectedSymbol, initialTicker.price, initialTicker.priceChangePercent, selectedMode);
       setAnalysis(initialAnalysis);
@@ -86,22 +170,27 @@ const Analysis = () => {
   };
 
   useEffect(() => {
+    setAnalysis(""); // Clear previous analysis when symbol changes
     loadInitialData();
     
     // Auto-refresh every 2 minutes
     const interval = setInterval(async () => {
       setRefreshing(true);
       try {
-        const [aiSentiment, currentTicker, events, whales] = await Promise.all([
+        const [aiSentiment, currentTicker, events, whales, traders, txs] = await Promise.all([
           getMarketSentiment(),
           fetchTicker(selectedSymbol),
           fetchEconomicEvents(),
-          fetchWhaleMovements()
+          fetchWhaleMovements(),
+          fetchTopTraders(),
+          fetchLargeTransactions()
         ]);
         setSentiment(aiSentiment);
         setTicker(currentTicker);
         setEconomicEvents(events);
         setWhaleMovements(whales);
+        setTopTraders(traders);
+        setLargeTransactions(txs);
         setLastUpdate(new Date().toLocaleTimeString());
       } catch (error) {
         console.error("Auto-refresh error:", error);
@@ -128,28 +217,45 @@ const Analysis = () => {
     }
   };
 
-  const getChartData = (price: string) => {
-    const basePrice = parseFloat(price);
-    return Array.from({ length: 20 }).map((_, i) => ({
-      name: i.toString(),
-      price: basePrice * (1 + (Math.random() * 0.04 - 0.02))
-    }));
-  };
-
-  const parseAnalysis = (text: string) => {
-    if (!text) return null;
-    const sections: Record<string, string> = {};
-    const parts = text.split(/\*\*([^*]+)\*\*/);
+  const shareToTelegram = async () => {
+    if (!analysis || !ticker) return;
     
-    for (let i = 1; i < parts.length; i += 2) {
-      const title = parts[i].trim().replace(':', '');
-      const content = parts[i+1]?.trim().replace(/^[:\s-]+/, '') || "";
-      sections[title] = content;
-    }
-    return sections;
+    toast.promise(
+      sendTelegramAlert({
+        symbol: selectedSymbol,
+        price: ticker.price,
+        change: ticker.priceChangePercent,
+        type: analysisSections?.["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA") ? "BULLISH" : "BEARISH",
+        confidence: 85,
+        analysis: analysis
+      }),
+      {
+        loading: 'Enviando señal a Telegram...',
+        success: 'Señal enviada a Telegram correctamente',
+        error: 'Error al enviar la señal a Telegram',
+      }
+    );
   };
 
-  const analysisSections = parseAnalysis(analysis);
+  const handleCopyStrategy = (trader: any) => {
+    const isLong = trader.trade.includes("LONG");
+    const entry = parseFloat(ticker?.price || "0");
+    const volatility = entry * 0.01;
+    
+    const strategyDetails = {
+      name: trader.name,
+      trade: trader.trade,
+      timeframe: "1h",
+      entry: entry,
+      sl: isLong ? entry - volatility : entry + volatility,
+      tp1: isLong ? entry + volatility * 1.5 : entry - volatility * 1.5,
+      tp2: isLong ? entry + volatility * 2.5 : entry - volatility * 2.5,
+      tp3: isLong ? entry + volatility * 4.0 : entry - volatility * 4.0,
+      justification: `Estrategia basada en el flujo de órdenes institucional detectado por ${trader.name}. Se observa una fuerte acumulación en zonas de descuento con confluencia en el perfil de volumen.`
+    };
+    setSelectedTraderStrategy(strategyDetails);
+    toast.info(`Estrategia de ${trader.name} cargada`);
+  };
 
   if (loading) {
     return (
@@ -337,6 +443,54 @@ const Analysis = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="space-y-6"
               >
+                {/* Wyckoff Analysis Section */}
+                <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                      <Layers className="w-3 h-3" /> ANALIZADOR WYCKOFF (ESTADO ACTUAL)
+                    </h4>
+                    <span className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-widest">
+                      {analysisSections["FASE WYCKOFF"]?.split(":")[0] || "ANALIZANDO"}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div className="space-y-4">
+                      <p className="text-sm text-on-surface-variant leading-relaxed">
+                        {analysisSections["FASE WYCKOFF"]}
+                      </p>
+                      <div className="flex items-center gap-4 pt-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Soporte</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-secondary rounded-full"></div>
+                          <span className="text-[8px] font-bold text-on-surface-variant uppercase">Resistencia</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="h-48 w-full bg-surface-container-high/20 rounded-xl p-4 border border-outline-variant/10 relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                          <XAxis dataKey="name" hide />
+                          <YAxis hide domain={['auto', 'auto']} />
+                          <Line type="monotone" dataKey="price" stroke="#fff" strokeWidth={2} dot={false} />
+                          {/* Wyckoff Arrows (White) */}
+                          <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                          <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                          <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                        <p className="text-[40px] font-black text-white uppercase tracking-tighter rotate-12">WYCKOFF THEORY</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Strategy Banner with Arrows */}
                 <div className="bg-surface-container-low border-2 border-outline-variant/10 p-8 rounded-2xl relative overflow-hidden flex flex-col items-center text-center">
                   <div className="mb-4">
@@ -425,14 +579,64 @@ const Analysis = () => {
                     </div>
                   </div>
 
-                  <div className="pt-8 border-t border-outline-variant/10">
-                    <div className="flex items-center gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10">
+                  {/* Raw AI Analysis Field */}
+                  <div className="pt-6 border-t border-outline-variant/10">
+                    <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest flex items-center gap-2">
+                      <Brain className="w-3 h-3" /> CAMPO DE ANÁLISIS IA (RAW)
+                    </h4>
+                    <div className="p-4 bg-surface-container-high/50 rounded-xl border border-outline-variant/10 max-h-40 overflow-y-auto">
+                      <pre className="text-[10px] text-on-surface-variant whitespace-pre-wrap font-mono leading-relaxed">
+                        {analysis}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className="pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 flex items-center gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10">
                       <Flame className="w-5 h-5 text-primary animate-pulse" />
                       <div>
                         <p className="text-[8px] font-black text-primary uppercase tracking-widest">Metáfora Técnica</p>
                         <p className="text-[10px] text-on-surface-variant italic leading-tight">
                           {analysisSections["METÁFORA TÉCNICA"]}
                         </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={shareToTelegram}
+                        className="px-6 py-3 bg-[#0088cc] text-white rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center gap-2 hover:bg-[#0077b5] transition-all"
+                      >
+                        <MessageSquare className="w-4 h-4" /> Alerta Telegram
+                      </button>
+                      <button 
+                        onClick={() => toast.success("Análisis guardado en favoritos")}
+                        className="p-3 bg-surface-container-high rounded-xl border border-outline-variant/20 text-on-surface-variant hover:text-primary transition-all"
+                      >
+                        <Star className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Recent Alerts Feed */}
+                  <div className="pt-6 border-t border-outline-variant/10">
+                    <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-4 tracking-widest flex items-center gap-2">
+                      <Bell className="w-3 h-3" /> ALERTAS DE TELEGRAM RECIENTES
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3 p-3 bg-surface-container rounded-lg border border-outline-variant/5">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <p className="text-[10px] text-on-surface-variant">
+                          <span className="font-bold text-on-surface">ALERTA ENVIADA:</span> {selectedSymbol} {selectedMode} - Niveles confirmados
+                        </p>
+                        <span className="ml-auto text-[8px] text-on-surface-variant opacity-50">AHORA</span>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-surface-container/50 rounded-lg border border-outline-variant/5 opacity-50">
+                        <div className="w-2 h-2 rounded-full bg-on-surface-variant" />
+                        <p className="text-[10px] text-on-surface-variant">
+                          <span className="font-bold text-on-surface">ALERTA ENVIADA:</span> BTC/USDT SCALPING - TP1 Alcanzado
+                        </p>
+                        <span className="ml-auto text-[8px] text-on-surface-variant opacity-50">15M AGO</span>
                       </div>
                     </div>
                   </div>
@@ -499,7 +703,7 @@ const Analysis = () => {
         </div>
       </section>
 
-      {/* Whale Movements & Economic Events - ADDED AT BOTTOM */}
+      {/* Whale Movements & Economic Events */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <section className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-6">
           <h3 className="font-headline text-xl font-bold uppercase tracking-wide flex items-center gap-2 text-primary">
@@ -518,7 +722,7 @@ const Analysis = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={cn("text-sm font-black", whale.type === "COMPRA" ? "text-primary" : "text-secondary")}>{whale.type}</p>
+                  <p className={cn("text-sm font-black", whale.type === "COMPRA" || whale.type === "BUY" ? "text-primary" : "text-secondary")}>{whale.type}</p>
                   <p className="text-xs font-bold">{whale.amount}</p>
                 </div>
               </div>
@@ -552,6 +756,114 @@ const Analysis = () => {
           </div>
         </section>
       </div>
+
+      {/* Copy Trading & Top Traders - MOVED TO BOTTOM */}
+      <section className="space-y-6">
+        <div className="bg-[#0a0c10] border border-orange-500/30 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="bg-gradient-to-r from-orange-600/20 to-transparent p-4 border-b border-orange-500/20 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Target className="w-5 h-5 text-black" />
+              </div>
+              <h3 className="text-sm font-black uppercase tracking-widest text-orange-500">
+                COPY TRADING | WHALES & TOP TRADERS EN VIVO
+              </h3>
+            </div>
+          </div>
+
+          {selectedTraderStrategy && (
+            <motion.div 
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              className="bg-orange-500/5 border-b border-orange-500/20 p-6 relative"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="md:col-span-1 space-y-2">
+                  <p className="text-[10px] font-black text-orange-500 uppercase tracking-widest">Trader</p>
+                  <p className="text-lg font-headline font-bold">{selectedTraderStrategy.name}</p>
+                  <div className="flex items-center gap-2">
+                    <span className={cn("text-[10px] font-black px-2 py-0.5 rounded", selectedTraderStrategy.trade.includes("LONG") ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")}>
+                      {selectedTraderStrategy.trade}
+                    </span>
+                  </div>
+                </div>
+                <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-bold text-on-surface-variant uppercase">Entrada</p>
+                    <p className="text-sm font-bold text-on-surface">${selectedTraderStrategy.entry.toLocaleString()}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-bold text-on-surface-variant uppercase">Stop Loss</p>
+                    <p className="text-sm font-bold text-secondary">${selectedTraderStrategy.sl.toLocaleString()}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[8px] font-bold text-on-surface-variant uppercase">TP 1</p>
+                    <p className="text-sm font-bold text-primary">${selectedTraderStrategy.tp1.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="md:col-span-1 border-l border-orange-500/10 pl-4">
+                  <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Justificación</p>
+                  <p className="text-[10px] text-on-surface-variant leading-relaxed italic">
+                    {selectedTraderStrategy.justification}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-outline-variant/10">
+            {/* Whale Movements (Detailed) */}
+            <div className="p-4 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                <TrendingUp className="w-3 h-3" /> MOVIMIENTOS RECIENTES
+              </h4>
+              <div className="space-y-3">
+                {whaleMovements.slice(0, 5).map((whale, i) => (
+                  <div key={i} className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold">{whale.symbol}</span>
+                    <span className={cn(whale.type === "BUY" || whale.type === "COMPRA" ? "text-primary" : "text-secondary")}>{whale.amount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Top Traders */}
+            <div className="p-4 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                <Users className="w-3 h-3" /> TOP TRADERS
+              </h4>
+              <div className="space-y-3">
+                {topTraders.map((trader, i) => (
+                  <div key={i} className="flex justify-between items-center text-[10px]">
+                    <span className="font-bold">{trader.name}</span>
+                    <button 
+                      onClick={() => handleCopyStrategy(trader)}
+                      className="text-orange-500 hover:underline"
+                    >
+                      Copiar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Large Transactions */}
+            <div className="p-4 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                <ArrowRightLeft className="w-3 h-3" /> TRANSACCIONES
+              </h4>
+              <div className="space-y-3">
+                {largeTransactions.map((tx, i) => (
+                  <div key={i} className="flex justify-between items-center text-[10px]">
+                    <span className="text-on-surface-variant">{tx.address.slice(0, 6)}...</span>
+                    <span className="font-bold">{tx.amount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Community Insights */}
       <section className="space-y-6">

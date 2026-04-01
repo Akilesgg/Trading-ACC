@@ -24,6 +24,8 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       
       **ESTRATEGIA**: (Describe la estrategia técnica recomendada: ALCISTA o BAJISTA)
       
+      **FASE WYCKOFF**: (Identifica la fase actual según la teoría de Wyckoff: ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN. Proporciona una breve explicación de por qué se encuentra en esa fase)
+      
       **JUSTIFICACIÓN DE ENTRADA**: (Explica detalladamente por qué el precio de entrada, el Stop Loss y los tres Take Profits están situados en esos niveles específicos basándote en la estructura de mercado, liquidez y volumen. Sé extremadamente detallado)
       
       **JUSTIFICACIÓN ALCISTA/BAJISTA**: (Explica detalladamente por qué la estructura actual justifica la postura tomada)
