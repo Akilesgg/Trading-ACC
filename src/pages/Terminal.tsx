@@ -247,6 +247,12 @@ const Terminal = () => {
     fetchAIAnalysis();
   };
 
+  useEffect(() => {
+    if (analysis) {
+      runAnalysis();
+    }
+  }, [timeframe, strategy]);
+
   const copySignal = () => {
     if (!analysis) return;
     const text = `🚀 ZCOIN ANALYZER - SEÑAL INSTITUCIONAL
@@ -305,10 +311,7 @@ const Terminal = () => {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className={cn(
-        "min-h-screen pt-16 pb-24 text-on-surface overflow-x-hidden transition-colors duration-1000",
-        analysis?.sentiment === "BULLISH" ? "bg-primary/5" : analysis?.sentiment === "BEARISH" ? "bg-secondary/5" : "bg-surface-container-lowest"
-      )}
+      className="min-h-screen pt-16 pb-24 text-on-surface overflow-x-hidden bg-surface-container-lowest"
     >
       {/* Top Header / Search */}
       <div className="px-4 py-4 border-b border-outline-variant/10 bg-surface-container-low sticky top-16 z-30">
@@ -390,12 +393,7 @@ const Terminal = () => {
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Market Overview Row */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className={cn(
-            "p-4 rounded-2xl border transition-all duration-500",
-            analysis?.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30 shadow-lg shadow-primary/5" : 
-            analysis?.sentiment === "BEARISH" ? "bg-secondary/10 border-secondary/30 shadow-lg shadow-secondary/5" : 
-            "bg-surface-container-low border-outline-variant/10"
-          )}>
+          <div className="p-4 rounded-2xl border bg-surface-container-low border-outline-variant/10">
             <div className="flex justify-between items-start mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Precio Actual</span>
               <Activity className={cn("w-4 h-4", (ticker && parseFloat(ticker.priceChangePercent) >= 0) ? "text-primary" : "text-secondary")} />
@@ -434,12 +432,7 @@ const Terminal = () => {
             </div>
           </div>
 
-          <div className={cn(
-            "p-4 rounded-2xl border transition-all duration-500 flex flex-col justify-center items-center text-center",
-            analysis?.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30 shadow-lg shadow-primary/5" : 
-            analysis?.sentiment === "BEARISH" ? "bg-secondary/10 border-secondary/30 shadow-lg shadow-secondary/5" : 
-            "bg-surface-container-low border-outline-variant/10"
-          )}>
+          <div className="p-4 rounded-2xl border bg-surface-container-low border-outline-variant/10 flex flex-col justify-center items-center text-center">
             <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Sentimiento IA</span>
             <div className="flex items-center gap-2">
               <Gauge className={cn("w-6 h-6", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")} />
@@ -1008,9 +1001,25 @@ const Terminal = () => {
           >
             {/* Signal Hero Banner */}
             <div className={cn(
-              "p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl overflow-hidden relative",
-              analysis.sentiment === "BULLISH" ? "bg-primary/10 border-primary/30" : "bg-secondary/10 border-secondary/30"
+              "p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl overflow-hidden relative bg-surface-container-low",
+              analysis.sentiment === "BULLISH" ? "border-primary/30" : "border-secondary/30"
             )}>
+              {/* Decorative Arrows */}
+              <div className="absolute left-0 top-0 bottom-0 w-24 flex items-center justify-center opacity-10 pointer-events-none">
+                {analysis.sentiment === "BULLISH" ? (
+                  <ArrowUpRight className="w-32 h-32 text-primary -rotate-12" />
+                ) : (
+                  <ArrowDownRight className="w-32 h-32 text-secondary rotate-12" />
+                )}
+              </div>
+              <div className="absolute right-0 top-0 bottom-0 w-24 flex items-center justify-center opacity-10 pointer-events-none">
+                {analysis.sentiment === "BULLISH" ? (
+                  <ArrowUpRight className="w-32 h-32 text-primary rotate-12" />
+                ) : (
+                  <ArrowDownRight className="w-32 h-32 text-secondary -rotate-12" />
+                )}
+              </div>
+
               <div className="flex items-center gap-6 z-10">
                 <div className={cn(
                   "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110",
@@ -1019,8 +1028,18 @@ const Terminal = () => {
                   {analysis.sentiment === "BULLISH" ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
                 </div>
                 <div>
-                  <h2 className={cn("text-3xl font-headline font-black tracking-tighter", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
-                    {analysis.sentiment === "BULLISH" ? "SEÑAL ALCISTA" : "SEÑAL BAJISTA"}
+                  <h2 className={cn("text-3xl font-headline font-black tracking-tighter flex items-center gap-3", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                    {analysis.sentiment === "BULLISH" ? (
+                      <>
+                        <ArrowUpRight className="w-8 h-8 animate-bounce" />
+                        SEÑAL ALCISTA
+                      </>
+                    ) : (
+                      <>
+                        <ArrowDownRight className="w-8 h-8 animate-bounce" />
+                        SEÑAL BAJISTA
+                      </>
+                    )}
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Confianza del Sistema:</span>
@@ -1042,10 +1061,7 @@ const Terminal = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className={cn(
-              "lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border-2 space-y-6 shadow-xl",
-              analysis.sentiment === "BULLISH" ? "border-primary/20" : "border-secondary/20"
-            )}>
+            <div className="lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border-2 space-y-6 shadow-xl border-outline-variant/10">
               <div className="flex justify-between items-center">
                 <div className="space-y-1">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">

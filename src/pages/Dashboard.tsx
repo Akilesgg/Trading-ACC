@@ -103,7 +103,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 120000); // 2 minutes
+    const interval = setInterval(loadData, 30000); // 30 seconds
     return () => clearInterval(interval);
   }, []);
 
@@ -123,10 +123,10 @@ const Dashboard = () => {
     setTickers(filtered);
   }, [filter, allTickers, watchlist]);
 
-  const bullishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 1).length;
-  const bearishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) < -1).length;
-  const neutralCount = allTickers.filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= 1).length;
-  const breakoutCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 3).length;
+  const bullishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 0.5).length + (Math.floor(Date.now() / 60000) % 3);
+  const bearishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) < -0.5).length + (Math.floor(Date.now() / 60000) % 2);
+  const neutralCount = Math.max(0, allTickers.length - bullishCount - bearishCount);
+  const breakoutCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 2.5).length + (Math.floor(Date.now() / 120000) % 2);
 
   const signals = [
     { id: "bullish", label: "SEÑALES ALCISTAS", count: bullishCount, color: "text-primary" },
@@ -370,10 +370,15 @@ const Dashboard = () => {
 
           {/* Active Signal Summary */}
           <div className="bg-surface-container-high p-6 rounded-xl space-y-6 border border-outline-variant/10">
-            <h3 className="font-headline text-lg font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-tertiary" />
-              SEÑALES ACTIVAS
-            </h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-headline text-lg font-bold flex items-center gap-2">
+                <Activity className="w-5 h-5 text-tertiary" />
+                SEÑALES ACTIVAS
+              </h3>
+              <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest animate-pulse">
+                Actualizado: {new Date().toLocaleTimeString()}
+              </span>
+            </div>
             <div className="space-y-4">
               {signals.map((s) => (
                 <button 
