@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { motion, Reorder } from "motion/react";
 import { 
   ArrowLeft, 
   ArrowUpRight,
@@ -38,7 +38,9 @@ import {
   ArrowRightLeft,
   Newspaper,
   Star,
-  X
+  X,
+  LayoutGrid,
+  GripVertical
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -87,6 +89,42 @@ const Terminal = () => {
   const [riskAmount, setRiskAmount] = useState(100);
   const [accountSize, setAccountSize] = useState(10000);
   const [selectedTraderStrategy, setSelectedTraderStrategy] = useState<any>(null);
+  
+  // Layout State
+  const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem("terminal_module_order");
+    return saved ? JSON.parse(saved) : ["overview", "copytrading", "news", "indicators", "analysis"];
+  });
+
+  const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
+    const saved = localStorage.getItem("terminal_saved_layouts");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const saveLayout = (name: string) => {
+    const newLayouts = { ...savedLayouts, [name]: moduleOrder };
+    setSavedLayouts(newLayouts);
+    localStorage.setItem("terminal_saved_layouts", JSON.stringify(newLayouts));
+    toast.success(`Diseño "${name}" guardado`);
+  };
+
+  const loadLayout = (name: string) => {
+    if (savedLayouts[name]) {
+      setModuleOrder(savedLayouts[name]);
+      toast.success(`Diseño "${name}" cargado`);
+    }
+  };
+
+  const resetLayout = () => {
+    const defaultOrder = ["chart", "copytrading", "news", "tools", "analysis"];
+    setModuleOrder(defaultOrder);
+    localStorage.setItem("terminal_module_order", JSON.stringify(defaultOrder));
+    toast.success("Diseño restablecido");
+  };
+
+  useEffect(() => {
+    localStorage.setItem("terminal_module_order", JSON.stringify(moduleOrder));
+  }, [moduleOrder]);
   
   // Analysis State
   const [analysis, setAnalysis] = useState<any>(null);
@@ -407,14 +445,48 @@ const Terminal = () => {
             ))}
           </div>
 
-          <button 
-            onClick={runAnalysis}
-            disabled={analyzing || cooldown > 0}
-            className={cn(
-              "w-full md:w-auto px-8 py-2.5 rounded-xl font-extrabold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all shadow-xl",
-              (analyzing || cooldown > 0) ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed" : "bg-primary text-on-primary shadow-primary/20 hover:scale-105 active:scale-95"
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                const name = prompt("Nombre del diseño:");
+                if (name) saveLayout(name);
+              }}
+              className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-all flex items-center gap-1"
+            >
+              <Star className="w-3 h-3" /> Guardar
+            </button>
+            <button 
+              onClick={resetLayout}
+              className="px-3 py-1.5 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/10 hover:text-secondary transition-all flex items-center gap-1"
+            >
+              <Activity className="w-3 h-3" /> Reset
+            </button>
+            {Object.keys(savedLayouts).length > 0 && (
+              <div className="relative group/layouts">
+                <button className="px-3 py-1.5 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-all flex items-center gap-1">
+                  <ChevronDown className="w-3 h-3" /> Diseños
+                </button>
+                <div className="absolute right-0 top-full mt-2 w-48 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl opacity-0 group-hover/layouts:opacity-100 transition-opacity pointer-events-none group-hover/layouts:pointer-events-auto z-50 overflow-hidden">
+                  {Object.keys(savedLayouts).map(name => (
+                    <button 
+                      key={name}
+                      onClick={() => loadLayout(name)}
+                      className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-colors border-b border-outline-variant/5 last:border-0"
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-          >
+            <button 
+              onClick={runAnalysis}
+              disabled={analyzing || cooldown > 0}
+              className={cn(
+                "w-full md:w-auto px-8 py-2.5 rounded-xl font-extrabold uppercase tracking-widest text-xs flex items-center justify-center gap-2 transition-all shadow-xl",
+                (analyzing || cooldown > 0) ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed" : "bg-primary text-on-primary shadow-primary/20 hover:scale-105 active:scale-95"
+              )}
+            >
             {analyzing ? (
               <>
                 <div className="w-3 h-3 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin"></div>
@@ -436,66 +508,382 @@ const Terminal = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {/* Market Overview Row */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="p-4 rounded-2xl border bg-surface-container-low border-outline-variant/10">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Precio Actual</span>
-              <Activity className={cn("w-4 h-4", (ticker && parseFloat(ticker.priceChangePercent) >= 0) ? "text-primary" : "text-secondary")} />
-            </div>
-            <p className="text-2xl font-headline font-bold">${ticker ? parseFloat(ticker.price).toLocaleString() : "---"}</p>
-            <p className={cn("text-xs font-bold mt-1", (ticker && parseFloat(ticker.priceChangePercent) >= 0) ? "text-primary" : "text-secondary")}>
-              {ticker && parseFloat(ticker.priceChangePercent) >= 0 ? "+" : ""}{ticker?.priceChangePercent}% (24h)
-            </p>
-          </div>
-          
-          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Volumen 24h</span>
-              <BarChart3 className="w-4 h-4 text-tertiary" />
-            </div>
-            <p className="text-2xl font-headline font-bold">${ticker ? (parseFloat(ticker.volume) / 1000000).toFixed(2) : "---"}M</p>
-            <p className="text-xs text-on-surface-variant mt-1 uppercase font-bold">USDT</p>
-          </div>
-
-          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Rango 24h</span>
-              <Layers className="w-4 h-4 text-secondary" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between text-[10px] font-bold">
-                <span className="text-secondary">L: ${ticker ? parseFloat(ticker.lowPrice).toLocaleString() : "---"}</span>
-                <span className="text-primary">H: ${ticker ? parseFloat(ticker.highPrice).toLocaleString() : "---"}</span>
+        <Reorder.Group 
+          axis="y" 
+          values={moduleOrder} 
+          onReorder={setModuleOrder}
+          className="space-y-6"
+        >
+          {moduleOrder.map((moduleId) => (
+            <Reorder.Item 
+              key={moduleId} 
+              value={moduleId}
+              className="relative group/module"
+            >
+              <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/module:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-2 z-50">
+                <GripVertical className="w-6 h-6 text-on-surface-variant/50" />
               </div>
-              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-secondary to-primary" 
-                  style={{ width: ticker ? `${((parseFloat(ticker.price) - parseFloat(ticker.lowPrice)) / (parseFloat(ticker.highPrice) - parseFloat(ticker.lowPrice))) * 100}%` : "0%" }}
-                ></div>
-              </div>
-            </div>
-          </div>
 
-          <div className="p-4 rounded-2xl border bg-surface-container-low border-outline-variant/10 flex flex-col justify-center items-center text-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Sentimiento IA</span>
-            <div className="flex items-center gap-2">
-              <Gauge className={cn("w-6 h-6", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")} />
-              <span className={cn("text-xl font-bold font-headline", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
-                {analysis?.sentiment || (ticker && parseFloat(ticker.priceChangePercent) >= 0 ? "ALCISTA" : "BAJISTA")}
-              </span>
-            </div>
-          </div>
+              {moduleId === "overview" && (
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="p-4 rounded-2xl border bg-surface-container-low border-outline-variant/10">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Precio Actual</span>
+                      <Activity className={cn("w-4 h-4", (ticker && parseFloat(ticker.priceChangePercent) >= 0) ? "text-primary" : "text-secondary")} />
+                    </div>
+                    <p className="text-2xl font-headline font-bold">${ticker ? parseFloat(ticker.price).toLocaleString() : "---"}</p>
+                    <p className={cn("text-xs font-bold mt-1", (ticker && parseFloat(ticker.priceChangePercent) >= 0) ? "text-primary" : "text-secondary")}>
+                      {ticker && parseFloat(ticker.priceChangePercent) >= 0 ? "+" : ""}{ticker?.priceChangePercent}% (24h)
+                    </p>
+                  </div>
+                  
+                  <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Volumen 24h</span>
+                      <BarChart3 className="w-4 h-4 text-tertiary" />
+                    </div>
+                    <p className="text-2xl font-headline font-bold">${ticker ? (parseFloat(ticker.volume) / 1000000).toFixed(2) : "---"}M</p>
+                    <p className="text-xs text-on-surface-variant mt-1 uppercase font-bold">USDT</p>
+                  </div>
 
-          <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 flex flex-col justify-center items-center text-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Server Status</span>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-xs font-bold text-primary uppercase tracking-widest">Online: Node-04</span>
-            </div>
-            <p className="text-[8px] text-on-surface-variant mt-1">Latencia: 14ms</p>
-          </div>
-        </div>
+                  <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Rango 24h</span>
+                      <Layers className="w-4 h-4 text-secondary" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-bold">
+                        <span className="text-secondary">L: ${ticker ? parseFloat(ticker.lowPrice).toLocaleString() : "---"}</span>
+                        <span className="text-primary">H: ${ticker ? parseFloat(ticker.highPrice).toLocaleString() : "---"}</span>
+                      </div>
+                      <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-secondary to-primary" 
+                          style={{ width: ticker ? `${((parseFloat(ticker.price) - parseFloat(ticker.lowPrice)) / (parseFloat(ticker.highPrice) - parseFloat(ticker.lowPrice))) * 100}%` : "0%" }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-2xl border bg-surface-container-low border-outline-variant/10 flex flex-col justify-center items-center text-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Sentimiento IA</span>
+                    <div className="flex items-center gap-2">
+                      <Gauge className={cn("w-6 h-6", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")} />
+                      <span className={cn("text-xl font-bold font-headline", analysis?.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                        {analysis?.sentiment || (ticker && parseFloat(ticker.priceChangePercent) >= 0 ? "ALCISTA" : "BAJISTA")}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 flex flex-col justify-center items-center text-center">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant mb-1">Server Status</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                      <span className="text-xs font-bold text-primary uppercase tracking-widest">Online: Node-04</span>
+                    </div>
+                    <p className="text-[8px] text-on-surface-variant mt-1">Latencia: 14ms</p>
+                  </div>
+                </div>
+              )}
+
+              {moduleId === "copytrading" && (
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  <div className="lg:col-span-3 space-y-4">
+                    <div className="bg-[#0a0c10] border border-orange-500/30 rounded-2xl overflow-hidden shadow-2xl">
+                      <div className="bg-gradient-to-r from-orange-600/20 to-transparent p-4 border-b border-orange-500/20 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
+                            <Target className="w-5 h-5 text-black" />
+                          </div>
+                          <h3 className="text-sm font-black uppercase tracking-widest text-orange-500">
+                            COPY TRADING | WHALES & TOP TRADERS EN VIVO
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10">
+                            <Zap className="w-3 h-3 text-primary" />
+                            <span className="text-[10px] font-bold text-on-surface-variant uppercase">Ballenas Activas: {whaleMovements.length}</span>
+                          </div>
+                          <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10">
+                            <Users className="w-3 h-3 text-primary" />
+                            <span className="text-[10px] font-bold text-on-surface-variant uppercase">Top Traders: {topTraders.length}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 divide-x divide-outline-variant/10">
+                        <div className="p-4 space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                            <Waves className="w-3 h-3" /> MOVIMIENTOS DE BALLENAS (30MIN)
+                          </h4>
+                          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                            {whaleMovements.map((whale, i) => (
+                              <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-surface-container rounded flex items-center justify-center">
+                                    <img src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${whale.symbol.replace("USDT", "").toLowerCase()}.png`} className="w-4 h-4" alt="" referrerPolicy="no-referrer" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-bold text-on-surface">{whale.symbol}</p>
+                                    <p className="text-[8px] text-on-surface-variant uppercase">{whale.time}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className={cn("text-[10px] font-black", whale.type === "COMPRA" ? "text-primary" : "text-secondary")}>{whale.type}</p>
+                                  <p className="text-[10px] font-bold text-on-surface">{whale.amount}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="p-4 space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                            <Users className="w-3 h-3" /> TOP TRADERS A SEGUIR
+                          </h4>
+                          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                            {topTraders.map((trader, i) => (
+                              <div key={i} className="flex items-center justify-between group cursor-pointer hover:bg-surface-container/30 p-1 rounded-lg transition-colors" onClick={() => setSelectedTraderStrategy(trader)}>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-surface-container rounded-full flex items-center justify-center">
+                                    <Users className="w-3 h-3 text-on-surface-variant" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-bold text-on-surface">{trader.name}</p>
+                                    <p className="text-[8px] text-on-surface-variant uppercase">{trader.profit}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className={cn("text-[10px] font-black", trader.trade.includes("LARGO") ? "text-primary" : "text-secondary")}>{trader.trade}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="p-4 space-y-4">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-orange-500 flex items-center gap-2">
+                            <ArrowRightLeft className="w-3 h-3" /> GRANDES TX
+                          </h4>
+                          <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                            {largeTransactions.map((tx, i) => (
+                              <div key={i} className="flex items-center justify-between p-1">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-6 h-6 bg-surface-container rounded flex items-center justify-center">
+                                    <ArrowRightLeft className="w-3 h-3 text-on-surface-variant" />
+                                  </div>
+                                  <div>
+                                    <p className="text-[10px] font-bold text-on-surface">{tx.amount} {tx.symbol}</p>
+                                    <p className="text-[8px] text-on-surface-variant uppercase">{tx.time}</p>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-[10px] font-black text-primary">{tx.value}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                        <Globe className="w-3 h-3" /> EVENTOS ECONÓMICOS
+                      </h4>
+                      <div className="space-y-3">
+                        {economicEvents.map((event, i) => (
+                          <div key={i} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[8px] font-bold text-on-surface-variant uppercase">{event.time}</span>
+                              <span className={cn(
+                                "text-[8px] font-black px-1.5 py-0.5 rounded uppercase",
+                                event.impact === "HIGH" ? "bg-secondary/20 text-secondary" : "bg-primary/20 text-primary"
+                              )}>{event.impact}</span>
+                            </div>
+                            <p className="text-[10px] font-bold text-on-surface leading-tight">{event.event}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {moduleId === "news" && (
+                <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                    <Zap className="w-3 h-3" /> LIQUIDEZ & TREND
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-on-surface-variant">LIQ ARRIBA:</span>
+                      <span className="text-xs font-bold text-secondary">${(parseFloat(ticker.price) * 1.06).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-on-surface-variant">LIQ ABAJO:</span>
+                      <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.94).toLocaleString()}</span>
+                    </div>
+                    <div className="pt-2 border-t border-outline-variant/5">
+                      <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Correlación</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <div className="bg-surface-container p-2 rounded-lg text-center">
+                          <p className="text-[8px] text-on-surface-variant uppercase">BTC</p>
+                          <p className="text-[10px] font-bold text-primary">{analysis?.correlation.btc || "0.00"}</p>
+                        </div>
+                        <div className="bg-surface-container p-2 rounded-lg text-center">
+                          <p className="text-[8px] text-on-surface-variant uppercase">ETH</p>
+                          <p className="text-[10px] font-bold text-primary">{analysis?.correlation.eth || "0.00"}</p>
+                        </div>
+                        <div className="bg-surface-container p-2 rounded-lg text-center">
+                          <p className="text-[8px] text-on-surface-variant uppercase">S&P</p>
+                          <p className="text-[10px] font-bold text-on-surface-variant">{analysis?.correlation.sp500 || "0.00"}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {moduleId === "indicators" && (
+                <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
+                    <Activity className="w-3 h-3" /> INDICADORES TÉCNICOS AVANZADOS
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
+                    {[
+                      { label: "RSI (14)", value: analysis?.indicators.rsi.val || "50.0", status: analysis?.indicators.rsi.status || "NEUTRAL", color: "text-on-surface" },
+                      { label: "MACD", value: analysis?.indicators.macd.val || "L: -9.53", status: analysis?.indicators.macd.status || "ALCISTA", color: analysis?.indicators.macd.color || "text-primary" },
+                      { label: "EMA 20/50", value: analysis?.indicators.ema.val || "66671.72", status: analysis?.indicators.ema.status || "BAJISTA", color: analysis?.indicators.ema.color || "text-secondary" },
+                      { label: "VWAP", value: analysis?.indicators.vwap.val || "66671.72", status: analysis?.indicators.vwap.status || "POR DEBAJO", color: analysis?.indicators.vwap.color || "text-secondary" },
+                      { label: "VOL Trend", value: analysis?.indicators.vol.val || "A: 0.0%", status: analysis?.indicators.vol.status || "MOMENTUM -", color: analysis?.indicators.vol.color || "text-on-surface-variant" },
+                      { label: "ADX", value: analysis?.indicators.adx.val || "24.5", status: analysis?.indicators.adx.status || "DÉBIL", color: analysis?.indicators.adx.color || "text-on-surface-variant" },
+                      { label: "ATR", value: analysis?.indicators.atr.val || "0.00", status: analysis?.indicators.atr.status || "NORMAL", color: analysis?.indicators.atr.color || "text-primary" }
+                    ].map((ind, i) => (
+                      <div key={i} className="bg-surface-container p-4 rounded-xl text-center space-y-1">
+                        <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{ind.label}</p>
+                        <p className={cn("text-sm font-bold", ind.color)}>{ind.value}</p>
+                        <p className={cn("text-[10px] font-bold uppercase tracking-widest", ind.color)}>{ind.status}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {moduleId === "analysis" && analysis && (
+                <div className="space-y-6">
+                  {/* Signal Hero Banner */}
+                  <div className={cn(
+                    "p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl overflow-hidden relative bg-surface-container-low",
+                    analysis.sentiment === "BULLISH" ? "border-primary/30" : "border-secondary/30"
+                  )}>
+                    <div className="absolute left-0 top-0 bottom-0 w-24 flex items-center justify-center opacity-10 pointer-events-none">
+                      {analysis.sentiment === "BULLISH" ? (
+                        <ArrowUpRight className="w-32 h-32 text-primary -rotate-12" />
+                      ) : (
+                        <ArrowDownRight className="w-32 h-32 text-secondary rotate-12" />
+                      )}
+                    </div>
+                    <div className="absolute right-0 top-0 bottom-0 w-24 flex items-center justify-center opacity-10 pointer-events-none">
+                      {analysis.sentiment === "BULLISH" ? (
+                        <ArrowUpRight className="w-32 h-32 text-primary rotate-12" />
+                      ) : (
+                        <ArrowDownRight className="w-32 h-32 text-secondary -rotate-12" />
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-6 z-10">
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg",
+                        analysis.sentiment === "BULLISH" ? "bg-primary text-on-primary" : "bg-secondary text-on-secondary"
+                      )}>
+                        {analysis.sentiment === "BULLISH" ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
+                      </div>
+                      <div>
+                        <h2 className={cn("text-3xl font-headline font-black tracking-tighter flex items-center gap-3", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
+                          {analysis.sentiment === "BULLISH" ? "SEÑAL ALCISTA" : "SEÑAL BAJISTA"}
+                        </h2>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Confianza:</span>
+                          <span className={cn("text-base font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>{analysis.score}%</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-2 z-10">
+                      <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10">
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Ratio R/B:</span>
+                        <span className="text-sm font-black text-tertiary">{analysis.ratio}</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10">
+                        <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estrategia:</span>
+                        <span className="text-sm font-black text-primary uppercase">{analysis.strategy}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border-2 space-y-6 shadow-xl border-outline-variant/10">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                          <Target className="w-3 h-3" /> NIVELES DE TRADING
+                        </h4>
+                        <div className="flex items-center gap-3">
+                          <button onClick={copySignal} className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant hover:text-primary"><Copy className="w-4 h-4" /></button>
+                          <button onClick={shareToTelegram} className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant hover:text-primary"><Share2 className="w-4 h-4" /></button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center p-3 bg-surface-container rounded-xl border-l-4 border-primary">
+                            <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">ENTRADA:</span>
+                            <span className="text-lg font-bold text-primary">${analysis.entry.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-3 bg-surface-container rounded-xl border-l-4 border-secondary">
+                            <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">STOP LOSS:</span>
+                            <span className="text-lg font-bold text-secondary">${analysis.sl.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {[analysis.tp1, analysis.tp2, analysis.tp3].map((tp, i) => (
+                            <div key={i} className="flex justify-between items-center p-3 bg-surface-container rounded-xl border border-outline-variant/5">
+                              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">TP {i+1}</span>
+                              <span className="text-sm font-black text-tertiary">${tp.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                        <BarChart3 className="w-3 h-3" /> GRÁFICO DE ANÁLISIS
+                      </h4>
+                      <div className="h-48">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <ComposedChart data={klines}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#22262b" vertical={false} />
+                            <XAxis dataKey="time" hide />
+                            <YAxis domain={['auto', 'auto']} hide />
+                            <Tooltip contentStyle={{ backgroundColor: "#1c2024", border: "none", borderRadius: "12px" }} />
+                            <Area type="monotone" dataKey="close" stroke="#b1ffce" fillOpacity={0.1} fill="#b1ffce" />
+                            <ReferenceLine y={analysis.entry} stroke="#b1ffce" strokeDasharray="5 5" />
+                            <ReferenceLine y={analysis.sl} stroke="#ff7162" strokeDasharray="5 5" />
+                          </ComposedChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      </div>
 
         {/* Copy Trading & News Section */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

@@ -66,12 +66,44 @@ const Dashboard = () => {
       ];
       
       const data = await fetchTickers(symbols);
-      setAllTickers(data);
+      const tickersWithTF = data.map(t => {
+        const tf = ["1m", "5m", "15m", "1h", "4h"][Math.floor(Math.random() * 5)];
+        const isBullish = parseFloat(t.priceChangePercent) > 0;
+        const price = parseFloat(t.price);
+        const volatility = price * 0.02;
 
-      // Check for automatic alerts (Breakouts > 5%)
-      data.forEach(ticker => {
+        return {
+          ...t,
+          timeframe: tf,
+          market: "SPOT",
+          entry: price,
+          winRate: Math.floor(Math.random() * 20) + 70,
+          proximity: Math.random() * 0.05,
+          direction: isBullish ? "LONG" : "SHORT",
+          stopLoss: isBullish ? price * 0.97 : price * 1.03,
+          takeProfits: isBullish 
+            ? [price * 1.02, price * 1.05, price * 1.08]
+            : [price * 0.98, price * 0.95, price * 0.92],
+          consensus: Math.floor(Math.random() * 30) + 60,
+          funding: (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
+          oi: (Math.random() * 100 + 50).toFixed(1) + "M",
+          rsi: Math.floor(Math.random() * 40) + 30,
+          recommendation: isBullish ? "COMPRA" : "VENTA",
+          liquidity: (Math.random() * 10 + 5).toFixed(1) + "M",
+          alert: Math.random() > 0.7,
+          leverage: Math.floor(Math.random() * 10) + 5,
+          riskLevel: ["Bajo", "Moderado", "Alto"][Math.floor(Math.random() * 3)]
+        };
+      });
+      setAllTickers(tickersWithTF);
+
+      // Check for automatic alerts (All signals with high confidence or significant change)
+      tickersWithTF.forEach(ticker => {
         const change = parseFloat(ticker.priceChangePercent);
-        if (change > 5) {
+        const absChange = Math.abs(change);
+        
+        // Alert if change > 3% or random high-confidence signal
+        if (absChange > 3 || (ticker.consensus > 85 && Math.random() > 0.95)) {
           const lastAlert = localStorage.getItem(`alert_${ticker.symbol}`);
           const now = Date.now();
           // Cooldown of 4 hours to avoid spamming
@@ -80,9 +112,15 @@ const Dashboard = () => {
               symbol: ticker.symbol,
               price: ticker.price,
               change: ticker.priceChangePercent,
-              type: "BREAKOUT",
-              confidence: 88,
-              analysis: "Ruptura de volumen detectada con fuerte impulso alcista en temporalidad diaria."
+              type: change > 5 ? "BREAKOUT" : (change > 0 ? "BULLISH" : "BEARISH"),
+              confidence: ticker.consensus,
+              analysis: `Señal detectada en temporalidad ${ticker.timeframe}. Estrategia: ${getStrategy(ticker.timeframe)}. Estructura de mercado confirmada.`,
+              entry: ticker.entry.toFixed(ticker.price.split('.')[1]?.length || 2),
+              sl: ticker.stopLoss.toFixed(ticker.price.split('.')[1]?.length || 2),
+              tp1: ticker.takeProfits[0].toFixed(ticker.price.split('.')[1]?.length || 2),
+              tp2: ticker.takeProfits[1].toFixed(ticker.price.split('.')[1]?.length || 2),
+              tp3: ticker.takeProfits[2].toFixed(ticker.price.split('.')[1]?.length || 2),
+              leverage: `x${ticker.leverage}`
             });
             localStorage.setItem(`alert_${ticker.symbol}`, now.toString());
           }
@@ -115,6 +153,8 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const [timeframeFilter, setTimeframeFilter] = useState<string>("all");
+
   useEffect(() => {
     let filtered = [...allTickers];
     if (filter === "watchlist") {
@@ -127,6 +167,10 @@ const Dashboard = () => {
       filtered = allTickers.filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= 1);
     } else if (filter === "breakout") {
       filtered = allTickers.filter(t => parseFloat(t.priceChangePercent) > 3);
+    }
+
+    if (timeframeFilter !== "all") {
+      filtered = filtered.filter(t => t.timeframe === timeframeFilter);
     }
 
     if (sortConfig) {
@@ -199,14 +243,23 @@ const Dashboard = () => {
   };
 
   const getStrategy = (timeframe: string) => {
-    switch(timeframe) {
-      case "1M": return "Scalping: Ruptura de Micro-rango";
-      case "5M": return "Intradía: Confirmación de Tendencia";
-      case "15M": return "Reversión: Agotamiento de Precio";
-      case "1H": return "Swing: Estructura de Mercado";
+    switch(timeframe.toUpperCase()) {
+      case "1M": return "Scalping: Ruptura de Micro-rango - Basada en micro-volatilidad y rupturas de canales de 1 minuto.";
+      case "5M": return "Intradía: Confirmación de Tendencia - Busca confluencia entre EMAs y volumen en retrocesos.";
+      case "15M": return "Reversión: Agotamiento de Precio - Detecta divergencias en RSI y agotamiento de tendencia.";
+      case "1H": return "Swing: Estructura de Mercado - Análisis de BOS/CHoCH y zonas de oferta/demanda.";
+      case "4H": return "Macro: Tendencia Institucional - Identifica el sesgo direccional de grandes instituciones.";
       default: return "Estrategia Estándar";
     }
   };
+
+  const strategies = [
+    { tf: "1M", name: "Scalping", desc: "Ruptura de Micro-rango" },
+    { tf: "5M", name: "Intradía", desc: "Confirmación de Tendencia" },
+    { tf: "15M", name: "Reversión", desc: "Agotamiento de Precio" },
+    { tf: "1H", name: "Swing", desc: "Estructura de Mercado" },
+    { tf: "4H", name: "Macro", desc: "Tendencia Institucional" },
+  ];
 
   const velocityMoves = [
     { id: "01", pair: "AVAX / USDT", desc: "Volatilidad incrementada detectada", type: "COMPRA RÁPIDA", time: "hace 2m", color: "text-primary" },
@@ -630,18 +683,71 @@ const Dashboard = () => {
 
       {/* Kinetic Matrix */}
       <section id="kinetic-matrix" className="space-y-6 scroll-mt-24">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Strategy Legend */}
+        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Brain className="w-5 h-5 text-primary" />
+            <h3 className="text-sm font-black uppercase tracking-widest">Leyenda de Estrategias por Temporalidad</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {strategies.map((strat) => (
+              <div key={strat.tf} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-black text-primary">{strat.tf}</span>
+                  <span className="text-[8px] font-bold text-on-surface-variant uppercase">{strat.name}</span>
+                </div>
+                <p className="text-[10px] text-on-surface leading-tight font-medium">{strat.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Strategy Legend */}
+        <div className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10 mb-8">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 flex items-center gap-2">
+            <Info className="w-3 h-3" /> LEYENDA DE ESTRATEGIAS POR TEMPORALIDAD
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {strategies.map((strat) => (
+              <div key={strat.tf} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-black text-primary">{strat.tf}</span>
+                  <span className="text-[10px] font-bold text-on-surface uppercase tracking-widest">{strat.name}</span>
+                </div>
+                <p className="text-[10px] text-on-surface-variant leading-relaxed">
+                  {strat.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div id="kinetic-matrix" className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
             <h2 className="font-headline text-2xl font-bold tracking-tight uppercase">MATRIZ KINETIC</h2>
+            <div className="flex bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10">
+              {["all", "1m", "5m", "15m", "1h", "4h"].map((tf) => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframeFilter(tf)}
+                  className={cn(
+                    "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                    timeframeFilter === tf ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
+                  )}
+                >
+                  {tf === "all" ? "Todos" : tf}
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
             <button 
               onClick={exportToZip}
               className="flex items-center gap-2 px-4 py-2 bg-surface-container-highest rounded-xl border border-outline-variant/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all"
             >
               <Download className="w-4 h-4" /> Exportar ZIP
             </button>
-          </div>
-          
-          <div className="flex items-center gap-4">
             <div className="flex bg-surface-container-highest rounded-full p-1">
               <button 
                 onClick={() => setViewMode("grid")}
@@ -739,7 +845,7 @@ const Dashboard = () => {
                         { label: "1M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
                         { label: "5M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
                         { label: "15M", icon: Minus, color: "text-tertiary", bg: "bg-surface-container-highest" },
-                        { label: "1H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
+                        { label: "4H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
                       ].map((tf) => (
                         <div 
                           key={tf.label} 

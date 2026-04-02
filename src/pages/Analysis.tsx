@@ -74,12 +74,19 @@ const WyckoffArrow = (props: any) => {
   const parseAnalysis = (text: string) => {
     if (!text) return {};
     const sections: Record<string, string> = {};
+    
+    // Try to split by **HEADER**
     const parts = text.split(/\*\*([^*]+)\*\*/);
     
-    for (let i = 1; i < parts.length; i += 2) {
-      const title = parts[i].trim().replace(':', '');
-      const content = parts[i+1]?.trim().replace(/^[:\s-]+/, '') || "";
-      sections[title] = content;
+    if (parts.length > 1) {
+      for (let i = 1; i < parts.length; i += 2) {
+        const title = parts[i].trim().replace(':', '').toUpperCase();
+        const content = parts[i+1]?.trim().replace(/^[:\s-]+/, '') || "";
+        sections[title] = content;
+      }
+    } else {
+      // Fallback: if no headers found, put everything in CONTEXTO
+      sections["CONTEXTO Y EXPLICACIÓN BREVE"] = text;
     }
     return sections;
   };
@@ -165,7 +172,7 @@ const Analysis = () => {
   };
 
   const resetLayout = () => {
-    const defaultOrder = ["context", "wyckoff", "strategy", "indicators", "levels", "objectives", "justification", "raw"];
+    const defaultOrder = ["context", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
     setModuleOrder(defaultOrder);
     localStorage.setItem("analysis_module_order", JSON.stringify(defaultOrder));
     toast.success("Diseño restablecido");
@@ -246,8 +253,14 @@ const Analysis = () => {
       const currentTicker = await fetchTicker(selectedSymbol);
       setTicker(currentTicker);
       const result = await analyzeMarket(selectedSymbol, currentTicker.price, currentTicker.priceChangePercent, selectedMode);
-      setAnalysis(result);
-      setLastUpdate(new Date().toLocaleTimeString());
+      
+      if (result && !result.includes("no disponible")) {
+        setAnalysis(result);
+        setLastUpdate(new Date().toLocaleTimeString());
+        toast.success(`Análisis de ${selectedSymbol} completado`);
+      } else {
+        toast.error("La IA no pudo generar un análisis válido. Inténtalo de nuevo.");
+      }
 
       // Check for hot signal
       const sections = parseAnalysis(result);
@@ -264,6 +277,7 @@ const Analysis = () => {
       }
     } catch (error) {
       console.error("Analysis run error:", error);
+      toast.error("Error crítico al ejecutar el análisis.");
     } finally {
       setAnalyzing(false);
     }
@@ -565,14 +579,56 @@ const Analysis = () => {
                   <span className="w-2 h-2 bg-primary rounded-full animate-bounce"></span>
                 </div>
               </div>
-            ) : analysisSections && Object.keys(analysisSections).length > 0 ? (
-              <>
+            ) : (analysisSections && Object.keys(analysisSections).length > 0) || analysis ? (
+              <div className="space-y-6">
+                <div className="flex items-center justify-between bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
+                  <div className="flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4 text-primary" />
+                    <h3 className="text-xs font-black uppercase tracking-widest">Personalizar Diseño</h3>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => {
+                        const name = prompt("Nombre del diseño:");
+                        if (name) saveLayout(name);
+                      }}
+                      className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/20 transition-all flex items-center gap-1"
+                    >
+                      <Star className="w-3 h-3" /> Guardar
+                    </button>
+                    <button 
+                      onClick={resetLayout}
+                      className="px-3 py-1.5 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-secondary/10 hover:text-secondary transition-all flex items-center gap-1"
+                    >
+                      <Activity className="w-3 h-3" /> Reset
+                    </button>
+                    {Object.keys(savedLayouts).length > 0 && (
+                      <div className="relative group/layouts">
+                        <button className="px-3 py-1.5 bg-surface-container-highest rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 transition-all flex items-center gap-1">
+                          <ChevronDown className="w-3 h-3" /> Diseños
+                        </button>
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl opacity-0 group-hover/layouts:opacity-100 transition-opacity pointer-events-none group-hover/layouts:pointer-events-auto z-50 overflow-hidden">
+                          {Object.keys(savedLayouts).map(name => (
+                            <button 
+                              key={name}
+                              onClick={() => loadLayout(name)}
+                              className="w-full text-left px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-colors border-b border-outline-variant/5 last:border-0"
+                            >
+                              {name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <Reorder.Group 
-                axis="y" 
-                values={moduleOrder} 
-                onReorder={setModuleOrder}
-                className="space-y-6"
-              >
+                  axis="y" 
+                  values={moduleOrder} 
+                  onReorder={setModuleOrder}
+                  className="space-y-6"
+                >
                 {moduleOrder.map((moduleId) => (
                   <Reorder.Item 
                     key={moduleId} 
@@ -586,10 +642,10 @@ const Analysis = () => {
                     {moduleId === "context" && analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"] && (
                       <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
                         <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-                          <MessageSquare className="w-3 h-3" /> CONTEXTO Y RESUMEN
+                          <Brain className="w-3 h-3" /> CONTEXTO Y RESUMEN EJECUTIVO
                         </h4>
-                        <p className="text-sm text-on-surface leading-relaxed">
-                          {analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}
+                        <p className="text-sm text-on-surface leading-relaxed font-medium italic">
+                          "{analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}"
                         </p>
                       </div>
                     )}
@@ -898,7 +954,7 @@ const Analysis = () => {
                   </div>
                 </div>
               </div>
-            </>
+            </div>
             ) : (
               <div className="h-full flex flex-col items-center justify-center bg-surface-container-low rounded-2xl border border-dashed border-outline-variant/30 p-12 text-center space-y-4">
                 <div className="w-16 h-16 bg-surface-container rounded-full flex items-center justify-center">
