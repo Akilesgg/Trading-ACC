@@ -54,7 +54,7 @@ const Dashboard = () => {
   const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
   const [topTraders, setTopTraders] = useState<any[]>([]);
   const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
-  const [economicEvents, setEconomicEvents] = useState<any[]>([]);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
 
   const loadData = async () => {
     try {
