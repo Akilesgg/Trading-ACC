@@ -25,6 +25,8 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       **CONTEXTO Y EXPLICACIÓN BREVE**: (Proporciona un resumen ejecutivo de la situación actual del activo en 2-3 frases)
 
       **ESTRATEGIA**: (Describe la estrategia técnica recomendada: ALCISTA o BAJISTA)
+
+      **DOMINANCIA BTC**: (Si el activo es BTC, evalúa su dominancia. Si BTC es alcista, indica si es momento de buscar ALTCOINS de baja capitalización con mayor potencial. Si no es BTC, indica cómo la dominancia de BTC afecta a este activo específico)
       
       **FASE WYCKOFF**: (Menciona explícitamente la temporalidad analizada. Identifica la fase actual según la teoría de Wyckoff: ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN. Proporciona una explicación detallada de por qué se encuentra en esa fase y QUÉ SE ESPERA que haga el precio a continuación según esta estructura)
       
@@ -43,6 +45,8 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       
       **NIVEL DE CONFIANZA**: (Un número del 1 al 100 indicando la seguridad de la señal)
 
+      **RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO**: (Basado en la volatilidad ATR y el riesgo, recomienda un apalancamiento (ej: x3, x5, x10) y un nivel de riesgo: BAJO, MODERADO o ALTO)
+      
       **METÁFORA TÉCNICA**: (Incluye una breve mención creativa comparando los indicadores con 'ingredientes activos' o 'canabinoides' que impulsan el precio)
       
       Asegúrate de que la descripción sea detallada y profesional. No uses otros formatos.`,

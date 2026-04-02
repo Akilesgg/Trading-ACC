@@ -18,7 +18,12 @@ import {
   Waves,
   ArrowRightLeft,
   Newspaper,
-  AlertTriangle
+  AlertTriangle,
+  Download,
+  LayoutGrid,
+  List,
+  ChevronUp,
+  ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -34,6 +39,7 @@ import { getMarketSentiment } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { sendTelegramAlert } from "@/services/telegramService";
 import { toast } from "sonner";
+import JSZip from "jszip";
 
 const Dashboard = () => {
   const [tickers, setTickers] = useState<CryptoData[]>([]);
@@ -42,6 +48,8 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { watchlist, toggleWatchlist } = useWatchlist();
   const [filter, setFilter] = useState<"all" | "watchlist" | "bullish" | "bearish" | "neutral" | "breakout">("all");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
+  const [sortConfig, setSortConfig] = useState<{ key: keyof CryptoData | string, direction: 'asc' | 'desc' } | null>(null);
   
   const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
   const [topTraders, setTopTraders] = useState<any[]>([]);
@@ -108,7 +116,7 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    let filtered = allTickers;
+    let filtered = [...allTickers];
     if (filter === "watchlist") {
       filtered = allTickers.filter(t => watchlist.includes(t.symbol));
     } else if (filter === "bullish") {
@@ -120,8 +128,49 @@ const Dashboard = () => {
     } else if (filter === "breakout") {
       filtered = allTickers.filter(t => parseFloat(t.priceChangePercent) > 3);
     }
+
+    if (sortConfig) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof CryptoData];
+        const bValue = b[sortConfig.key as keyof CryptoData];
+
+        if (aValue === undefined || bValue === undefined) return 0;
+
+        let comparison = 0;
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          comparison = aValue - bValue;
+        } else {
+          comparison = String(aValue).localeCompare(String(bValue));
+        }
+
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      });
+    }
+
     setTickers(filtered);
-  }, [filter, allTickers, watchlist]);
+  }, [filter, allTickers, watchlist, sortConfig]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'desc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const exportToZip = async () => {
+    const zip = new JSZip();
+    const dataStr = JSON.stringify(tickers, null, 2);
+    zip.file("signals_audit.json", dataStr);
+    
+    const content = await zip.generateAsync({ type: "blob" });
+    const url = window.URL.createObjectURL(content);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `audit_signals_${new Date().toISOString().split('T')[0]}.zip`;
+    link.click();
+    toast.success("Archivo ZIP generado correctamente para auditoría");
+  };
 
   const bullishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) > 0.5).length + (Math.floor(Date.now() / 60000) % 3);
   const bearishCount = allTickers.filter(t => parseFloat(t.priceChangePercent) < -0.5).length + (Math.floor(Date.now() / 60000) % 2);
@@ -581,112 +630,263 @@ const Dashboard = () => {
 
       {/* Kinetic Matrix */}
       <section id="kinetic-matrix" className="space-y-6 scroll-mt-24">
-        <div className="flex items-center justify-between">
-          <h2 className="font-headline text-2xl font-bold tracking-tight uppercase">MATRIZ KINETIC</h2>
-          <div className="flex bg-surface-container-highest rounded-full p-1">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <h2 className="font-headline text-2xl font-bold tracking-tight uppercase">MATRIZ KINETIC</h2>
             <button 
-              onClick={() => setFilter("all")}
-              className={cn(
-                "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all",
-                filter === "all" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
-              )}
+              onClick={exportToZip}
+              className="flex items-center gap-2 px-4 py-2 bg-surface-container-highest rounded-xl border border-outline-variant/10 text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all"
             >
-              Todos los Activos
-            </button>
-            <button 
-              onClick={() => setFilter("watchlist")}
-              className={cn(
-                "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all",
-                filter === "watchlist" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
-              )}
-            >
-              Lista de Seguimiento
+              <Download className="w-4 h-4" /> Exportar ZIP
             </button>
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tickers.map((ticker) => {
-            const isBullish = parseFloat(ticker.priceChangePercent) > 0;
-            return (
-              <div 
-                key={ticker.symbol} 
+          
+          <div className="flex items-center gap-4">
+            <div className="flex bg-surface-container-highest rounded-full p-1">
+              <button 
+                onClick={() => setViewMode("grid")}
                 className={cn(
-                  "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500",
-                  isBullish ? "border-primary/10 hover:border-primary/40 shadow-lg shadow-primary/5" : "border-secondary/10 hover:border-secondary/40 shadow-lg shadow-secondary/5"
+                  "p-2 rounded-full transition-all",
+                  viewMode === "grid" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
                 )}
               >
-                <div className="p-6 space-y-6">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                        isBullish ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                      )}>
-                        {isBullish ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
-                      </div>
-                      <div>
-                        <h4 className="font-headline font-bold text-lg">{ticker.symbol.replace("USDT", " / USDT")}</h4>
-                        <div className="flex items-center gap-2">
-                          <span className={cn(
-                            "text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest",
-                            isBullish ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
-                          )}>
-                            {isBullish ? "Alcista" : "Bajista"}
-                          </span>
-                          <Star 
-                            className={cn(
-                              "w-3 h-3 transition-colors cursor-pointer",
-                              watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
-                            )} 
-                            onClick={() => toggleWatchlist(ticker.symbol)}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-headline font-bold text-lg">${parseFloat(ticker.price).toLocaleString()}</p>
-                      <p className={cn("text-xs font-bold", isBullish ? "text-primary" : "text-secondary")}>
-                        {isBullish ? "+" : ""}{ticker.priceChangePercent}%
-                      </p>
-                    </div>
-                  </div>
-                  {/* Timeframe Matrix */}
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { label: "1M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-                      { label: "5M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-                      { label: "15M", icon: Minus, color: "text-tertiary", bg: "bg-surface-container-highest" },
-                      { label: "1H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
-                    ].map((tf) => (
-                      <div 
-                        key={tf.label} 
-                        title={getStrategy(tf.label)}
-                        className={cn("flex flex-col items-center p-2 rounded-lg border border-outline-variant/10 group/tf relative", tf.bg)}
-                      >
-                        <span className="text-[10px] font-label text-on-surface-variant mb-1">{tf.label}</span>
-                        <tf.icon className={cn("w-4 h-4", tf.color)} />
-                        
-                        {/* Strategy Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 p-2 bg-surface-container-highest text-[8px] font-bold uppercase tracking-widest text-on-surface rounded opacity-0 group-hover/tf:opacity-100 transition-opacity pointer-events-none z-50 text-center border border-outline-variant/20 shadow-xl">
-                          {getStrategy(tf.label)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <Link 
-                    to={`/terminal?symbol=${ticker.symbol}`}
-                    className={cn(
-                      "block w-full py-3 rounded-xl border font-bold uppercase tracking-widest text-xs text-center transition-all duration-300",
-                      isBullish ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-on-primary" : "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary hover:text-on-secondary"
-                    )}
-                  >
-                    ANALIZAR AHORA
-                  </Link>
-                </div>
-              </div>
-            );
-          })}
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => setViewMode("table")}
+                className={cn(
+                  "p-2 rounded-full transition-all",
+                  viewMode === "table" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
+                )}
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex bg-surface-container-highest rounded-full p-1">
+              <button 
+                onClick={() => setFilter("all")}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all",
+                  filter === "all" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
+                )}
+              >
+                Todos
+              </button>
+              <button 
+                onClick={() => setFilter("watchlist")}
+                className={cn(
+                  "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all",
+                  filter === "watchlist" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface"
+                )}
+              >
+                Watchlist
+              </button>
+            </div>
+          </div>
         </div>
+
+        {viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tickers.map((ticker) => {
+              const isBullish = parseFloat(ticker.priceChangePercent) > 0;
+              return (
+                <div 
+                  key={ticker.symbol} 
+                  className={cn(
+                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500",
+                    isBullish ? "border-primary/10 hover:border-primary/40 shadow-lg shadow-primary/5" : "border-secondary/10 hover:border-secondary/40 shadow-lg shadow-secondary/5"
+                  )}
+                >
+                  <div className="p-6 space-y-6">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                          isBullish ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                        )}>
+                          {isBullish ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
+                        </div>
+                        <div>
+                          <h4 className="font-headline font-bold text-lg">{ticker.symbol.replace("USDT", " / USDT")}</h4>
+                          <div className="flex items-center gap-2">
+                            <span className={cn(
+                              "text-[10px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest",
+                              isBullish ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                            )}>
+                              {isBullish ? "Alcista" : "Bajista"}
+                            </span>
+                            <Star 
+                              className={cn(
+                                "w-3 h-3 transition-colors cursor-pointer",
+                                watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
+                              )} 
+                              onClick={() => toggleWatchlist(ticker.symbol)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-headline font-bold text-lg">${parseFloat(ticker.price).toLocaleString()}</p>
+                        <p className={cn("text-xs font-bold", isBullish ? "text-primary" : "text-secondary")}>
+                          {isBullish ? "+" : ""}{ticker.priceChangePercent}%
+                        </p>
+                      </div>
+                    </div>
+                    {/* Timeframe Matrix */}
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { label: "1M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+                        { label: "5M", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
+                        { label: "15M", icon: Minus, color: "text-tertiary", bg: "bg-surface-container-highest" },
+                        { label: "1H", icon: TrendingDown, color: "text-secondary", bg: "bg-secondary/10" },
+                      ].map((tf) => (
+                        <div 
+                          key={tf.label} 
+                          title={getStrategy(tf.label)}
+                          className={cn("flex flex-col items-center p-2 rounded-lg border border-outline-variant/10 group/tf relative", tf.bg)}
+                        >
+                          <span className="text-[10px] font-label text-on-surface-variant mb-1">{tf.label}</span>
+                          <tf.icon className={cn("w-4 h-4", tf.color)} />
+                          
+                          {/* Strategy Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-32 p-2 bg-surface-container-highest text-[8px] font-bold uppercase tracking-widest text-on-surface rounded opacity-0 group-hover/tf:opacity-100 transition-opacity pointer-events-none z-50 text-center border border-outline-variant/20 shadow-xl">
+                            {getStrategy(tf.label)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Link 
+                      to={`/terminal?symbol=${ticker.symbol}`}
+                      className={cn(
+                        "block w-full py-3 rounded-xl border font-bold uppercase tracking-widest text-xs text-center transition-all duration-300",
+                        isBullish ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-on-primary" : "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary hover:text-on-secondary"
+                      )}
+                    >
+                      ANALIZAR AHORA
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-surface-container-low rounded-2xl border border-outline-variant/10 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container border-b border-outline-variant/10">
+                    {[
+                      { key: 'market', label: 'Mercado' },
+                      { key: 'symbol', label: 'Activo' },
+                      { key: 'price', label: 'Precio Actual' },
+                      { key: 'entry', label: 'Entrada' },
+                      { key: 'timeframe', label: 'TF' },
+                      { key: 'winRate', label: 'WinRate' },
+                      { key: 'proximity', label: 'Prox.' },
+                      { key: 'direction', label: 'Dirección' },
+                      { key: 'stopLoss', label: 'Stop Loss' },
+                      { key: 'takeProfits', label: 'Take Profits' },
+                      { key: 'consensus', label: 'Consenso' },
+                      { key: 'funding', label: 'FUND' },
+                      { key: 'oi', label: 'OI' },
+                      { key: 'rsi', label: 'RSI' },
+                      { key: 'recommendation', label: 'REC' },
+                      { key: 'liquidity', label: 'LIQ' },
+                      { key: 'alert', label: 'Alerta' },
+                      { key: 'leverage', label: 'Leverage' }
+                    ].map((col) => (
+                      <th 
+                        key={col.key}
+                        onClick={() => handleSort(col.key)}
+                        className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:bg-surface-container-high transition-colors group"
+                      >
+                        <div className="flex items-center gap-2">
+                          {col.label}
+                          {sortConfig?.key === col.key ? (
+                            sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3 text-primary" /> : <ChevronDown className="w-3 h-3 text-primary" />
+                          ) : (
+                            <ChevronDown className="w-3 h-3 opacity-0 group-hover:opacity-30" />
+                          )}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {tickers.map((ticker) => (
+                    <tr key={ticker.symbol} className="border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors">
+                      <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.market}</td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <img src={ticker.image} className="w-4 h-4" alt="" referrerPolicy="no-referrer" />
+                          <span className="text-xs font-black">{ticker.symbol}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-xs font-bold">${parseFloat(ticker.price).toLocaleString()}</td>
+                      <td className="p-4 text-xs font-bold text-primary">${ticker.entry?.toLocaleString()}</td>
+                      <td className="p-4 text-[10px] font-bold">{ticker.timeframe}</td>
+                      <td className="p-4">
+                        <span className="text-[10px] font-black px-2 py-0.5 bg-primary/10 text-primary rounded">
+                          {ticker.winRate}%
+                        </span>
+                      </td>
+                      <td className="p-4 text-[10px] font-bold">{(ticker.proximity! * 100).toFixed(2)}%</td>
+                      <td className="p-4">
+                        <span className={cn(
+                          "text-[10px] font-black px-2 py-0.5 rounded",
+                          ticker.direction === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                        )}>
+                          {ticker.direction}
+                        </span>
+                      </td>
+                      <td className="p-4 text-xs font-bold text-secondary">${ticker.stopLoss?.toLocaleString()}</td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1">
+                          {ticker.takeProfits?.map((tp, i) => (
+                            <span key={i} className="text-[8px] font-bold text-primary">TP{i+1}: ${tp.toLocaleString()}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="w-12 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                          <div className="h-full bg-primary" style={{ width: `${ticker.consensus}%` }}></div>
+                        </div>
+                        <span className="text-[8px] font-bold text-on-surface-variant">{ticker.consensus}%</span>
+                      </td>
+                      <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.funding}</td>
+                      <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.oi}</td>
+                      <td className="p-4">
+                        <span className={cn(
+                          "text-[10px] font-black",
+                          ticker.rsi! > 70 ? "text-secondary" : ticker.rsi! < 30 ? "text-primary" : "text-on-surface-variant"
+                        )}>
+                          {ticker.rsi}
+                        </span>
+                      </td>
+                      <td className="p-4 text-[8px] font-black uppercase text-primary">{ticker.recommendation}</td>
+                      <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.liquidity}</td>
+                      <td className="p-4">
+                        {ticker.alert ? <Bell className="w-3 h-3 text-primary animate-pulse" /> : <Minus className="w-3 h-3 text-on-surface-variant opacity-20" />}
+                      </td>
+                      <td className="p-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-black text-primary">x{ticker.leverage}</span>
+                          <span className={cn(
+                            "text-[8px] font-black px-1.5 py-0.5 rounded uppercase",
+                            ticker.riskLevel === "Bajo" ? "bg-primary/10 text-primary" : ticker.riskLevel === "Moderado" ? "bg-orange-500/10 text-orange-500" : "bg-secondary/10 text-secondary"
+                          )}>
+                            {ticker.riskLevel}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Dynamic Trends & Volume */}

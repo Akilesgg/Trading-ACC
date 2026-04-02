@@ -142,8 +142,34 @@ const Analysis = () => {
   const [hotSignalData, setHotSignalData] = useState<any>(null);
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("analysis_module_order");
-    return saved ? JSON.parse(saved) : ["context", "wyckoff", "strategy", "indicators", "levels", "objectives", "justification", "raw"];
+    return saved ? JSON.parse(saved) : ["context", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
   });
+
+  const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
+    const saved = localStorage.getItem("analysis_saved_layouts");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const saveLayout = (name: string) => {
+    const newLayouts = { ...savedLayouts, [name]: moduleOrder };
+    setSavedLayouts(newLayouts);
+    localStorage.setItem("analysis_saved_layouts", JSON.stringify(newLayouts));
+    toast.success(`Diseño "${name}" guardado`);
+  };
+
+  const loadLayout = (name: string) => {
+    if (savedLayouts[name]) {
+      setModuleOrder(savedLayouts[name]);
+      toast.success(`Diseño "${name}" cargado`);
+    }
+  };
+
+  const resetLayout = () => {
+    const defaultOrder = ["context", "wyckoff", "strategy", "indicators", "levels", "objectives", "justification", "raw"];
+    setModuleOrder(defaultOrder);
+    localStorage.setItem("analysis_module_order", JSON.stringify(defaultOrder));
+    toast.success("Diseño restablecido");
+  };
 
   useEffect(() => {
     localStorage.setItem("analysis_module_order", JSON.stringify(moduleOrder));
@@ -246,14 +272,24 @@ const Analysis = () => {
   const shareToTelegram = async () => {
     if (!analysis || !ticker) return;
     
+    const levels = analysisSections?.["NIVELES OPERATIVOS"] || "";
+    const leverageInfo = analysisSections?.["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"] || "";
+
     toast.promise(
       sendTelegramAlert({
         symbol: selectedSymbol,
         price: ticker.price,
         change: ticker.priceChangePercent,
-        type: analysisSections?.["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA") ? "BULLISH" : "BEARISH",
-        confidence: 85,
-        analysis: analysis
+        type: analysisSections?.["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA") ? "BULLISH" : 
+              analysisSections?.["ESTRATEGIA"]?.toUpperCase().includes("BAJISTA") ? "BEARISH" : "SIGNAL",
+        confidence: parseInt(analysisSections?.["NIVEL DE CONFIANZA"] || "85"),
+        analysis: analysis,
+        entry: levels.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || levels.match(/ENTRADA:\s*(\d+([,.]\d+)*)/i)?.[1],
+        sl: levels.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || levels.match(/STOP LOSS:\s*(\d+([,.]\d+)*)/i)?.[1],
+        tp1: levels.match(/TAKE PROFIT 1:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || levels.match(/TAKE PROFIT 1:\s*(\d+([,.]\d+)*)/i)?.[1],
+        tp2: levels.match(/TAKE PROFIT 2:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || levels.match(/TAKE PROFIT 2:\s*(\d+([,.]\d+)*)/i)?.[1],
+        tp3: levels.match(/TAKE PROFIT 3:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || levels.match(/TAKE PROFIT 3:\s*(\d+([,.]\d+)*)/i)?.[1],
+        leverage: leverageInfo.match(/x\d+/i)?.[0]
       }),
       {
         loading: 'Enviando señal a Telegram...',
@@ -361,6 +397,39 @@ const Analysis = () => {
                     {mode.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-1 w-full md:w-auto">
+              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Diseño</label>
+              <div className="flex gap-2">
+                <button 
+                  onClick={resetLayout}
+                  className="px-4 py-3 bg-surface-container-high border border-outline-variant/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all"
+                >
+                  Reset
+                </button>
+                <button 
+                  onClick={() => {
+                    const name = prompt("Nombre del diseño:");
+                    if (name) saveLayout(name);
+                  }}
+                  className="px-4 py-3 bg-surface-container-high border border-outline-variant/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-all"
+                >
+                  Guardar
+                </button>
+                {Object.keys(savedLayouts).length > 0 && (
+                  <select 
+                    onChange={(e) => loadLayout(e.target.value)}
+                    className="bg-surface-container-high border border-outline-variant/20 rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest text-on-surface-variant focus:outline-none"
+                    value=""
+                  >
+                    <option value="" disabled>Cargar...</option>
+                    {Object.keys(savedLayouts).map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             </div>
           </div>
@@ -480,7 +549,23 @@ const Analysis = () => {
 
           {/* Right Column: AI Detailed Analysis */}
           <div className="lg:col-span-2">
-            {analysisSections && Object.keys(analysisSections).length > 0 ? (
+            {analyzing ? (
+              <div className="h-full flex flex-col items-center justify-center bg-surface-container-low rounded-2xl border border-outline-variant/30 p-12 text-center space-y-6">
+                <div className="relative">
+                  <div className="w-20 h-20 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                  <Brain className="w-8 h-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-xl font-headline font-bold text-on-surface">Procesando Inteligencia de Mercado</h4>
+                  <p className="text-sm text-on-surface-variant max-w-xs mx-auto">La IA está analizando patrones Wyckoff, indicadores técnicos y liquidez para generar una estrategia óptima.</p>
+                </div>
+                <div className="flex gap-2">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                  <span className="w-2 h-2 bg-primary rounded-full animate-bounce"></span>
+                </div>
+              </div>
+            ) : analysisSections && Object.keys(analysisSections).length > 0 ? (
               <>
                 <Reorder.Group 
                 axis="y" 
@@ -506,6 +591,19 @@ const Analysis = () => {
                         <p className="text-sm text-on-surface leading-relaxed">
                           {analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}
                         </p>
+                      </div>
+                    )}
+
+                    {moduleId === "dominance" && analysisSections["DOMINANCIA BTC"] && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <Activity className="w-3 h-3" /> DOMINANCIA BTC & ESTRATEGIA ALTCOINS
+                        </h4>
+                        <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/5">
+                          <p className="text-sm text-on-surface-variant leading-relaxed">
+                            {analysisSections["DOMINANCIA BTC"]}
+                          </p>
+                        </div>
                       </div>
                     )}
 
@@ -652,6 +750,37 @@ const Analysis = () => {
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {moduleId === "leverage" && analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"] && (
+                      <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+                        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+                          <Shield className="w-3 h-3" /> APALANCAMIENTO & GESTIÓN DE RIESGO
+                        </h4>
+                        <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/5 flex items-center justify-between">
+                          <div className="space-y-1">
+                            <p className="text-[8px] font-bold text-on-surface-variant uppercase">Apalancamiento Sugerido</p>
+                            <p className="text-2xl font-black text-primary">
+                              {analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.match(/x\d+/i)?.[0] || "x3"}
+                            </p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <p className="text-[8px] font-bold text-on-surface-variant uppercase">Nivel de Riesgo</p>
+                            <span className={cn(
+                              "text-[10px] font-black px-2 py-1 rounded uppercase",
+                              analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("BAJO") ? "bg-primary/10 text-primary" :
+                              analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("ALTO") ? "bg-secondary/10 text-secondary" :
+                              "bg-orange-500/10 text-orange-500"
+                            )}>
+                              {analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("BAJO") ? "BAJO" :
+                               analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("ALTO") ? "ALTO" : "MODERADO"}
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-on-surface-variant leading-relaxed italic px-2">
+                          {analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]}
+                        </p>
                       </div>
                     )}
 

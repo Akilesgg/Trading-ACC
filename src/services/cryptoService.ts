@@ -5,12 +5,48 @@ export interface CryptoData {
   highPrice: string;
   lowPrice: string;
   volume: string;
+  // New fields for signals table
+  market?: string;
+  entry?: number;
+  timeframe?: string;
+  winRate?: number;
+  proximity?: number;
+  direction?: "LONG" | "SHORT";
+  stopLoss?: number;
+  takeProfits?: number[];
+  consensus?: number;
+  funding?: string;
+  oi?: string;
+  rsi?: number;
+  recommendation?: string;
+  liquidity?: string;
+  alert?: boolean;
+  leverage?: number;
+  riskLevel?: "Bajo" | "Moderado" | "Alto";
 }
 
 export async function fetchTicker(symbol: string): Promise<CryptoData> {
   const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
   if (!response.ok) throw new Error("Failed to fetch ticker");
   const data = await response.json();
+  
+  // Mocking/Calculating additional fields
+  const price = parseFloat(data.lastPrice);
+  const change = parseFloat(data.priceChangePercent);
+  const isBullish = change > 0;
+  const volatility = Math.abs(parseFloat(data.highPrice) - parseFloat(data.lowPrice)) / price;
+  
+  // Leverage calculation based on volatility (ATR-like)
+  let leverage = 10;
+  let riskLevel: "Bajo" | "Moderado" | "Alto" = "Moderado";
+  if (volatility > 0.05) {
+    leverage = 3;
+    riskLevel = "Alto";
+  } else if (volatility < 0.02) {
+    leverage = 20;
+    riskLevel = "Bajo";
+  }
+
   return {
     symbol: data.symbol,
     price: data.lastPrice,
@@ -18,6 +54,23 @@ export async function fetchTicker(symbol: string): Promise<CryptoData> {
     highPrice: data.highPrice,
     lowPrice: data.lowPrice,
     volume: data.volume,
+    market: "FUTUROS",
+    entry: price * (isBullish ? 0.995 : 1.005),
+    timeframe: "1h",
+    winRate: Math.floor(Math.random() * 20) + 65,
+    proximity: Math.random() * 0.5,
+    direction: isBullish ? "LONG" : "SHORT",
+    stopLoss: isBullish ? price * 0.98 : price * 1.02,
+    takeProfits: isBullish ? [price * 1.02, price * 1.05, price * 1.1] : [price * 0.98, price * 0.95, price * 0.9],
+    consensus: Math.floor(Math.random() * 30) + 60,
+    funding: (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
+    oi: (parseFloat(data.volume) * 0.1).toFixed(2) + "M",
+    rsi: Math.floor(Math.random() * 40) + 30,
+    recommendation: isBullish ? "COMPRA FUERTE" : "VENTA FUERTE",
+    liquidity: (parseFloat(data.volume) * 0.05).toFixed(2) + "M",
+    alert: Math.random() > 0.7,
+    leverage,
+    riskLevel
   };
 }
 
