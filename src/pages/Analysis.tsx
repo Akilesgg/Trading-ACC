@@ -308,39 +308,6 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker, btcSenti
         </div>
       )}
 
-      {moduleId === "comments" && analysisSections["COMENTARIOS Y OBSERVACIONES"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <MessageSquare className="w-3 h-3" /> COMENTARIOS Y OBSERVACIONES
-          </h4>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
-            {analysisSections["COMENTARIOS Y OBSERVACIONES"]}
-          </p>
-        </div>
-      )}
-
-      {moduleId === "predictions" && analysisSections["PREDICCIONES DE MERCADO"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Target className="w-3 h-3" /> PREDICCIONES DE MERCADO
-          </h4>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
-            {analysisSections["PREDICCIONES DE MERCADO"]}
-          </p>
-        </div>
-      )}
-
-      {moduleId === "recommendation" && analysisSections["RECOMENDACIÓN IA"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-2 border-primary/20 bg-primary/5 p-6 rounded-2xl space-y-3 shadow-lg shadow-primary/5">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Zap className="w-3 h-3" /> RECOMENDACIÓN FINAL DE LA IA
-          </h4>
-          <p className="text-base text-on-surface leading-relaxed font-bold">
-            {analysisSections["RECOMENDACIÓN IA"]}
-          </p>
-        </div>
-      )}
-
       {moduleId === "dominance" && analysisSections["DOMINANCIA BTC"] && (
         <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
           <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
@@ -622,7 +589,7 @@ const Analysis = () => {
 
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("analysis_module_order");
-    return saved ? JSON.parse(saved) : ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    return saved ? JSON.parse(saved) : ["sentiment_gauges", "context", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
   });
 
   const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
@@ -645,7 +612,7 @@ const Analysis = () => {
   };
 
   const resetLayout = () => {
-    const defaultOrder = ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    const defaultOrder = ["sentiment_gauges", "context", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
     setModuleOrder(defaultOrder);
     localStorage.setItem("analysis_module_order", JSON.stringify(defaultOrder));
     toast.success("Diseño restablecido");
