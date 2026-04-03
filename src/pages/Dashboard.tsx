@@ -27,7 +27,7 @@ import {
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
   fetchTickers, 
   CryptoData, 
@@ -43,7 +43,6 @@ import { toast } from "sonner";
 import JSZip from "jszip";
 
 const Dashboard = () => {
-  const navigate = useNavigate();
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allTickers, setAllTickers] = useState<CryptoData[]>([]);
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
@@ -800,11 +799,10 @@ const Dashboard = () => {
             {tickers.map((ticker) => {
               const isBullish = parseFloat(ticker.priceChangePercent) > 0;
               return (
-                <Link 
+                <div 
                   key={ticker.symbol} 
-                  to={`/analysis?symbol=${ticker.symbol}`}
                   className={cn(
-                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500 block",
+                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500",
                     isBullish ? "border-primary/10 hover:border-primary/40 shadow-lg shadow-primary/5" : "border-secondary/10 hover:border-secondary/40 shadow-lg shadow-secondary/5"
                   )}
                 >
@@ -876,7 +874,7 @@ const Dashboard = () => {
                       ANALIZAR AHORA
                     </Link>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
@@ -925,11 +923,7 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {tickers.map((ticker) => (
-                    <tr 
-                      key={ticker.symbol} 
-                      onClick={() => navigate(`/analysis?symbol=${ticker.symbol}`)}
-                      className="border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors cursor-pointer"
-                    >
+                    <tr key={ticker.symbol} className="border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors">
                       <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.market}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
