@@ -34,7 +34,7 @@ import {
   Waves
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
 import { 
   fetchTickers, 
