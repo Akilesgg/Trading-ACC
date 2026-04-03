@@ -23,7 +23,8 @@ import {
   LayoutGrid,
   List,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
@@ -54,6 +55,7 @@ const Dashboard = () => {
   const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
   const [topTraders, setTopTraders] = useState<any[]>([]);
   const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
+  const [economicEvents, setEconomicEvents] = useState<any[]>([]);
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>("all");
 
   const loadData = async () => {

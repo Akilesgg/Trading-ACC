@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useDragControls } from "motion/react";
+import { useDragControls, Reorder, motion } from "motion/react";
 import { 
   ArrowLeft, 
   ArrowUpRight,
@@ -70,7 +70,25 @@ import {
   ReferenceLine
 } from "recharts";
 
-const TerminalModule = ({ moduleId, ticker, whaleMovements, topTraders, largeTransactions, economicEvents, analysis, setSelectedTraderStrategy }: any) => {
+const TerminalModule = ({ 
+  moduleId, 
+  ticker, 
+  whaleMovements, 
+  topTraders, 
+  largeTransactions, 
+  economicEvents, 
+  analysis, 
+  setSelectedTraderStrategy,
+  accountSize,
+  setAccountSize,
+  riskAmount,
+  setRiskAmount,
+  copySignal,
+  shareToTelegram,
+  timeframe,
+  setTimeframe,
+  assetSentiments
+}: any) => {
   const controls = useDragControls();
 
   return (
@@ -145,6 +163,51 @@ const TerminalModule = ({ moduleId, ticker, whaleMovements, topTraders, largeTra
               <span className="text-xs font-bold text-primary uppercase tracking-widest">Online: Node-04</span>
             </div>
             <p className="text-[8px] text-on-surface-variant mt-1">Latencia: 14ms</p>
+          </div>
+        </div>
+      )}
+
+      {moduleId === "sentiment" && (
+        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+              <Gauge className="w-3 h-3" /> SENTIMIENTO MULTI-TEMPORALIDAD
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {["1m", "5m", "15m", "1h", "4h", "1d", "1w"].map((tf) => (
+                <button
+                  key={tf}
+                  onClick={() => setTimeframe(tf)}
+                  className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+                    timeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                  )}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            {Object.entries(assetSentiments).map(([asset, data]: [string, any]) => (
+              <div key={asset} className="bg-surface-container p-4 rounded-xl border border-outline-variant/5 text-center space-y-2 group hover:border-primary/30 transition-all cursor-pointer">
+                <div className="flex justify-center mb-1">
+                  <img src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${asset.toLowerCase()}.png`} className="w-6 h-6" alt="" referrerPolicy="no-referrer" />
+                </div>
+                <p className="text-[10px] font-black text-on-surface uppercase tracking-widest">{asset}</p>
+                <div className={cn(
+                  "px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest",
+                  data.sentiment === "ALCISTA" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                )}>
+                  {data.sentiment}
+                </div>
+                <div className="flex items-center justify-center gap-1">
+                  <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", data.sentiment === "ALCISTA" ? "bg-primary" : "bg-secondary")}></div>
+                  <span className="text-[8px] font-bold text-on-surface-variant">{data.confidence}%</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -559,7 +622,7 @@ const Terminal = () => {
   // Layout State
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("terminal_module_order");
-    return saved ? JSON.parse(saved) : ["overview", "copytrading", "news", "indicators", "analysis"];
+    return saved ? JSON.parse(saved) : ["overview", "sentiment", "copytrading", "news", "indicators", "analysis"];
   });
 
   const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
@@ -594,6 +657,7 @@ const Terminal = () => {
   
   // Analysis State
   const [analysis, setAnalysis] = useState<any>(null);
+  const [assetSentiments, setAssetSentiments] = useState<Record<string, any>>({});
   const [mtfBias, setMtfBias] = useState<any>({
     "1m": "NEUTRAL",
     "5m": "BULLISH",
@@ -661,6 +725,20 @@ const Terminal = () => {
       return () => clearTimeout(timer);
     }
   }, [cooldown]);
+
+  useEffect(() => {
+    // Simulate updating sentiments for different assets based on timeframe
+    const assets = ["BTC", "ETH", "SOL", "BNB", "XRP", "ADA", "DOGE"];
+    const newSentiments: Record<string, any> = {};
+    assets.forEach(asset => {
+      const isBullish = Math.random() > 0.4;
+      newSentiments[asset] = {
+        sentiment: isBullish ? "ALCISTA" : "BAJISTA",
+        confidence: Math.floor(Math.random() * 30) + 60
+      };
+    });
+    setAssetSentiments(newSentiments);
+  }, [timeframe]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -991,408 +1069,19 @@ const Terminal = () => {
               economicEvents={economicEvents}
               analysis={analysis}
               setSelectedTraderStrategy={setSelectedTraderStrategy}
+              accountSize={accountSize}
+              setAccountSize={setAccountSize}
+              riskAmount={riskAmount}
+              setRiskAmount={setRiskAmount}
+              copySignal={copySignal}
+              shareToTelegram={shareToTelegram}
+              timeframe={timeframe}
+              setTimeframe={setTimeframe}
+              assetSentiments={assetSentiments}
             />
           ))}
-        </Reorder.Group>      </div>
-
-
-
-
-          {/* Wyckoff & Volume Profile */}
-          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Waves className="w-3 h-3" /> WYCKOFF & VOL
-            </h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">Fase:</span>
-                <span className="text-xs font-bold text-secondary">Distribución B</span>
-              </div>
-              <div className="pt-2 border-t border-outline-variant/5">
-                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Volume Profile (VPVR)</p>
-                <div className="space-y-1">
-                  {(analysis?.volumeProfile || [
-                    { vol: 80 }, { vol: 45 }, { vol: 100 }, { vol: 60 }, { vol: 30 }
-                  ]).map((vp: any, i: number) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <div className="h-2 bg-surface-container-highest flex-1 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary/40" style={{ width: `${vp.vol}%` }}></div>
-                      </div>
-                      <span className="text-[8px] font-bold text-on-surface-variant">{vp.vol}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* OTE Zones & Correlation */}
-          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Target className="w-3 h-3" /> OTE & CORR
-            </h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">OTE LONG:</span>
-                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.96).toFixed(2)}</span>
-              </div>
-              <div className="pt-2 border-t border-outline-variant/5">
-                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Correlación</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-surface-container p-2 rounded-lg text-center">
-                    <p className="text-[8px] text-on-surface-variant uppercase">BTC</p>
-                    <p className="text-[10px] font-bold text-primary">{analysis?.correlation.btc || "0.00"}</p>
-                  </div>
-                  <div className="bg-surface-container p-2 rounded-lg text-center">
-                    <p className="text-[8px] text-on-surface-variant uppercase">ETH</p>
-                    <p className="text-[10px] font-bold text-primary">{analysis?.correlation.eth || "0.00"}</p>
-                  </div>
-                  <div className="bg-surface-container p-2 rounded-lg text-center">
-                    <p className="text-[8px] text-on-surface-variant uppercase">S&P</p>
-                    <p className="text-[10px] font-bold text-on-surface-variant">{analysis?.correlation.sp500 || "0.00"}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Liquidez & Tendencia */}
-          <div className="bg-surface-container-low p-5 rounded-2xl border border-outline-variant/10 space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-              <Zap className="w-3 h-3" /> LIQUIDEZ & TREND
-            </h4>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">LIQ ARRIBA:</span>
-                <span className="text-xs font-bold text-secondary">${(parseFloat(ticker.price) * 1.06).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-on-surface-variant">LIQ ABAJO:</span>
-                <span className="text-xs font-bold text-primary">${(parseFloat(ticker.price) * 0.94).toFixed(2)}</span>
-              </div>
-              <div className="pt-2 border-t border-outline-variant/5">
-                <p className="text-[9px] font-bold text-on-surface-variant uppercase mb-2">Live Order Flow</p>
-                <div className="space-y-1 h-12 overflow-hidden">
-                  {[1, 2, 3].map((_, i) => (
-                    <div key={i} className="flex justify-between text-[8px] font-mono animate-pulse">
-                      <span className={i % 2 === 0 ? "text-primary" : "text-secondary"}>
-                        {i % 2 === 0 ? "BUY" : "SELL"}
-                      </span>
-                      <span className="text-on-surface-variant">{(Math.random() * 2).toFixed(3)} BTC</span>
-                      <span className="text-on-surface">${ticker.price}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        </Reorder.Group>
       </div>
-
-        {/* Indicators Section */}
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10">
-          <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-6 flex items-center gap-2">
-            <Activity className="w-3 h-3" /> INDICADORES TÉCNICOS AVANZADOS
-          </h4>
-          <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
-            {[
-              { label: "RSI (14)", value: analysis?.indicators.rsi.val || "50.0", status: analysis?.indicators.rsi.status || "NEUTRAL", color: "text-on-surface" },
-              { label: "MACD", value: analysis?.indicators.macd.val || "L: -9.53", status: analysis?.indicators.macd.status || "ALCISTA", color: analysis?.indicators.macd.color || "text-primary" },
-              { label: "EMA 20/50", value: analysis?.indicators.ema.val || "66671.72", status: analysis?.indicators.ema.status || "BAJISTA", color: analysis?.indicators.ema.color || "text-secondary" },
-              { label: "VWAP", value: analysis?.indicators.vwap.val || "66671.72", status: analysis?.indicators.vwap.status || "POR DEBAJO", color: analysis?.indicators.vwap.color || "text-secondary" },
-              { label: "VOL Trend", value: analysis?.indicators.vol.val || "A: 0.0%", status: analysis?.indicators.vol.status || "MOMENTUM -", color: analysis?.indicators.vol.color || "text-on-surface-variant" },
-              { label: "ADX", value: analysis?.indicators.adx.val || "24.5", status: analysis?.indicators.adx.status || "DÉBIL", color: analysis?.indicators.adx.color || "text-on-surface-variant" },
-              { label: "ATR", value: analysis?.indicators.atr.val || "0.00", status: analysis?.indicators.atr.status || "NORMAL", color: analysis?.indicators.atr.color || "text-primary" }
-            ].map((ind, i) => (
-              <div key={i} className="bg-surface-container p-4 rounded-xl text-center space-y-1">
-                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{ind.label}</p>
-                <p className={cn("text-sm font-bold", ind.color)}>{ind.value}</p>
-                <p className={cn("text-[10px] font-bold uppercase tracking-widest", ind.color)}>{ind.status}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Analysis Results */}
-        {analysis && (
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            {/* Signal Hero Banner */}
-            <div className={cn(
-              "p-8 rounded-3xl border-2 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl overflow-hidden relative bg-surface-container-low",
-              analysis.sentiment === "BULLISH" ? "border-primary/30" : "border-secondary/30"
-            )}>
-              {/* Decorative Arrows */}
-              <div className="absolute left-0 top-0 bottom-0 w-24 flex items-center justify-center opacity-10 pointer-events-none">
-                {analysis.sentiment === "BULLISH" ? (
-                  <ArrowUpRight className="w-32 h-32 text-primary -rotate-12" />
-                ) : (
-                  <ArrowDownRight className="w-32 h-32 text-secondary rotate-12" />
-                )}
-              </div>
-              <div className="absolute right-0 top-0 bottom-0 w-24 flex items-center justify-center opacity-10 pointer-events-none">
-                {analysis.sentiment === "BULLISH" ? (
-                  <ArrowUpRight className="w-32 h-32 text-primary rotate-12" />
-                ) : (
-                  <ArrowDownRight className="w-32 h-32 text-secondary -rotate-12" />
-                )}
-              </div>
-
-              <div className="flex items-center gap-6 z-10">
-                <div className={cn(
-                  "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110",
-                  analysis.sentiment === "BULLISH" ? "bg-primary text-on-primary" : "bg-secondary text-on-secondary"
-                )}>
-                  {analysis.sentiment === "BULLISH" ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
-                </div>
-                <div>
-                  <h2 className={cn("text-3xl font-headline font-black tracking-tighter flex items-center gap-3", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
-                    {analysis.sentiment === "BULLISH" ? (
-                      <>
-                        <ArrowUpRight className="w-8 h-8 animate-bounce" />
-                        SEÑAL ALCISTA
-                      </>
-                    ) : (
-                      <>
-                        <ArrowDownRight className="w-8 h-8 animate-bounce" />
-                        SEÑAL BAJISTA
-                      </>
-                    )}
-                  </h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Confianza del Sistema:</span>
-                    <span className={cn("text-base font-black", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>{analysis.score}%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col items-end gap-2 z-10">
-                <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Ratio R/B:</span>
-                  <span className="text-sm font-black text-tertiary">{analysis.ratio}</span>
-                </div>
-                <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-xl border border-outline-variant/10">
-                  <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estrategia:</span>
-                  <span className="text-sm font-black text-primary uppercase">{analysis.strategy}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-surface-container-low p-6 rounded-2xl border-2 space-y-6 shadow-xl border-outline-variant/10">
-              <div className="flex justify-between items-center">
-                <div className="space-y-1">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                    <Target className="w-3 h-3" /> NIVELES DE TRADING ({timeframe.toUpperCase()})
-                  </h4>
-                  <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Estrategia: <span className="text-tertiary">{analysis.strategy}</span></p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={copySignal}
-                    className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant hover:text-primary"
-                    title="Copiar Señal"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={shareToTelegram}
-                    className="p-2 hover:bg-surface-container-high rounded-lg transition-colors text-on-surface-variant hover:text-primary"
-                    title="Enviar a Telegram"
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                  <span className={cn("text-xs font-bold px-3 py-1 rounded-full", analysis.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary")}>
-                    {analysis.type === "LONG" ? "COMPRA MODERADA" : "VENTA MODERADA"} ({analysis.score}%)
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-surface-container rounded-xl border-l-4 border-primary">
-                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">ENTRADA:</span>
-                    <span className="text-lg font-bold text-primary">${analysis.entry.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-surface-container rounded-xl border-l-4 border-secondary">
-                    <span className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">STOP LOSS:</span>
-                    <span className="text-lg font-bold text-secondary">${analysis.sl.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs font-bold px-3">
-                    <span className="text-on-surface-variant uppercase tracking-widest">RATIO RIESGO/BENEFICIO:</span>
-                    <span className="text-tertiary">{analysis.ratio}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    { label: "TAKE PROFIT 1", val: analysis.tp1, color: "text-tertiary", icon: <Target className="w-4 h-4" /> },
-                    { label: "TAKE PROFIT 2", val: analysis.tp2, color: "text-tertiary", icon: <Target className="w-4 h-4" /> },
-                    { label: "TAKE PROFIT 3", val: analysis.tp3, color: "text-tertiary", icon: <Target className="w-4 h-4" /> }
-                  ].map((tp, i) => (
-                    <div key={i} className="flex justify-between items-center p-4 bg-surface-container rounded-xl border border-outline-variant/5 hover:border-tertiary/30 transition-all group/tp">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-tertiary/10 rounded-lg text-tertiary group-hover/tp:scale-110 transition-transform">
-                          {tp.icon}
-                        </div>
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">{tp.label}</span>
-                      </div>
-                      <span className={cn("text-lg font-black", tp.color)}>${tp.val.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-outline-variant/10 space-y-4">
-                <h5 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">JUSTIFICACIÓN DE ENTRADA ({analysis.type}):</h5>
-                <div className="bg-surface-container-high/30 p-6 rounded-2xl border border-outline-variant/10">
-                  <div className="prose prose-invert max-w-none">
-                    {analysis.description.split('\n').map((line: string, i: number) => {
-                      const trimmedLine = line.trim();
-                      if (!trimmedLine) return <div key={i} className="h-4" />;
-                      
-                      if (trimmedLine.startsWith('**') && trimmedLine.includes(':')) {
-                        const [header, ...rest] = trimmedLine.replace(/\*\*/g, '').split(':');
-                        return (
-                          <div key={i} className="mb-6 last:mb-0">
-                            <h4 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2 flex items-center gap-2">
-                              <div className="w-1.5 h-1.5 bg-primary rounded-full" />
-                              {header}
-                            </h4>
-                            <p className="text-on-surface-variant text-xs leading-relaxed font-medium pl-3.5 border-l border-outline-variant/20">
-                              {rest.join(':').trim()}
-                            </p>
-                          </div>
-                        );
-                      }
-                      return <p key={i} className="text-on-surface-variant text-xs leading-relaxed mb-4 last:mb-0">{trimmedLine}</p>;
-                    })}
-                  </div>
-                </div>
-                <div className="bg-surface-container p-3 rounded-xl">
-                  <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">PUNTUACIÓN TOTAL: {analysis.score}%</p>
-                  <div className="h-2 bg-surface-container-highest rounded-full overflow-hidden">
-                    <div className="h-full bg-primary" style={{ width: `${analysis.score}%` }}></div>
-                  </div>
-                </div>
-
-                {/* Risk/Reward Visualizer */}
-                <div className="pt-4 border-t border-outline-variant/10">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Relación Riesgo / Beneficio</span>
-                    <span className="text-sm font-black text-primary">1 : {analysis.rr.toFixed(1)}</span>
-                  </div>
-                  <div className="flex h-2 rounded-full overflow-hidden">
-                    <div className="bg-secondary w-1/4 opacity-80"></div>
-                    <div className="bg-primary flex-1 opacity-80"></div>
-                  </div>
-                  <div className="flex justify-between mt-1">
-                    <span className="text-[8px] font-bold text-secondary uppercase">Riesgo</span>
-                    <span className="text-[8px] font-bold text-primary uppercase">Beneficio</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {/* Signal Status Card - Elegant Arrows */}
-              <div className={cn(
-                "p-8 rounded-3xl border border-outline-variant/10 flex flex-col items-center text-center space-y-6 shadow-2xl relative overflow-hidden bg-surface-container-low",
-              )}>
-                <div className="flex items-center gap-8">
-                  <motion.div 
-                    animate={{ y: [0, -10, 0] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className={cn(
-                      "w-16 h-16 flex items-center justify-center",
-                      analysis.sentiment === "BULLISH" ? "text-primary" : "text-on-surface-variant/20"
-                    )}
-                  >
-                    <ArrowUpRight className="w-16 h-16 stroke-[3]" />
-                  </motion.div>
-                  <div className="h-12 w-px bg-outline-variant/20" />
-                  <motion.div 
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className={cn(
-                      "w-16 h-16 flex items-center justify-center",
-                      analysis.sentiment === "BEARISH" ? "text-secondary" : "text-on-surface-variant/20"
-                    )}
-                  >
-                    <ArrowDownRight className="w-16 h-16 stroke-[3]" />
-                  </motion.div>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className={cn("text-[10px] font-black uppercase tracking-[0.3em]", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
-                    Sesgo del Mercado
-                  </p>
-                  <h3 className={cn("text-4xl font-headline font-black tracking-tighter", analysis.sentiment === "BULLISH" ? "text-primary" : "text-secondary")}>
-                    {analysis.sentiment === "BULLISH" ? "ALCISTA" : "BAJISTA"}
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-4 w-full px-4">
-                  <div className="flex-1 h-1 bg-surface-container-highest rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${analysis.score}%` }}
-                      className={cn("h-full", analysis.sentiment === "BULLISH" ? "bg-primary" : "bg-secondary")}
-                    />
-                  </div>
-                  <span className="text-[10px] font-bold font-mono text-on-surface-variant">{analysis.score}%</span>
-                </div>
-              </div>
-
-              <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
-                <h4 className="text-[10px] font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                  <BarChart3 className="w-3 h-3" /> GRÁFICO DE ANÁLISIS
-                </h4>
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={klines}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#22262b" vertical={false} />
-                      <XAxis dataKey="time" hide />
-                      <YAxis domain={['auto', 'auto']} hide />
-                      <Tooltip 
-                        contentStyle={{ backgroundColor: "#1c2024", border: "none", borderRadius: "12px" }}
-                        itemStyle={{ color: "#b1ffce" }}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="close" 
-                        stroke="#b1ffce" 
-                        fillOpacity={0.1} 
-                        fill="#b1ffce" 
-                      />
-                      {/* Entry Line */}
-                      <ReferenceLine y={analysis.entry} stroke="#b1ffce" strokeDasharray="5 5" label={{ position: 'right', value: 'ENTRY', fill: '#b1ffce', fontSize: 10 }} />
-                      {/* SL Line */}
-                      <ReferenceLine y={analysis.sl} stroke="#ff7162" strokeDasharray="5 5" label={{ position: 'right', value: 'SL', fill: '#ff7162', fontSize: 10 }} />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-surface-container-high to-surface-container-low p-6 rounded-2xl border border-primary/20 relative overflow-hidden group">
-                <div className="relative z-10 space-y-4">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Brain className="w-5 h-5" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Sugerencia de IA</span>
-                  </div>
-                  <p className="text-xs text-on-surface-variant leading-relaxed italic">
-                    "La estructura de mercado en {timeframe} sugiere una {analysis.type === "LONG" ? "acumulación" : "distribución"} fuerte. Los niveles de liquidez indican un posible movimiento hacia el TP2 en las próximas horas."
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-        )}
-
         {!analysis && !analyzing && (
           <div className="py-20 text-center space-y-4">
             <div className="w-20 h-20 bg-surface-container rounded-xl flex items-center justify-center mx-auto mb-6">
@@ -1404,6 +1093,31 @@ const Terminal = () => {
             </p>
           </div>
         )}
+      </div>
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-low border-t border-outline-variant/10 px-4 py-3 z-50 flex justify-around items-center shadow-2xl backdrop-blur-xl bg-opacity-80">
+        <button onClick={() => navigate("/")} className="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+          <LayoutGrid className="w-5 h-5" />
+          <span className="text-[8px] font-bold uppercase">Dashboard</span>
+        </button>
+        <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+          <Activity className="w-5 h-5" />
+          <span className="text-[8px] font-bold uppercase">Terminal</span>
+        </button>
+        <button onClick={runAnalysis} className="flex flex-col items-center gap-1 text-primary transition-colors">
+          <div className="p-2 bg-primary rounded-full shadow-lg shadow-primary/20 -mt-8 border-4 border-surface-container-low">
+            <Brain className="w-6 h-6 text-on-primary" />
+          </div>
+          <span className="text-[8px] font-bold uppercase mt-1">Analizar</span>
+        </button>
+        <button onClick={() => navigate("/analysis")} className="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+          <TrendingUp className="w-5 h-5" />
+          <span className="text-[8px] font-bold uppercase">Análisis</span>
+        </button>
+        <button onClick={() => navigate("/settings")} className="flex flex-col items-center gap-1 text-on-surface-variant hover:text-primary transition-colors">
+          <Settings className="w-5 h-5" />
+          <span className="text-[8px] font-bold uppercase">Ajustes</span>
+        </button>
       </div>
     </motion.div>
   );

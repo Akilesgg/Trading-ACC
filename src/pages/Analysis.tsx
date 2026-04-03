@@ -29,7 +29,8 @@ import {
   Users,
   ArrowRightLeft,
   X,
-  GripVertical
+  GripVertical,
+  LayoutGrid
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
