@@ -491,8 +491,8 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker, btcSenti
               <div key={i} className="flex flex-col p-3 bg-surface-container rounded-xl border border-outline-variant/5">
                 <span className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">TP {i}</span>
                 <span className="text-sm font-black text-primary">
-                  {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || 
-                   analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}
+                  {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\\d+)*)`, 'i'))?.[1] || 
+                   analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\\d+)*)`, 'i'))?.[1] || "---"}
                 </span>
               </div>
             ))}
@@ -590,14 +590,15 @@ const Analysis = () => {
   const [analysis, setAnalysis] = useState<string>("");
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allAssets, setAllAssets] = useState<any[]>([]);
-  const [selectedSymbol, setSelectedSymbol] = useState(new URLSearchParams(window.location.search).get("symbol") || "BTCUSDT");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedSymbol, setSelectedSymbol] = useState(searchParams.get("symbol") || "BTCUSDT");
 
   useEffect(() => {
-    const symbolFromUrl = new URLSearchParams(window.location.search).get("symbol");
+    const symbolFromUrl = searchParams.get("symbol");
     if (symbolFromUrl && symbolFromUrl !== selectedSymbol) {
       setSelectedSymbol(symbolFromUrl);
     }
-  }, [window.location.search]);
+  }, [searchParams, selectedSymbol]);
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [selectedMode, setSelectedMode] = useState<"Standard" | "Scalping" | "Swing">("Standard");
   const [loading, setLoading] = useState(true);
@@ -621,13 +622,23 @@ const Analysis = () => {
   const [generalTF, setGeneralTF] = useState("1h");
 
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem("analysis_module_order");
-    return saved ? JSON.parse(saved) : ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    try {
+      const saved = localStorage.getItem("analysis_module_order");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    } catch (e) {
+      return ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    }
   });
 
   const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem("analysis_saved_layouts");
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem("analysis_saved_layouts");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch (e) {
+      return {};
+    }
   });
 
   const saveLayout = (name: string) => {
