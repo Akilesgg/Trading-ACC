@@ -15,7 +15,7 @@
   --color-inverse-primary: #006d43;
   --color-secondary-fixed: #ffc3bb;
   --color-on-surface-variant: #a9abaf;
-  --color-surface-container-lowest: #000000;
+  --color-surface-container-lowest: #0a0c0e;
   --color-on-secondary-container: #fff6f4;
   --color-secondary-dim: #e2241f;
   --color-on-error-container: #ffa8a3;
@@ -56,7 +56,7 @@
   --color-outline: #737679;
   --color-error-dim: #d7383b;
   --color-on-primary-fixed-variant: #00673f;
-  --color-background: #0b0e11;
+  --color-background: #101418;
 }
 
 @layer base {
