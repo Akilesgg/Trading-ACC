@@ -800,11 +800,11 @@ const Dashboard = () => {
             {tickers.map((ticker) => {
               const isBullish = parseFloat(ticker.priceChangePercent) > 0;
               return (
-                <div 
+                <Link 
                   key={ticker.symbol} 
-                  onClick={() => navigate(`/analysis?symbol=${ticker.symbol}`)}
+                  to={`/analysis?symbol=${ticker.symbol}`}
                   className={cn(
-                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500 block cursor-pointer",
+                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500 block",
                     isBullish ? "border-primary/10 hover:border-primary/40 shadow-lg shadow-primary/5" : "border-secondary/10 hover:border-secondary/40 shadow-lg shadow-secondary/5"
                   )}
                 >
@@ -831,10 +831,7 @@ const Dashboard = () => {
                                 "w-3 h-3 transition-colors cursor-pointer",
                                 watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
                               )} 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleWatchlist(ticker.symbol);
-                              }}
+                              onClick={() => toggleWatchlist(ticker.symbol)}
                             />
                           </div>
                         </div>
@@ -869,20 +866,17 @@ const Dashboard = () => {
                         </div>
                       ))}
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/terminal?symbol=${ticker.symbol}`);
-                      }}
+                    <Link 
+                      to={`/terminal?symbol=${ticker.symbol}`}
                       className={cn(
                         "block w-full py-3 rounded-xl border font-bold uppercase tracking-widest text-xs text-center transition-all duration-300",
                         isBullish ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-on-primary" : "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary hover:text-on-secondary"
                       )}
                     >
                       ANALIZAR AHORA
-                    </button>
+                    </Link>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

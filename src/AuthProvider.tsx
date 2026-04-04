@@ -52,16 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(user);
       setLoading(false);
     });
-
-    // Safety timeout: if auth state doesn't resolve in 5 seconds, stop loading
-    const timeout = setTimeout(() => {
-      setLoading(false);
-    }, 5000);
-
-    return () => {
-      unsubscribe();
-      clearTimeout(timeout);
-    };
+    return () => unsubscribe();
   }, []);
 
   const login = async () => {
