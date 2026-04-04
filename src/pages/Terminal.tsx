@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDragControls, Reorder, motion } from "motion/react";
 import { 
   ArrowLeft, 
@@ -191,11 +191,7 @@ const TerminalModule = ({
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {Object.entries(assetSentiments).map(([asset, data]: [string, any]) => (
-              <Link 
-                key={asset} 
-                to={`/analysis?symbol=${asset}USDT`}
-                className="bg-surface-container p-4 rounded-xl border border-outline-variant/5 text-center space-y-2 group hover:border-primary/30 transition-all cursor-pointer block"
-              >
+              <div key={asset} className="bg-surface-container p-4 rounded-xl border border-outline-variant/5 text-center space-y-2 group hover:border-primary/30 transition-all cursor-pointer">
                 <div className="flex justify-center mb-1">
                   <img src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${asset.toLowerCase()}.png`} className="w-6 h-6" alt="" referrerPolicy="no-referrer" />
                 </div>
@@ -210,7 +206,7 @@ const TerminalModule = ({
                   <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", data.sentiment === "ALCISTA" ? "bg-primary" : "bg-secondary")}></div>
                   <span className="text-[8px] font-bold text-on-surface-variant">{data.confidence}%</span>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>
