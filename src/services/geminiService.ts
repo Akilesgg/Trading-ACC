@@ -1,13 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 
-const API_KEY = process.env.GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: API_KEY || "" });
+const getApiKey = () => {
+  return process.env.GEMINI_API_KEY || localStorage.getItem("GEMINI_API_KEY") || "";
+};
 
 export async function analyzeMarket(symbol: string, price: string, change: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") {
-  if (!API_KEY) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     console.error("GEMINI_API_KEY is missing");
-    return "Error: Configuración de API de IA faltante. Por favor, configura tu GEMINI_API_KEY en los ajustes.";
+    return "Error: Configuración de API de IA faltante. Por favor, configura tu GEMINI_API_KEY en los ajustes o en el panel de análisis.";
   }
+  
+  const ai = new GoogleGenAI({ apiKey });
   
   try {
     let modePrompt = "";
@@ -97,7 +101,10 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
 }
 
 export async function getMarketSentiment() {
-  if (!API_KEY) return "Sentimiento neutral (API Key faltante).";
+  const apiKey = getApiKey();
+  if (!apiKey) return "Sentimiento neutral (API Key faltante).";
+  
+  const ai = new GoogleGenAI({ apiKey });
   
   try {
     const response = await ai.models.generateContent({

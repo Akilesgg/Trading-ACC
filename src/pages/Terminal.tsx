@@ -128,13 +128,13 @@ const TerminalModule = ({
       value={moduleId}
       dragListener={false}
       dragControls={controls}
-      className="relative group/module"
+      className="relative"
     >
       <div 
         onPointerDown={(e) => controls.start(e)}
-        className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover/module:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-2 z-50"
+        className="absolute top-4 right-4 p-2 z-50 bg-surface-container-highest/50 rounded-lg border border-outline-variant/10 cursor-grab active:cursor-grabbing hover:bg-primary/10 hover:text-primary transition-all"
       >
-        <GripVertical className="w-6 h-6 text-on-surface-variant/50" />
+        <GripVertical className="w-4 h-4" />
       </div>
 
       {moduleId === "overview" && (
@@ -1045,6 +1045,16 @@ const Terminal = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <input 
+              type="password"
+              placeholder="GEMINI API KEY"
+              defaultValue={localStorage.getItem("GEMINI_API_KEY") || ""}
+              onChange={(e) => {
+                localStorage.setItem("GEMINI_API_KEY", e.target.value);
+                toast.success("API Key guardada localmente");
+              }}
+              className="w-32 md:w-48 bg-surface-container-high border border-outline-variant/20 rounded-xl py-2 px-4 focus:outline-none focus:border-primary transition-all text-[10px] font-mono"
+            />
             <button 
               onClick={() => {
                 const name = prompt("Nombre del diseño:");

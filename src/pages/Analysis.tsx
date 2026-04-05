@@ -253,13 +253,13 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker, btcSenti
       value={moduleId}
       dragListener={false}
       dragControls={controls}
-      className="relative group"
+      className="relative"
     >
       <div 
         onPointerDown={(e) => controls.start(e)}
-        className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-2 z-50"
+        className="absolute top-4 right-4 p-2 z-50 bg-surface-container-highest/50 rounded-lg border border-outline-variant/10 cursor-grab active:cursor-grabbing hover:bg-primary/10 hover:text-primary transition-all"
       >
-        <GripVertical className="w-6 h-6 text-on-surface-variant/50" />
+        <GripVertical className="w-4 h-4" />
       </div>
       
       {moduleId === "sentiment_gauges" && (
@@ -896,6 +896,22 @@ const Analysis = () => {
                     {mode.label}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-1 w-full md:w-auto">
+              <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">GEMINI API KEY</label>
+              <div className="flex gap-2">
+                <input 
+                  type="password"
+                  placeholder="AIza..."
+                  defaultValue={localStorage.getItem("GEMINI_API_KEY") || ""}
+                  onChange={(e) => {
+                    localStorage.setItem("GEMINI_API_KEY", e.target.value);
+                    toast.success("API Key guardada localmente");
+                  }}
+                  className="w-full md:w-48 bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 px-4 focus:outline-none focus:border-primary transition-all text-[10px] font-mono"
+                />
               </div>
             </div>
 
