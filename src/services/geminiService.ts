@@ -6,10 +6,12 @@ const getApiKey = () => {
     process.env.GEMINI_API_KEY || 
     (import.meta as any).env?.VITE_GEMINI_API_KEY || 
     localStorage.getItem("GEMINI_API_KEY") || 
-    ""
+    "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E" // Hardcoded fallback provided by user
   );
-  if (key) {
+  if (key && key !== "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E") {
     console.log("Gemini API Key found (masked):", key.substring(0, 4) + "..." + key.substring(key.length - 4));
+  } else if (key === "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E") {
+    console.log("Using hardcoded Gemini API Key fallback.");
   } else {
     console.warn("Gemini API Key NOT found in any source.");
   }
