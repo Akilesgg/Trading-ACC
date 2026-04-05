@@ -739,12 +739,16 @@ const Analysis = () => {
       setTicker(currentTicker);
       const result = await analyzeMarket(selectedSymbol, currentTicker.price, currentTicker.priceChangePercent, selectedMode);
       
-      if (result && !result.includes("no disponible")) {
+      if (result && !result.startsWith("Error:")) {
         setAnalysis(result);
         setLastUpdate(new Date().toLocaleTimeString());
         toast.success(`Análisis de ${selectedSymbol} completado`);
       } else {
-        toast.error("La IA no pudo generar un análisis válido. Inténtalo de nuevo.");
+        const errorMsg = result?.startsWith("Error:") ? result : "La IA no pudo generar un análisis válido. Inténtalo de nuevo.";
+        toast.error(errorMsg);
+        if (result?.startsWith("Error:")) {
+          setAnalysis(result); // Show the error in the UI too
+        }
       }
 
       // Check for hot signal

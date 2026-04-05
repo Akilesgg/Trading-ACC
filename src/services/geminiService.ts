@@ -1,7 +1,19 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = () => {
-  return process.env.GEMINI_API_KEY || localStorage.getItem("GEMINI_API_KEY") || "";
+  // Try multiple sources for the API key
+  const key = (
+    process.env.GEMINI_API_KEY || 
+    (import.meta as any).env?.VITE_GEMINI_API_KEY || 
+    localStorage.getItem("GEMINI_API_KEY") || 
+    ""
+  );
+  if (key) {
+    console.log("Gemini API Key found (masked):", key.substring(0, 4) + "..." + key.substring(key.length - 4));
+  } else {
+    console.warn("Gemini API Key NOT found in any source.");
+  }
+  return key;
 };
 
 export async function analyzeMarket(symbol: string, price: string, change: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") {
@@ -36,7 +48,7 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       INSTRUCCIONES CRÍTICAS:
       1. Responde SIEMPRE en ESPAÑOL.
       2. Mantén un tono profesional, analítico, directo y profundamente involucrado.
-      3. Involúcrate en los resultados: proporciona niveles de precios REALES y COHERENTES con el precio actual.
+      3. Involúcrate en los resultados: proporciona niveles de precios REALES y COHERENTES con el precio actual. La ENTRADA debe estar muy cerca del precio actual (máximo 1-2% de diferencia).
       4. ES OBLIGATORIO usar EXACTAMENTE estos encabezados en negrita y mayúsculas para que el sistema pueda parsear tu respuesta:
       
       **CONTEXTO Y EXPLICACIÓN BREVE**: Resumen ejecutivo de la situación actual. Sé específico y técnico.
@@ -72,7 +84,7 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
       
       **METÁFORA TÉCNICA**: Una breve comparación creativa de los indicadores con elementos químicos o biológicos que impulsan el precio.
       
-      Asegúrate de que los niveles de ENTRADA, STOP LOSS y TAKE PROFITS sean lógicos respecto al precio actual de ${price}.`,
+      Asegúrate de que los niveles de ENTRADA, STOP LOSS y TAKE PROFITS sean lógicos respecto al precio actual de ${price} y que la señal sea ejecutable de inmediato o en breve.`,
       config: {
         tools: [{ googleSearch: {} }],
         temperature: 0.7,

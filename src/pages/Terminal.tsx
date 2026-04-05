@@ -808,6 +808,13 @@ const Terminal = () => {
     const fetchAIAnalysis = async () => {
       try {
         const aiResponse = await analyzeMarket(symbolParam, ticker.price, ticker.priceChangePercent, strategy as any);
+        
+        if (aiResponse.startsWith("Error:")) {
+          toast.error(aiResponse);
+          setAnalyzing(false);
+          return;
+        }
+
         const sections = parseAnalysis(aiResponse);
         
         const adxVal = Math.floor(Math.random() * 30) + 15; // 15-45
@@ -827,11 +834,17 @@ const Terminal = () => {
 
         // Extract Levels from AI Response
         const levelsText = sections["NIVELES OPERATIVOS"] || "";
-        const aiEntry = parseFloat(levelsText.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
+        let aiEntry = parseFloat(levelsText.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
         const aiSL = parseFloat(levelsText.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
         const aiTP1 = parseFloat(levelsText.match(/TAKE PROFIT 1:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
         const aiTP2 = parseFloat(levelsText.match(/TAKE PROFIT 2:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
         const aiTP3 = parseFloat(levelsText.match(/TAKE PROFIT 3:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
+
+        // Enforce proximity: if AI entry is more than 3% away, use current price
+        if (aiEntry > 0 && Math.abs((price - aiEntry) / aiEntry) > 0.03) {
+          console.warn("AI Entry too far, using current price");
+          aiEntry = price;
+        }
 
         // Strategy Logic
         let strategyName = strategy;

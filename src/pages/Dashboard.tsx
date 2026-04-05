@@ -73,29 +73,42 @@ const Dashboard = () => {
       const tickersWithTF = data.map(t => {
         const existingTicker = allTickers.find(at => at.symbol === t.symbol);
         const tf = existingTicker?.timeframe || ["1m", "5m", "15m", "1h", "4h"][Math.floor(Math.random() * 5)];
-        const isBullish = parseFloat(t.priceChangePercent) > 0;
+        const rsi = Math.floor(Math.random() * 60) + 20; // 20-80
         const price = parseFloat(t.price);
+        const isBullish = rsi < 40 || parseFloat(t.priceChangePercent) > 2;
+        const isBearish = rsi > 60 || parseFloat(t.priceChangePercent) < -2;
         
-        // Preserve entry price if it already exists, otherwise generate one
-        const entry = existingTicker?.entry || (isBullish ? price * 0.995 : price * 1.005);
+        const recommendation = isBullish ? "COMPRA" : (isBearish ? "VENTA" : "NEUTRAL");
+        const direction = isBullish ? "LONG" : (isBearish ? "SHORT" : "NONE");
+
+        // Preserve entry price if it already exists and is close enough (within 5%), otherwise generate one
+        let entry = existingTicker?.entry || 0;
+        const isTooFar = entry > 0 && Math.abs((price - entry) / entry) > 0.05;
+        
+        if (entry === 0 || isTooFar) {
+          entry = isBullish ? price * 0.995 : (isBearish ? price * 1.005 : price);
+        }
+        
+        // Calculate real proximity percentage
+        const proximity = Math.abs((price - entry) / entry) * 100;
 
         return {
           ...t,
           timeframe: tf,
           market: "SPOT",
           entry: entry,
-          winRate: existingTicker?.winRate || Math.floor(Math.random() * 20) + 70,
-          proximity: Math.random() * 0.05,
-          direction: existingTicker?.direction || (isBullish ? "LONG" : "SHORT"),
-          stopLoss: existingTicker?.stopLoss || (isBullish ? entry * 0.97 : entry * 1.03),
+          winRate: existingTicker?.winRate || Math.floor(Math.random() * 15) + 75,
+          proximity: proximity,
+          direction: direction,
+          stopLoss: existingTicker?.stopLoss || (isBullish ? entry * 0.985 : entry * 1.015),
           takeProfits: existingTicker?.takeProfits || (isBullish 
-            ? [entry * 1.02, entry * 1.05, entry * 1.08]
-            : [entry * 0.98, entry * 0.95, entry * 0.92]),
-          consensus: existingTicker?.consensus || Math.floor(Math.random() * 30) + 60,
+            ? [entry * 1.01, entry * 1.025, entry * 1.04]
+            : [entry * 0.99, entry * 0.975, entry * 0.96]),
+          consensus: existingTicker?.consensus || Math.floor(Math.random() * 20) + 75,
           funding: existingTicker?.funding || (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
           oi: existingTicker?.oi || (Math.random() * 100 + 50).toFixed(1) + "M",
-          rsi: Math.floor(Math.random() * 40) + 30,
-          recommendation: isBullish ? "COMPRA" : "VENTA",
+          rsi: rsi,
+          recommendation: recommendation,
           liquidity: existingTicker?.liquidity || (Math.random() * 10 + 5).toFixed(1) + "M",
           alert: existingTicker?.alert || Math.random() > 0.7,
           leverage: existingTicker?.leverage || Math.floor(Math.random() * 10) + 5,
@@ -175,6 +188,9 @@ const Dashboard = () => {
     } else if (filter === "breakout") {
       filtered = allTickers.filter(t => parseFloat(t.priceChangePercent) > 3);
     }
+
+    // Filter by proximity: only show signals within 2% of entry price
+    filtered = filtered.filter(t => (t.proximity || 0) <= 2.0);
 
     if (timeframeFilter !== "all") {
       filtered = filtered.filter(t => t.timeframe === timeframeFilter);
