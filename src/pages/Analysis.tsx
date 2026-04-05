@@ -106,16 +106,17 @@ const WyckoffArrow = (props: any) => {
     const basePrice = parseFloat(price);
     const data = [];
     let currentPrice = basePrice;
+    const lowerPhase = phase.toLowerCase();
     
     for (let i = 0; i < 30; i++) {
       let change = 0;
-      if (phase.includes("Acumulación")) {
+      if (lowerPhase.includes("acumulación") || lowerPhase.includes("accumulation")) {
         change = Math.sin(i / 2) * 0.01;
-      } else if (phase.includes("Markup")) {
+      } else if (lowerPhase.includes("markup")) {
         change = (i / 30) * 0.05;
-      } else if (phase.includes("Distribución")) {
+      } else if (lowerPhase.includes("distribución") || lowerPhase.includes("distribution")) {
         change = Math.cos(i / 2) * 0.01;
-      } else if (phase.includes("Markdown")) {
+      } else if (lowerPhase.includes("markdown")) {
         change = -(i / 30) * 0.05;
       } else {
         change = (Math.random() - 0.5) * 0.02;

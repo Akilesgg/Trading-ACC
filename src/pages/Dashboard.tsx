@@ -24,7 +24,8 @@ import {
   List,
   ChevronUp,
   ChevronDown,
-  Info
+  Info,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useNavigate } from "react-router-dom";
@@ -70,32 +71,35 @@ const Dashboard = () => {
       
       const data = await fetchTickers(symbols);
       const tickersWithTF = data.map(t => {
-        const tf = ["1m", "5m", "15m", "1h", "4h"][Math.floor(Math.random() * 5)];
+        const existingTicker = allTickers.find(at => at.symbol === t.symbol);
+        const tf = existingTicker?.timeframe || ["1m", "5m", "15m", "1h", "4h"][Math.floor(Math.random() * 5)];
         const isBullish = parseFloat(t.priceChangePercent) > 0;
         const price = parseFloat(t.price);
-        const volatility = price * 0.02;
+        
+        // Preserve entry price if it already exists, otherwise generate one
+        const entry = existingTicker?.entry || (isBullish ? price * 0.995 : price * 1.005);
 
         return {
           ...t,
           timeframe: tf,
           market: "SPOT",
-          entry: price,
-          winRate: Math.floor(Math.random() * 20) + 70,
+          entry: entry,
+          winRate: existingTicker?.winRate || Math.floor(Math.random() * 20) + 70,
           proximity: Math.random() * 0.05,
-          direction: (isBullish ? "LONG" : "SHORT") as "LONG" | "SHORT",
-          stopLoss: isBullish ? price * 0.97 : price * 1.03,
-          takeProfits: isBullish 
-            ? [price * 1.02, price * 1.05, price * 1.08]
-            : [price * 0.98, price * 0.95, price * 0.92],
-          consensus: Math.floor(Math.random() * 30) + 60,
-          funding: (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
-          oi: (Math.random() * 100 + 50).toFixed(1) + "M",
+          direction: existingTicker?.direction || (isBullish ? "LONG" : "SHORT"),
+          stopLoss: existingTicker?.stopLoss || (isBullish ? entry * 0.97 : entry * 1.03),
+          takeProfits: existingTicker?.takeProfits || (isBullish 
+            ? [entry * 1.02, entry * 1.05, entry * 1.08]
+            : [entry * 0.98, entry * 0.95, entry * 0.92]),
+          consensus: existingTicker?.consensus || Math.floor(Math.random() * 30) + 60,
+          funding: existingTicker?.funding || (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
+          oi: existingTicker?.oi || (Math.random() * 100 + 50).toFixed(1) + "M",
           rsi: Math.floor(Math.random() * 40) + 30,
           recommendation: isBullish ? "COMPRA" : "VENTA",
-          liquidity: (Math.random() * 10 + 5).toFixed(1) + "M",
-          alert: Math.random() > 0.7,
-          leverage: Math.floor(Math.random() * 10) + 5,
-          riskLevel: (["Bajo", "Moderado", "Alto"][Math.floor(Math.random() * 3)]) as "Bajo" | "Moderado" | "Alto"
+          liquidity: existingTicker?.liquidity || (Math.random() * 10 + 5).toFixed(1) + "M",
+          alert: existingTicker?.alert || Math.random() > 0.7,
+          leverage: existingTicker?.leverage || Math.floor(Math.random() * 10) + 5,
+          riskLevel: existingTicker?.riskLevel || (["Bajo", "Moderado", "Alto"][Math.floor(Math.random() * 3)])
         };
       });
       setAllTickers(tickersWithTF as CryptoData[]);
@@ -196,6 +200,60 @@ const Dashboard = () => {
 
     setTickers(filtered);
   }, [filter, allTickers, watchlist, sortConfig]);
+
+  const [enabledAlerts, setEnabledAlerts] = useState<Set<string>>(new Set());
+  const [triggeredAlerts, setTriggeredAlerts] = useState<Set<string>>(new Set());
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // Initialize audio
+  useEffect(() => {
+    audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+  }, []);
+
+  const toggleAlert = (e: React.MouseEvent, symbol: string) => {
+    e.stopPropagation();
+    const newAlerts = new Set(enabledAlerts);
+    if (newAlerts.has(symbol)) {
+      newAlerts.delete(symbol);
+      const newTriggered = new Set(triggeredAlerts);
+      newTriggered.delete(symbol);
+      setTriggeredAlerts(newTriggered);
+    } else {
+      newAlerts.add(symbol);
+    }
+    setEnabledAlerts(newAlerts);
+  };
+
+  // Monitor prices for alerts
+  useEffect(() => {
+    tickers.forEach(ticker => {
+      if (enabledAlerts.has(ticker.symbol) && !triggeredAlerts.has(ticker.symbol)) {
+        const currentPrice = parseFloat(ticker.price);
+        const entryPrice = ticker.entry || 0;
+        
+        // Trigger if price crosses entry (simple check: if price is close enough or crossed)
+        // For this demo, let's say if it's within 0.1% or crossed
+        const isReached = ticker.direction === "LONG" 
+          ? currentPrice <= entryPrice 
+          : currentPrice >= entryPrice;
+
+        if (isReached && entryPrice > 0) {
+          const newTriggered = new Set(triggeredAlerts);
+          newTriggered.add(ticker.symbol);
+          setTriggeredAlerts(newTriggered);
+          
+          // Play sound
+          if (audioRef.current) {
+            audioRef.current.play().catch(e => console.error("Audio play failed:", e));
+          }
+          
+          toast.success(`¡ALERTA! ${ticker.symbol} ha llegado al PRECIO DE ENTRADA: $${entryPrice}`, {
+            duration: 10000,
+          });
+        }
+      }
+    });
+  }, [tickers, enabledAlerts, triggeredAlerts]);
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'desc';
@@ -934,13 +992,29 @@ const Dashboard = () => {
                     <tr 
                       key={ticker.symbol} 
                       onClick={() => navigate(`/analysis?symbol=${ticker.symbol}`)}
-                      className="border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors cursor-pointer"
+                      className={cn(
+                        "border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors cursor-pointer",
+                        triggeredAlerts.has(ticker.symbol) && "animate-fast-flash"
+                      )}
                     >
                       <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.market}</td>
                       <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <img src={ticker.image} className="w-4 h-4" alt="" referrerPolicy="no-referrer" />
-                          <span className="text-xs font-black">{ticker.symbol}</span>
+                        <div className="flex items-center gap-3">
+                          <div 
+                            onClick={(e) => toggleAlert(e, ticker.symbol)}
+                            className={cn(
+                              "w-4 h-4 border rounded flex items-center justify-center transition-all",
+                              enabledAlerts.has(ticker.symbol) 
+                                ? "bg-primary border-primary" 
+                                : "border-outline-variant hover:border-primary"
+                            )}
+                          >
+                            {enabledAlerts.has(ticker.symbol) && <Check className="w-3 h-3 text-on-primary" />}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <img src={ticker.image} className="w-4 h-4" alt="" referrerPolicy="no-referrer" />
+                            <span className="text-xs font-black">{ticker.symbol}</span>
+                          </div>
                         </div>
                       </td>
                       <td className="p-4 text-xs font-bold">${parseFloat(ticker.price).toLocaleString()}</td>

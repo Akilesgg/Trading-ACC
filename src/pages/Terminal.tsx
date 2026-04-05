@@ -70,6 +70,38 @@ import {
   ReferenceLine
 } from "recharts";
 
+const WyckoffArrow = (props: any) => {
+  const { cx, cy } = props;
+  return (
+    <path
+      d="M0,-10 L5,0 L-5,0 Z"
+      transform={`translate(${cx},${cy})`}
+      fill="white"
+      className="drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]"
+    />
+  );
+};
+
+const parseAnalysis = (text: string) => {
+  if (!text) return {};
+  const sections: Record<string, string> = {};
+  
+  // Try to split by **HEADER**
+  const parts = text.split(/\*\*([^*]+)\*\*/);
+  
+  if (parts.length > 1) {
+    for (let i = 1; i < parts.length; i += 2) {
+      const title = parts[i].trim().replace(':', '').toUpperCase();
+      const content = parts[i+1]?.trim().replace(/^[:\s-]+/, '') || "";
+      sections[title] = content;
+    }
+  } else {
+    // Fallback: if no headers found, put everything in CONTEXTO
+    sections["CONTEXTO Y EXPLICACIÓN BREVE"] = text;
+  }
+  return sections;
+};
+
 const TerminalModule = ({ 
   moduleId, 
   ticker, 
@@ -776,13 +808,14 @@ const Terminal = () => {
     const fetchAIAnalysis = async () => {
       try {
         const aiResponse = await analyzeMarket(symbolParam, ticker.price, ticker.priceChangePercent, strategy as any);
+        const sections = parseAnalysis(aiResponse);
         
         const adxVal = Math.floor(Math.random() * 30) + 15; // 15-45
         const isChop = adxVal < 20;
-        const isBullish = aiResponse.includes("ALCISTA") || aiResponse.includes("LONG") || Math.random() > 0.5;
+        const isBullish = aiResponse.toUpperCase().includes("ALCISTA") || aiResponse.toUpperCase().includes("LONG") || sections["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA");
         const isBTC = symbolParam.includes("BTC");
 
-        // Timeframe based volatility/TP distance
+        // Timeframe based volatility/TP distance (Fallback if AI levels fail)
         let tpMultiplier = 1.0;
         if (timeframe === "1m") tpMultiplier = 0.3;
         else if (timeframe === "5m") tpMultiplier = 0.6;
@@ -791,6 +824,14 @@ const Terminal = () => {
         else if (timeframe === "4h") tpMultiplier = 5.0;
 
         const volatility = price * 0.005 * tpMultiplier;
+
+        // Extract Levels from AI Response
+        const levelsText = sections["NIVELES OPERATIVOS"] || "";
+        const aiEntry = parseFloat(levelsText.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
+        const aiSL = parseFloat(levelsText.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
+        const aiTP1 = parseFloat(levelsText.match(/TAKE PROFIT 1:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
+        const aiTP2 = parseFloat(levelsText.match(/TAKE PROFIT 2:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
+        const aiTP3 = parseFloat(levelsText.match(/TAKE PROFIT 3:\s*(\$?\d+([,.]\d+)*)/i)?.[1]?.replace('$', '') || "0");
 
         // Strategy Logic
         let strategyName = strategy;
@@ -801,22 +842,22 @@ const Terminal = () => {
 
         const newAnalysis = {
           type: isBullish ? "LONG" : "SHORT",
-          entry: price,
-          sl: isBullish ? price - (volatility * 0.8) : price + (volatility * 0.8),
-          tp1: isBullish ? price + volatility : price - volatility,
-          tp2: isBullish ? price + volatility * 1.8 : price - volatility * 1.8,
-          tp3: isBullish ? price + volatility * 3.0 : price - volatility * 3.0,
+          entry: aiEntry || price,
+          sl: aiSL || (isBullish ? price - (volatility * 0.8) : price + (volatility * 0.8)),
+          tp1: aiTP1 || (isBullish ? price + volatility : price - volatility),
+          tp2: aiTP2 || (isBullish ? price + volatility * 1.8 : price - volatility * 1.8),
+          tp3: aiTP3 || (isBullish ? price + volatility * 3.0 : price - volatility * 3.0),
           ratio: `1:${(3.0 / 0.8).toFixed(1)}`,
           rr: 3.0 / 0.8,
-          score: isChop ? Math.floor(Math.random() * 20) + 40 : Math.floor(Math.random() * 30) + 65,
+          score: parseInt(sections["NIVEL DE CONFIANZA"] || (isChop ? Math.floor(Math.random() * 20) + 40 : Math.floor(Math.random() * 30) + 65).toString()),
           sentiment: isBullish ? "BULLISH" : "BEARISH",
           strategy: strategyName,
-          description: aiResponse,
+          description: sections["CONTEXTO Y EXPLICACIÓN BREVE"] || aiResponse,
           context: {
             trend: adxVal > 25 ? "STRONG ↑" : "WEAK →",
             adx: adxVal,
             vol: Math.random() > 0.5 ? "HIGH" : "NORMAL",
-            structure: Math.random() > 0.7 ? "BOS (Break of Structure)" : "CHoCH (Change of Character)",
+            structure: sections["FASE WYCKOFF"]?.split(":")[0] || (Math.random() > 0.7 ? "BOS" : "CHoCH"),
             zone: Math.random() > 0.5 ? "LVN BREAK" : "HVN REJECTION",
             bias: isBullish ? "LONG" : "SHORT",
             cvd: (Math.random() * 1000 - 500).toFixed(0),

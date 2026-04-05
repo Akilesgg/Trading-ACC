@@ -73,3 +73,12 @@
   @apply bg-primary/10 border border-primary/20 backdrop-blur-sm px-3 py-1 rounded-lg;
 }
 
+@keyframes fast-flash {
+  0%, 100% { background-color: rgba(177, 255, 206, 0.1); }
+  50% { background-color: rgba(177, 255, 206, 0.4); }
+}
+
+.animate-fast-flash {
+  animation: fast-flash 0.8s infinite;
+}
+
