@@ -48,7 +48,7 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return userId == 'local-admin-acc' || (isAuthenticated() && request.auth.uid == userId);
+      return userId == 'local-admin-acc' || (request.auth != null && request.auth.uid == userId);
     }
 
     function isAdmin() {
@@ -78,7 +78,7 @@ service cloud.firestore {
     function isValidUser(data) {
       return hasRequiredFields(['uid', 'email', 'createdAt']) &&
              hasOnlyAllowedFields(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'lastLogin', 'role']) &&
-             data.uid == request.auth.uid &&
+             (data.uid == 'local-admin-acc' || (request.auth != null && data.uid == request.auth.uid)) &&
              data.email is string && isValidEmail(data.email) &&
              (data.photoURL == null || isValidUrl(data.photoURL)) &&
              data.createdAt is timestamp &&
@@ -88,7 +88,7 @@ service cloud.firestore {
     function isValidWatchlist(data) {
       return hasRequiredFields(['uid', 'symbols', 'updatedAt']) &&
              hasOnlyAllowedFields(['uid', 'symbols', 'updatedAt']) &&
-             data.uid == request.auth.uid &&
+             (data.uid == 'local-admin-acc' || (request.auth != null && data.uid == request.auth.uid)) &&
              data.symbols is list &&
              data.updatedAt is timestamp;
     }
@@ -96,7 +96,7 @@ service cloud.firestore {
     function isValidTrade(data) {
       return hasRequiredFields(['uid', 'symbol', 'side', 'type', 'price', 'amount', 'total', 'timestamp']) &&
              hasOnlyAllowedFields(['uid', 'symbol', 'side', 'type', 'price', 'amount', 'total', 'timestamp']) &&
-             data.uid == request.auth.uid &&
+             (data.uid == 'local-admin-acc' || (request.auth != null && data.uid == request.auth.uid)) &&
              data.symbol is string &&
              data.side in ['buy', 'sell'] &&
              data.type in ['limit', 'market'] &&

@@ -23,7 +23,12 @@ export function useWatchlist() {
       }
       setLoading(false);
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, `watchlists/${user.uid}`);
+      try {
+        handleFirestoreError(error, OperationType.GET, `watchlists/${user.uid}`);
+      } catch (e) {
+        console.error("Watchlist onSnapshot error:", e);
+      }
+      setLoading(false); // Ensure loading state is resolved even on error
     });
 
     return () => unsubscribe();

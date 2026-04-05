@@ -30,9 +30,11 @@ import {
   ArrowRightLeft,
   X,
   GripVertical,
-  LayoutGrid
+  LayoutGrid,
+  Waves
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link, useSearchParams } from "react-router-dom";
 import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
 import { 
   fetchTickers, 
@@ -128,7 +130,121 @@ const WyckoffArrow = (props: any) => {
     return data;
   };
 
-const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker }: any) => {
+const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => {
+  const getColor = (val: number) => {
+    if (val > 70) return "text-primary";
+    if (val < 30) return "text-secondary";
+    return "text-on-surface-variant";
+  };
+
+  const getLabel = (val: number) => {
+    if (val > 80) return "EXTREMA CODICIA";
+    if (val > 60) return "CODICIA";
+    if (val > 40) return "NEUTRAL";
+    if (val > 20) return "MIEDO";
+    return "EXTREMO MIEDO";
+  };
+
+  return (
+    <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 flex flex-col items-center text-center space-y-4">
+      <div className="flex items-center justify-between w-full">
+        <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{label}</h4>
+        <div className="flex bg-surface-container-highest rounded-lg p-0.5 border border-outline-variant/10">
+          {["1h", "4h", "1d"].map((tf) => (
+            <button
+              key={tf}
+              onClick={() => onTimeframeChange(tf)}
+              className={cn(
+                "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest transition-all",
+                timeframe === tf ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+              )}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <div className="relative w-32 h-32">
+        <svg className="w-full h-full" viewBox="0 0 100 100">
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            className="text-surface-container-highest"
+            strokeDasharray="188.5"
+            strokeDashoffset="62.8"
+            transform="rotate(150 50 50)"
+          />
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="8"
+            className={getColor(value)}
+            strokeDasharray="188.5"
+            strokeDashoffset={188.5 - (188.5 * 0.66 * value / 100)}
+            transform="rotate(150 50 50)"
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className={cn("text-2xl font-black", getColor(value))}>{value}</span>
+          <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest">{getLabel(value)}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LiquidityMap = ({ symbol, price }: any) => {
+  const currentPrice = parseFloat(price || "0");
+  const liquidityData = [
+    { price: currentPrice * 1.05, liquidity: 85, type: "resistance" },
+    { price: currentPrice * 1.03, liquidity: 45, type: "resistance" },
+    { price: currentPrice * 1.01, liquidity: 20, type: "resistance" },
+    { price: currentPrice * 0.99, liquidity: 30, type: "support" },
+    { price: currentPrice * 0.97, liquidity: 65, type: "support" },
+    { price: currentPrice * 0.95, liquidity: 95, type: "support" },
+  ];
+
+  return (
+    <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+      <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+        <Waves className="w-3 h-3" /> MAPA DE LIQUIDEZ Y ZONAS DE CALOR
+      </h4>
+      <div className="space-y-2">
+        {liquidityData.map((zone, i) => (
+          <div key={i} className="flex items-center gap-4">
+            <span className="text-[10px] font-mono text-on-surface-variant w-16">${zone.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            <div className="flex-1 h-4 bg-surface-container rounded-full overflow-hidden relative">
+              <div 
+                className={cn(
+                  "h-full transition-all duration-1000",
+                  zone.type === "support" ? "bg-primary/40" : "bg-secondary/40"
+                )}
+                style={{ width: `${zone.liquidity}%` }}
+              />
+              <div className="absolute inset-0 flex items-center justify-end px-2">
+                <span className="text-[8px] font-black text-on-surface-variant uppercase">{zone.liquidity}M</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-on-surface-variant italic leading-relaxed">
+        * Las zonas de alta liquidez actúan como imanes de precio y fuertes soportes/resistencias.
+      </p>
+    </div>
+  );
+};
+
+const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker, btcSentiment, setBtcSentiment, top100Sentiment, setTop100Sentiment, generalSentiment, setGeneralSentiment, btcTF, setBtcTF, top100TF, setTop100TF, generalTF, setGeneralTF }: any) => {
   const controls = useDragControls();
 
   return (
@@ -145,6 +261,42 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker }: any) =
         <GripVertical className="w-6 h-6 text-on-surface-variant/50" />
       </div>
       
+      {moduleId === "sentiment_gauges" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <SentimentGauge 
+            label="SENTIMIENTO BITCOIN" 
+            value={btcSentiment} 
+            timeframe={btcTF} 
+            onTimeframeChange={(tf: string) => {
+              setBtcTF(tf);
+              setBtcSentiment(Math.floor(Math.random() * 40) + 40);
+            }} 
+          />
+          <SentimentGauge 
+            label="SENTIMIENTO TOP 100 CRYPTO" 
+            value={top100Sentiment} 
+            timeframe={top100TF} 
+            onTimeframeChange={(tf: string) => {
+              setTop100TF(tf);
+              setTop100Sentiment(Math.floor(Math.random() * 40) + 30);
+            }} 
+          />
+          <SentimentGauge 
+            label="SENTIMIENTO MERCADO GENERAL" 
+            value={generalSentiment} 
+            timeframe={generalTF} 
+            onTimeframeChange={(tf: string) => {
+              setGeneralTF(tf);
+              setGeneralSentiment(Math.floor(Math.random() * 40) + 35);
+            }} 
+          />
+        </div>
+      )}
+
+      {moduleId === "liquidity" && (
+        <LiquidityMap symbol={ticker?.symbol} price={ticker?.price} />
+      )}
+
       {moduleId === "context" && analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"] && (
         <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
           <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
@@ -152,6 +304,39 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker }: any) =
           </h4>
           <p className="text-sm text-on-surface leading-relaxed font-medium italic">
             "{analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}"
+          </p>
+        </div>
+      )}
+
+      {moduleId === "comments" && analysisSections["COMENTARIOS Y OBSERVACIONES"] && (
+        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+            <MessageSquare className="w-3 h-3" /> COMENTARIOS Y OBSERVACIONES
+          </h4>
+          <p className="text-sm text-on-surface-variant leading-relaxed">
+            {analysisSections["COMENTARIOS Y OBSERVACIONES"]}
+          </p>
+        </div>
+      )}
+
+      {moduleId === "predictions" && analysisSections["PREDICCIONES DE MERCADO"] && (
+        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+            <Target className="w-3 h-3" /> PREDICCIONES DE MERCADO
+          </h4>
+          <p className="text-sm text-on-surface-variant leading-relaxed">
+            {analysisSections["PREDICCIONES DE MERCADO"]}
+          </p>
+        </div>
+      )}
+
+      {moduleId === "recommendation" && analysisSections["RECOMENDACIÓN IA"] && (
+        <div className="bg-surface-container-low p-6 rounded-2xl border border-2 border-primary/20 bg-primary/5 p-6 rounded-2xl space-y-3 shadow-lg shadow-primary/5">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
+            <Zap className="w-3 h-3" /> RECOMENDACIÓN FINAL DE LA IA
+          </h4>
+          <p className="text-base text-on-surface leading-relaxed font-bold">
+            {analysisSections["RECOMENDACIÓN IA"]}
           </p>
         </div>
       )}
@@ -205,9 +390,9 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker }: any) =
                   <YAxis hide domain={['auto', 'auto']} />
                   <Line type="monotone" dataKey="price" stroke="#fff" strokeWidth={2} dot={false} />
                   {/* Wyckoff Arrows (White) */}
-                  <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
-                  <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
-                  <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={6} shape={<WyckoffArrow />} isFront={true} />
+                  <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={6} shape={<WyckoffArrow />} />
+                  <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={6} shape={<WyckoffArrow />} />
+                  <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={6} shape={<WyckoffArrow />} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -306,8 +491,8 @@ const AnalysisModule = ({ moduleId, analysisSections, analysis, ticker }: any) =
               <div key={i} className="flex flex-col p-3 bg-surface-container rounded-xl border border-outline-variant/5">
                 <span className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">TP {i}</span>
                 <span className="text-sm font-black text-primary">
-                  {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || 
-                   analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}
+                  {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\\d+)*)`, 'i'))?.[1] || 
+                   analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\\d+)*)`, 'i'))?.[1] || "---"}
                 </span>
               </div>
             ))}
@@ -405,7 +590,15 @@ const Analysis = () => {
   const [analysis, setAnalysis] = useState<string>("");
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allAssets, setAllAssets] = useState<any[]>([]);
-  const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedSymbol, setSelectedSymbol] = useState(searchParams.get("symbol") || "BTCUSDT");
+
+  useEffect(() => {
+    const symbolFromUrl = searchParams.get("symbol");
+    if (symbolFromUrl && symbolFromUrl !== selectedSymbol) {
+      setSelectedSymbol(symbolFromUrl);
+    }
+  }, [searchParams, selectedSymbol]);
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [selectedMode, setSelectedMode] = useState<"Standard" | "Scalping" | "Swing">("Standard");
   const [loading, setLoading] = useState(true);
@@ -419,14 +612,33 @@ const Analysis = () => {
   const [selectedTraderStrategy, setSelectedTraderStrategy] = useState<any>(null);
   const [showHotSignal, setShowHotSignal] = useState(false);
   const [hotSignalData, setHotSignalData] = useState<any>(null);
+
+  // New sentiment states
+  const [btcSentiment, setBtcSentiment] = useState(65);
+  const [top100Sentiment, setTop100Sentiment] = useState(58);
+  const [generalSentiment, setGeneralSentiment] = useState(62);
+  const [btcTF, setBtcTF] = useState("1h");
+  const [top100TF, setTop100TF] = useState("1h");
+  const [generalTF, setGeneralTF] = useState("1h");
+
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem("analysis_module_order");
-    return saved ? JSON.parse(saved) : ["context", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    try {
+      const saved = localStorage.getItem("analysis_module_order");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    } catch (e) {
+      return ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    }
   });
 
   const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem("analysis_saved_layouts");
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem("analysis_saved_layouts");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch (e) {
+      return {};
+    }
   });
 
   const saveLayout = (name: string) => {
@@ -444,7 +656,7 @@ const Analysis = () => {
   };
 
   const resetLayout = () => {
-    const defaultOrder = ["context", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    const defaultOrder = ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
     setModuleOrder(defaultOrder);
     localStorage.setItem("analysis_module_order", JSON.stringify(defaultOrder));
     toast.success("Diseño restablecido");
@@ -908,6 +1120,18 @@ const Analysis = () => {
                     analysisSections={analysisSections}
                     analysis={analysis}
                     ticker={ticker}
+                    btcSentiment={btcSentiment}
+                    setBtcSentiment={setBtcSentiment}
+                    top100Sentiment={top100Sentiment}
+                    setTop100Sentiment={setTop100Sentiment}
+                    generalSentiment={generalSentiment}
+                    setGeneralSentiment={setGeneralSentiment}
+                    btcTF={btcTF}
+                    setBtcTF={setBtcTF}
+                    top100TF={top100TF}
+                    setTop100TF={setTop100TF}
+                    generalTF={generalTF}
+                    setGeneralTF={setGeneralTF}
                   />
                 ))}
                 </Reorder.Group>

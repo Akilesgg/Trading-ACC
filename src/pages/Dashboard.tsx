@@ -27,7 +27,7 @@ import {
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   fetchTickers, 
   CryptoData, 
@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import JSZip from "jszip";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allTickers, setAllTickers] = useState<CryptoData[]>([]);
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
@@ -81,7 +82,7 @@ const Dashboard = () => {
           entry: price,
           winRate: Math.floor(Math.random() * 20) + 70,
           proximity: Math.random() * 0.05,
-          direction: isBullish ? "LONG" : "SHORT",
+          direction: (isBullish ? "LONG" : "SHORT") as "LONG" | "SHORT",
           stopLoss: isBullish ? price * 0.97 : price * 1.03,
           takeProfits: isBullish 
             ? [price * 1.02, price * 1.05, price * 1.08]
@@ -94,10 +95,10 @@ const Dashboard = () => {
           liquidity: (Math.random() * 10 + 5).toFixed(1) + "M",
           alert: Math.random() > 0.7,
           leverage: Math.floor(Math.random() * 10) + 5,
-          riskLevel: ["Bajo", "Moderado", "Alto"][Math.floor(Math.random() * 3)]
+          riskLevel: (["Bajo", "Moderado", "Alto"][Math.floor(Math.random() * 3)]) as "Bajo" | "Moderado" | "Alto"
         };
       });
-      setAllTickers(tickersWithTF);
+      setAllTickers(tickersWithTF as CryptoData[]);
 
       // Check for automatic alerts (All signals with high confidence or significant change)
       tickersWithTF.forEach(ticker => {
@@ -801,8 +802,9 @@ const Dashboard = () => {
               return (
                 <div 
                   key={ticker.symbol} 
+                  onClick={() => navigate(`/analysis?symbol=${ticker.symbol}`)}
                   className={cn(
-                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500",
+                    "bg-surface-container-low rounded-xl overflow-hidden group border-2 transition-all duration-500 block cursor-pointer",
                     isBullish ? "border-primary/10 hover:border-primary/40 shadow-lg shadow-primary/5" : "border-secondary/10 hover:border-secondary/40 shadow-lg shadow-secondary/5"
                   )}
                 >
@@ -829,7 +831,10 @@ const Dashboard = () => {
                                 "w-3 h-3 transition-colors cursor-pointer",
                                 watchlist.includes(ticker.symbol) ? "text-primary fill-primary" : "text-on-surface-variant hover:text-primary"
                               )} 
-                              onClick={() => toggleWatchlist(ticker.symbol)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleWatchlist(ticker.symbol);
+                              }}
                             />
                           </div>
                         </div>
@@ -864,15 +869,18 @@ const Dashboard = () => {
                         </div>
                       ))}
                     </div>
-                    <Link 
-                      to={`/terminal?symbol=${ticker.symbol}`}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/terminal?symbol=${ticker.symbol}`);
+                      }}
                       className={cn(
                         "block w-full py-3 rounded-xl border font-bold uppercase tracking-widest text-xs text-center transition-all duration-300",
                         isBullish ? "bg-primary/10 border-primary/20 text-primary hover:bg-primary hover:text-on-primary" : "bg-secondary/10 border-secondary/20 text-secondary hover:bg-secondary hover:text-on-secondary"
                       )}
                     >
                       ANALIZAR AHORA
-                    </Link>
+                    </button>
                   </div>
                 </div>
               );
@@ -923,7 +931,11 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {tickers.map((ticker) => (
-                    <tr key={ticker.symbol} className="border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors">
+                    <tr 
+                      key={ticker.symbol} 
+                      onClick={() => navigate(`/analysis?symbol=${ticker.symbol}`)}
+                      className="border-b border-outline-variant/5 hover:bg-surface-container-high/30 transition-colors cursor-pointer"
+                    >
                       <td className="p-4 text-[10px] font-bold text-on-surface-variant">{ticker.market}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useDragControls, Reorder, motion } from "motion/react";
 import { 
   ArrowLeft, 
@@ -191,7 +191,11 @@ const TerminalModule = ({
 
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
             {Object.entries(assetSentiments).map(([asset, data]: [string, any]) => (
-              <div key={asset} className="bg-surface-container p-4 rounded-xl border border-outline-variant/5 text-center space-y-2 group hover:border-primary/30 transition-all cursor-pointer">
+              <Link 
+                key={asset} 
+                to={`/analysis?symbol=${asset}USDT`}
+                className="bg-surface-container p-4 rounded-xl border border-outline-variant/5 text-center space-y-2 group hover:border-primary/30 transition-all cursor-pointer block"
+              >
                 <div className="flex justify-center mb-1">
                   <img src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${asset.toLowerCase()}.png`} className="w-6 h-6" alt="" referrerPolicy="no-referrer" />
                 </div>
@@ -206,7 +210,7 @@ const TerminalModule = ({
                   <div className={cn("w-1.5 h-1.5 rounded-full animate-pulse", data.sentiment === "ALCISTA" ? "bg-primary" : "bg-secondary")}></div>
                   <span className="text-[8px] font-bold text-on-surface-variant">{data.confidence}%</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -621,13 +625,23 @@ const Terminal = () => {
   
   // Layout State
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem("terminal_module_order");
-    return saved ? JSON.parse(saved) : ["overview", "sentiment", "copytrading", "news", "indicators", "analysis"];
+    try {
+      const saved = localStorage.getItem("terminal_module_order");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : ["overview", "sentiment", "copytrading", "news", "indicators", "analysis"];
+    } catch (e) {
+      return ["overview", "sentiment", "copytrading", "news", "indicators", "analysis"];
+    }
   });
 
   const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
-    const saved = localStorage.getItem("terminal_saved_layouts");
-    return saved ? JSON.parse(saved) : {};
+    try {
+      const saved = localStorage.getItem("terminal_saved_layouts");
+      const parsed = saved ? JSON.parse(saved) : null;
+      return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+    } catch (e) {
+      return {};
+    }
   });
 
   const saveLayout = (name: string) => {

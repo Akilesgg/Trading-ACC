@@ -23,6 +23,7 @@ export interface CryptoData {
   alert?: boolean;
   leverage?: number;
   riskLevel?: "Bajo" | "Moderado" | "Alto";
+  image?: string;
 }
 
 export async function fetchTicker(symbol: string): Promise<CryptoData> {
@@ -70,7 +71,8 @@ export async function fetchTicker(symbol: string): Promise<CryptoData> {
     liquidity: (parseFloat(data.volume) * 0.05).toFixed(2) + "M",
     alert: Math.random() > 0.7,
     leverage,
-    riskLevel
+    riskLevel,
+    image: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${data.symbol.replace("USDT", "").toLowerCase()}.png`
   };
 }
 
@@ -103,6 +105,7 @@ export function connectTickerStream(symbol: string, onMessage: (data: any) => vo
       highPrice: data.h,
       lowPrice: data.l,
       volume: data.v,
+      image: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${data.s.replace("USDT", "").toLowerCase()}.png`
     });
   };
   return ws;

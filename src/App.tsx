@@ -33,7 +33,8 @@ import {
   Shield,
   Target,
   Users,
-  Newspaper
+  Newspaper,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./AuthProvider";
@@ -54,7 +55,6 @@ const LoginScreen = () => {
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,163,0.05),transparent_70%)]"></div>
       
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-md w-full glass-card p-10 rounded-[2.5rem] space-y-8 relative z-10 text-center"
       >
@@ -244,13 +244,56 @@ const BottomNavBar = () => {
   );
 };
 
+class ErrorBoundary extends React.Component<any, any> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#0b0e11] flex flex-col items-center justify-center p-6 text-center">
+          <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mb-6">
+            <AlertTriangle className="w-8 h-8 text-secondary" />
+          </div>
+          <h1 className="text-[#b1ffce] font-headline text-2xl font-bold mb-4 uppercase tracking-tighter">Error de Sistema</h1>
+          <p className="text-[#a9abaf] font-label text-sm max-w-md mb-8 uppercase tracking-widest leading-relaxed">
+            Se ha detectado una anomalía crítica en la terminal. Los protocolos de seguridad han aislado el error.
+          </p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="px-8 py-3 bg-on-background text-background rounded-full font-bold uppercase tracking-widest text-xs active:scale-95 transition-all shadow-xl"
+          >
+            Reiniciar Terminal
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const { user, loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#0b0e11] flex flex-col items-center justify-center gap-6">
+        <div className="w-16 h-16 border-4 border-[#b1ffce] border-t-transparent rounded-full animate-spin shadow-[0_0_30px_rgba(177,255,206,0.2)]"></div>
+        <div className="text-center space-y-2">
+          <h2 className="text-[#b1ffce] font-headline font-bold text-xl tracking-[0.2em] animate-pulse">TRADING ACC</h2>
+          <p className="text-[#a9abaf] font-label text-[10px] uppercase tracking-widest">Inicializando Terminal de Inteligencia...</p>
+        </div>
       </div>
     );
   }
@@ -260,28 +303,30 @@ export default function App() {
   }
 
   return (
-    <Router>
-      <Toaster position="top-right" theme="dark" richColors />
-      <div className="min-h-screen flex flex-col">
-        <TopAppBar />
-        <main className="flex-1">
-          <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/market" element={<Market />} />
-              <Route path="/analysis" element={<Analysis />} />
-              <Route path="/signal/:symbol" element={<SignalDetail />} />
-              <Route path="/terminal" element={<Terminal />} />
-              <Route path="/copy-trading" element={<CopyTrading />} />
-              <Route path="/news" element={<News />} />
-              {/* Fallbacks */}
-              <Route path="/signals" element={<Dashboard />} />
-            </Routes>
-          </AnimatePresence>
-        </main>
-        <BottomNavBar />
-      </div>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <Toaster position="top-right" theme="dark" richColors />
+        <div className="min-h-screen flex flex-col">
+          <TopAppBar />
+          <main className="flex-1">
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/market" element={<Market />} />
+                <Route path="/analysis" element={<Analysis />} />
+                <Route path="/signal/:symbol" element={<SignalDetail />} />
+                <Route path="/terminal" element={<Terminal />} />
+                <Route path="/copy-trading" element={<CopyTrading />} />
+                <Route path="/news" element={<News />} />
+                {/* Fallbacks */}
+                <Route path="/signals" element={<Dashboard />} />
+              </Routes>
+            </AnimatePresence>
+          </main>
+          <BottomNavBar />
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
