@@ -48,6 +48,7 @@ import Terminal from "./pages/Terminal";
 import CopyTrading from "./pages/CopyTrading";
 import News from "./pages/News";
 import BTCComparison from "./pages/BTCComparison";
+import CryptoBubbles from "./pages/CryptoBubbles";
 
 const LoginScreen = () => {
   const { login } = useAuth();
@@ -85,11 +86,11 @@ const LoginScreen = () => {
 const TopAppBar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Panel Principal", path: "/dashboard", desc: "Vista general de señales y mercado" },
     { icon: BarChart3, label: "Mercados Spot", path: "/market", desc: "Precios en tiempo real y heatmap" },
+    { icon: Zap, label: "Top 100 Cripto", path: "/top-100", desc: "Estado de Top 100 Cripto" },
     { icon: Target, label: "Analizador IA", path: "/terminal", desc: "Análisis técnico profundo con Wyckoff" },
     { icon: Users, label: "Copy Trading", path: "/copy-trading", desc: "Sigue a ballenas y top traders" },
     { icon: Newspaper, label: "Noticias", path: "/news", desc: "Impacto económico y geopolítico" },
@@ -104,19 +105,40 @@ const TopAppBar = () => {
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
         <div className="flex justify-between items-center px-6 h-16 w-full">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setIsMenuOpen(true)}
-              className="hover:bg-primary/10 transition-colors p-2 rounded-xl active:scale-95 duration-200"
-            >
-              <Menu className="w-6 h-6 text-primary" />
-            </button>
             <Link to="/dashboard" className="text-xl font-bold tracking-tighter text-primary font-headline uppercase">TRADING ACC</Link>
           </div>
-          <div className="hidden md:flex items-center gap-8 font-label text-[10px] font-bold uppercase tracking-widest text-on-background/60">
-            <Link to="/market" className={cn("hover:text-primary transition-colors", location.pathname === "/market" && "text-primary")}>Mercados</Link>
-            <Link to="/dashboard" className={cn("hover:text-primary transition-colors", location.pathname === "/dashboard" && "text-primary")}>Señales</Link>
-            <Link to="/terminal" className={cn("hover:text-primary transition-colors", location.pathname === "/terminal" && "text-primary")}>Analizador</Link>
-            <Link to="/analysis" className={cn("hover:text-primary transition-colors", location.pathname === "/analysis" && "text-primary")}>Análisis</Link>
+          <div className="hidden lg:flex items-center gap-6 font-label text-[9px] font-black uppercase tracking-widest text-on-background/60">
+            {menuItems.slice(0, 7).map((item) => (
+              <Link 
+                key={item.label}
+                to={item.path} 
+                className={cn(
+                  "hover:text-primary transition-all flex items-center gap-1.5 px-2 py-1 rounded-lg", 
+                  location.pathname === item.path && "text-primary bg-primary/5"
+                )}
+              >
+                <item.icon className="w-3 h-3" />
+                {item.label}
+              </Link>
+            ))}
+            <div className="relative group">
+              <button className="hover:text-primary transition-all flex items-center gap-1.5 px-2 py-1 rounded-lg cursor-pointer">
+                <Menu className="w-3 h-3" />
+                MÁS
+              </button>
+              <div className="absolute top-full right-0 mt-2 w-56 bg-surface-container-low border border-outline-variant/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[100]">
+                {menuItems.slice(7).map((item) => (
+                  <Link 
+                    key={item.label}
+                    to={item.path}
+                    className="flex items-center gap-3 p-3 hover:bg-surface-container-high rounded-xl transition-colors"
+                  >
+                    <item.icon className="w-4 h-4 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <div className="hidden sm:flex flex-col items-end mr-2">
@@ -135,80 +157,7 @@ const TopAppBar = () => {
         </div>
       </header>
 
-      {/* Side Menu Drawer */}
-      <AnimatePresence>
-        {isMenuOpen && (
-          <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsMenuOpen(false)}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
-            />
-            <motion.div 
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 h-full w-80 bg-surface-container-low z-[70] shadow-2xl flex flex-col"
-            >
-              <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-                    <Zap className="w-6 h-6 text-on-primary" />
-                  </div>
-                  <span className="font-headline font-bold text-lg tracking-tight uppercase">TRADING ACC</span>
-                </div>
-                <button 
-                  onClick={() => setIsMenuOpen(false)}
-                  className="p-2 hover:bg-surface-container-high rounded-lg transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4 space-y-2">
-                {menuItems.map((item) => (
-                  <Link 
-                    key={item.label}
-                    to={item.path}
-                    onClick={() => setIsMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-4 p-4 rounded-2xl transition-all group",
-                      location.pathname === item.path ? "bg-primary/10 text-primary" : "hover:bg-surface-container-high"
-                    )}
-                  >
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center transition-colors",
-                      location.pathname === item.path ? "bg-primary text-on-primary" : "bg-surface-container-highest group-hover:bg-primary/20"
-                    )}>
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm">{item.label}</p>
-                      <p className="text-[10px] text-on-surface-variant font-label uppercase tracking-widest">{item.desc}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="p-6 border-t border-outline-variant/10 bg-surface-container-lowest">
-                <button 
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full py-3 bg-secondary/10 text-secondary rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 hover:bg-secondary/20 transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Cerrar Sesión
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Side Menu Drawer removed as per request to move items to top menu */}
     </>
   );
 };
@@ -322,6 +271,7 @@ export default function App() {
                 <Route path="/copy-trading" element={<CopyTrading />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/btc-comparison" element={<BTCComparison />} />
+                <Route path="/top-100" element={<CryptoBubbles />} />
                 {/* Fallbacks */}
                 <Route path="/signals" element={<Dashboard />} />
               </Routes>
