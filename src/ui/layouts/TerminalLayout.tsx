@@ -13,35 +13,56 @@ interface TerminalLayoutProps {
 
 const TerminalLayout: React.FC<TerminalLayoutProps> = ({ children }) => {
   const { layout, setLayout } = useTerminalStore();
+  const [width, setWidth] = useState(1200);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (!containerRef.current) return;
+    
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setWidth(entry.contentRect.width);
+      }
+    });
+    
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const onLayoutChange = (currentLayout: any, allLayouts: any) => {
     setLayout(currentLayout);
   };
 
   return (
-    <div className="min-h-screen bg-surface text-on-surface font-mono selection:bg-primary/30">
+    <div ref={containerRef} className="min-h-full bg-surface text-on-surface font-mono selection:bg-primary/30">
       <ResponsiveGridLayout
         className="layout"
-        layouts={{ lg: layout }}
+        layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-        cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+        cols={{ lg: 12, md: 12, sm: 12, xs: 12, xxs: 12 }}
         rowHeight={30}
-        width={1200}
+        width={width}
         onLayoutChange={onLayoutChange}
-        margin={[8, 8]}
+        margin={[12, 12]}
       >
         {layout.map((item: any) => (
-          <div key={item.i} className="bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden shadow-2xl flex flex-col group">
+          <div 
+            key={item.i} 
+            className="bg-surface-container-low border border-outline-variant/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col group"
+          >
             <div className="drag-handle bg-surface-container-high/50 px-4 py-2 border-b border-outline-variant/10 flex items-center justify-between cursor-grab active:cursor-grabbing">
-              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50 group-hover:opacity-100 transition-opacity">
-                {item.i}
-              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50 group-hover:opacity-100 transition-opacity">
+                  {item.i}
+                </span>
+              </div>
               <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-on-surface-variant/20" />
-                <div className="w-2 h-2 rounded-full bg-on-surface-variant/20" />
+                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/10" />
+                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/10" />
               </div>
             </div>
-            <div className="flex-1 overflow-auto custom-scrollbar">
+            <div className="flex-1 overflow-hidden">
               {children[item.i] || <div className="p-4 text-xs text-on-surface-variant italic">Widget {item.i} not found</div>}
             </div>
           </div>

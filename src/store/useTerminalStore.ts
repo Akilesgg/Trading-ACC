@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { TradingSignal } from "../core/signals/types";
 
 interface TerminalState {
@@ -15,23 +16,30 @@ interface TerminalState {
   addLog: (log: string) => void;
 }
 
-export const useTerminalStore = create<TerminalState>((set) => ({
-  layout: [
-    { i: "chart", x: 0, y: 0, w: 8, h: 12 },
-    { i: "signals", x: 8, y: 0, w: 4, h: 6 },
-    { i: "orderbook", x: 8, y: 6, w: 4, h: 6 },
-    { i: "console", x: 0, y: 12, w: 12, h: 4 },
-  ],
-  setLayout: (layout) => set({ layout }),
-  signals: [],
-  addSignal: (signal) => set((state) => ({ signals: [signal, ...state.signals] })),
-  updateSignal: (id, status) => set((state) => ({
-    signals: state.signals.map(s => s.id === id ? { ...s, status } : s)
-  })),
-  activeSymbol: "BTCUSDT",
-  setActiveSymbol: (activeSymbol) => set({ activeSymbol }),
-  timeframe: "1h",
-  setTimeframe: (timeframe) => set({ timeframe }),
-  logs: ["Terminal initialized..."],
-  addLog: (log) => set((state) => ({ logs: [`[${new Date().toLocaleTimeString()}] ${log}`, ...state.logs.slice(0, 49)] })),
-}));
+export const useTerminalStore = create<TerminalState>()(
+  persist(
+    (set) => ({
+      layout: [
+        { i: "chart", x: 0, y: 0, w: 9, h: 18 },
+        { i: "signals", x: 9, y: 0, w: 3, h: 9 },
+        { i: "orderbook", x: 9, y: 9, w: 3, h: 9 },
+        { i: "console", x: 0, y: 18, w: 12, h: 6 },
+      ],
+      setLayout: (layout) => set({ layout }),
+      signals: [],
+      addSignal: (signal) => set((state) => ({ signals: [signal, ...state.signals] })),
+      updateSignal: (id, status) => set((state) => ({
+        signals: state.signals.map(s => s.id === id ? { ...s, status } : s)
+      })),
+      activeSymbol: "BTCUSDT",
+      setActiveSymbol: (activeSymbol) => set({ activeSymbol }),
+      timeframe: "1h",
+      setTimeframe: (timeframe) => set({ timeframe }),
+      logs: ["Terminal initialized..."],
+      addLog: (log) => set((state) => ({ logs: [`[${new Date().toLocaleTimeString()}] ${log}`, ...state.logs.slice(0, 49)] })),
+    }),
+    {
+      name: "terminal-storage",
+    }
+  )
+);
