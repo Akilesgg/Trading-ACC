@@ -34,6 +34,7 @@ import AnalysisModule from "@/components/analysis/AnalysisModule";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 
 const DEFAULT_LAYOUT = [
+  "comparator",
   "sentiment_gauges",
   "strategy",
   "context",
@@ -287,6 +288,7 @@ const Analysis = () => {
                     setTop100TF={setTop100TF}
                     generalTF={generalTF}
                     setGeneralTF={setGeneralTF}
+                    allAssets={allAssets}
                   />
                 ))}
               </Reorder.Group>

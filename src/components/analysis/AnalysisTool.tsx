@@ -1,5 +1,5 @@
-import React from "react";
-import { Brain, ChevronDown } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Brain, ChevronDown, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AnalysisToolProps {
@@ -33,23 +33,97 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
   savedLayouts,
   onLoadLayout
 }) => {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredAssets = allAssets.filter(asset => 
+    asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    asset.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const selectedAsset = allAssets.find(a => a.id === selectedSymbol);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 shadow-xl">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="space-y-1 w-full md:w-64">
+          <div className="space-y-1 w-full md:w-64" ref={dropdownRef}>
             <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Activo</label>
             <div className="relative">
-              <select 
-                value={selectedSymbol}
-                onChange={(e) => setSelectedSymbol(e.target.value)}
-                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 pl-4 pr-10 appearance-none focus:outline-none focus:border-primary transition-all text-sm font-bold"
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 pl-4 pr-10 text-left focus:outline-none focus:border-primary transition-all text-sm font-bold flex items-center justify-between"
               >
-                {allAssets.map(asset => (
-                  <option key={asset.id} value={asset.id}>{asset.name} (USDT)</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
+                <span className="truncate">
+                  {selectedAsset ? `${selectedAsset.name} (USDT)` : "Seleccionar Activo"}
+                </span>
+                <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform", isSearchOpen && "rotate-180")} />
+              </button>
+
+              {isSearchOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in duration-200">
+                  <div className="p-2 border-b border-outline-variant/10 flex items-center gap-2">
+                    <Search className="w-4 h-4 text-on-surface-variant" />
+                    <input 
+                      autoFocus
+                      type="text"
+                      placeholder="Buscar activo..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-on-surface-variant/50"
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")}>
+                        <X className="w-4 h-4 text-on-surface-variant" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto p-1">
+                    {filteredAssets.length > 0 ? (
+                      filteredAssets.map(asset => (
+                        <button
+                          key={asset.id}
+                          onClick={() => {
+                            setSelectedSymbol(asset.id);
+                            setIsSearchOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-3",
+                            selectedSymbol === asset.id ? "bg-primary text-on-primary" : "hover:bg-primary/10 text-on-surface"
+                          )}
+                        >
+                          <img 
+                            src={asset.image} 
+                            alt={asset.name} 
+                            className="w-5 h-5 rounded-full"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="flex flex-col">
+                            <span>{asset.name}</span>
+                            <span className="text-[8px] opacity-70 uppercase tracking-tighter">{asset.id}</span>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-xs text-on-surface-variant font-bold italic">
+                        No se encontraron activos
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

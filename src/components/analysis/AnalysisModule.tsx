@@ -13,7 +13,8 @@ import {
   Layers, 
   MessageSquare, 
   Flame, 
-  GripVertical 
+  GripVertical,
+  Scale 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -25,6 +26,7 @@ import {
   ResponsiveContainer, 
   ReferenceDot 
 } from 'recharts';
+import ChartComparator from "./ChartComparator";
 
 const WyckoffArrow = (props: any) => {
   const { cx, cy } = props;
@@ -156,6 +158,7 @@ interface AnalysisModuleProps {
   setTop100TF: (tf: string) => void;
   generalTF: string;
   setGeneralTF: (tf: string) => void;
+  allAssets?: any[];
 }
 
 const AnalysisModule: React.FC<AnalysisModuleProps> = ({ 
@@ -174,7 +177,8 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   top100TF, 
   setTop100TF, 
   generalTF, 
-  setGeneralTF 
+  setGeneralTF,
+  allAssets = []
 }) => {
   const controls = useDragControls();
 
@@ -192,6 +196,14 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         <GripVertical className="w-4 h-4" />
       </div>
       
+      {moduleId === "comparator" && (
+        <ChartComparator 
+          allAssets={allAssets} 
+          defaultSymbol1={ticker?.symbol || "BTCUSDT"} 
+          defaultSymbol2="ETHUSDT" 
+        />
+      )}
+
       {moduleId === "sentiment_gauges" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SentimentGauge 
