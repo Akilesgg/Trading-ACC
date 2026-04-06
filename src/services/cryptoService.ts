@@ -122,7 +122,9 @@ export async function fetchEconomicEvents() {
       description: "Discusión sobre nuevas sanciones comerciales y tensiones en fronteras orientales. Alta probabilidad de impacto en el precio del petróleo y activos de refugio.",
       effect: "Volatilidad extrema",
       probability: 95,
-      sourceUrl: "https://www.reuters.com/world/europe/"
+      sourceUrl: "https://www.reuters.com/world/europe/",
+      recommendation: "MANTENER",
+      details: "Las sanciones podrían desestabilizar los mercados energéticos europeos, lo que históricamente ha llevado a una correlación negativa con activos de riesgo. Se recomienda reducir exposición a altcoins de baja capitalización."
     },
     { 
       event: "Decisión de Tasas (FED)", 
@@ -132,7 +134,9 @@ export async function fetchEconomicEvents() {
       description: "El mercado espera una pausa en las tasas. Cualquier sorpresa podría causar liquidaciones masivas en el mercado cripto.",
       effect: "Cambio de Tendencia",
       probability: 88,
-      sourceUrl: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+      sourceUrl: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      recommendation: "VENTA",
+      details: "Si la FED decide un aumento inesperado, el DXY (Índice del Dólar) se fortalecerá, presionando a la baja a BTC. Los traders institucionales están cubriendo posiciones con opciones de venta."
     },
     { 
       event: "Cumbre G7 sobre Activos Digitales", 
@@ -142,7 +146,9 @@ export async function fetchEconomicEvents() {
       description: "Propuesta de marco regulatorio global para stablecoins y exchanges. Posible presión regulatoria a corto plazo.",
       effect: "Corrección Técnica",
       probability: 75,
-      sourceUrl: "https://www.g7germany.de/"
+      sourceUrl: "https://www.g7germany.de/",
+      recommendation: "MANTENER",
+      details: "La regulación global es positiva a largo plazo para la adopción masiva, pero genera incertidumbre inmediata. Observar niveles de soporte en stablecoins algorítmicas."
     },
     { 
       event: "Conflicto en Oriente Medio", 
@@ -152,37 +158,39 @@ export async function fetchEconomicEvents() {
       description: "Escalada de tensiones afecta las rutas de suministro globales. Impacto directo en el sentimiento de riesgo (Risk-Off).",
       effect: "Fuga hacia Calidad (BTC/Oro)",
       probability: 92,
-      sourceUrl: "https://www.aljazeera.com/news/"
+      sourceUrl: "https://www.aljazeera.com/news/",
+      recommendation: "COMPRA",
+      details: "En escenarios de inestabilidad geopolítica, Bitcoin ha comenzado a comportarse como 'oro digital'. Se observa un flujo de capital desde mercados de renta variable hacia BTC."
     },
   ];
 }
 
 export async function fetchWhaleMovements() {
   return [
-    { symbol: "BTCUSDT", type: "COMPRA", amount: "$2450K", impact: "Alta", exchange: "Binance", time: "hace 2 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "ETHUSDT", type: "VENTA", amount: "$1800K", impact: "Alta", exchange: "Bybit", time: "hace 5 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "BNBUSDT", type: "COMPRA", amount: "$950K", impact: "Media", exchange: "OKX", time: "hace 12 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "SOLUSDT", type: "COMPRA", amount: "$620K", impact: "Media", exchange: "Coinbase", time: "hace 18 min", sourceUrl: "https://whale-alert.io/" },
-    { symbol: "XRPUSDT", type: "VENTA", amount: "$870K", impact: "Alta", exchange: "Binance", time: "hace 25 min", sourceUrl: "https://whale-alert.io/" },
+    { symbol: "BTCUSDT", type: "COMPRA", amount: "$2450K", impact: "Alta", exchange: "Binance", time: "hace 2 min", sourceUrl: "https://whale-alert.io/", recommendation: "COMPRA", details: "Acumulación masiva detectada en billeteras frías de Binance. Indica una fuerte confianza institucional a estos niveles de precio." },
+    { symbol: "ETHUSDT", type: "VENTA", amount: "$1800K", impact: "Alta", exchange: "Bybit", time: "hace 5 min", sourceUrl: "https://whale-alert.io/", recommendation: "VENTA", details: "Gran flujo de ETH hacia exchanges detectado. Posible toma de ganancias masiva o preparación para una liquidación en cascada." },
+    { symbol: "BNBUSDT", type: "COMPRA", amount: "$950K", impact: "Media", exchange: "OKX", time: "hace 12 min", sourceUrl: "https://whale-alert.io/", recommendation: "MANTENER", details: "Movimiento de ballena de tamaño medio. Podría ser una rebalanceo de cartera antes del próximo Launchpad de Binance." },
+    { symbol: "SOLUSDT", type: "COMPRA", amount: "$620K", impact: "Media", exchange: "Coinbase", time: "hace 18 min", sourceUrl: "https://whale-alert.io/", recommendation: "COMPRA", details: "Compras consistentes en Coinbase Pro sugieren una acumulación silenciosa por parte de fondos de inversión estadounidenses." },
+    { symbol: "XRPUSDT", type: "VENTA", amount: "$870K", impact: "Alta", exchange: "Binance", time: "hace 25 min", sourceUrl: "https://whale-alert.io/", recommendation: "VENTA", details: "Venta de XRP tras noticias legales. El volumen de venta supera la media de 24h, indicando una posible corrección mayor." },
   ];
 }
 
 export async function fetchTopTraders() {
   return [
-    { name: "CryptoGod", exchange: "Binance", followers: "12.5K", trade: "LARGO BTC", profit: "+12.4%", score: 94, sourceUrl: "https://www.binance.com/en/copy-trading" },
-    { name: "WhaleHunter", exchange: "Bybit", followers: "8.9K", trade: "CORTO ETH", profit: "+8.2%", score: 88, sourceUrl: "https://www.bybit.com/copyTrading" },
-    { name: "SmartMoney", exchange: "OKX", followers: "6.7K", trade: "LARGO SOL", profit: "+15.7%", score: 85, sourceUrl: "https://www.okx.com/copy-trading" },
-    { name: "AlphaTrader", exchange: "Binance", followers: "15.4K", trade: "LARGO BTC", profit: "+9.3%", score: 91, sourceUrl: "https://www.binance.com/en/copy-trading" },
-    { name: "MoonMaker", exchange: "Kucoin", followers: "5.2K", trade: "CORTO BNB", profit: "+5.8%", score: 72, sourceUrl: "https://www.kucoin.com/copy-trading" },
+    { name: "CryptoGod", exchange: "Binance", followers: "12.5K", trade: "LARGO BTC", profit: "+12.4%", score: 94, sourceUrl: "https://www.binance.com/en/copy-trading", recommendation: "COMPRA", details: "Trader con 90% de winrate en los últimos 30 días. Su posición actual en largo BTC tiene un apalancamiento de 10x con stop loss ajustado." },
+    { name: "WhaleHunter", exchange: "Bybit", followers: "8.9K", trade: "CORTO ETH", profit: "+8.2%", score: 88, sourceUrl: "https://www.bybit.com/copyTrading", recommendation: "VENTA", details: "Especialista en detectar techos de mercado. Ha abierto una posición corta tras detectar una divergencia bajista en el RSI diario de ETH." },
+    { name: "SmartMoney", exchange: "OKX", followers: "6.7K", trade: "LARGO SOL", profit: "+15.7%", score: 85, sourceUrl: "https://www.okx.com/copy-trading", recommendation: "COMPRA", details: "Enfocado en ecosistemas de alta velocidad. Su entrada en SOL se basa en el aumento del TVL (Total Value Locked) en la red Solana." },
+    { name: "AlphaTrader", exchange: "Binance", followers: "15.4K", trade: "LARGO BTC", profit: "+9.3%", score: 91, sourceUrl: "https://www.binance.com/en/copy-trading", recommendation: "COMPRA", details: "Estrategia de seguimiento de tendencia macro. Mantiene posiciones largas mientras BTC se mantenga por encima de la EMA de 200 periodos." },
+    { name: "MoonMaker", exchange: "Kucoin", followers: "5.2K", trade: "CORTO BNB", profit: "+5.8%", score: 72, sourceUrl: "https://www.kucoin.com/copy-trading", recommendation: "VENTA", details: "Trader oportunista. Busca ineficiencias en el libro de órdenes. Su corto en BNB es una cobertura ante la volatilidad esperada." },
   ];
 }
 
 export async function fetchLargeTransactions() {
   return [
-    { symbol: "BTC", amount: "1,250", type: "Acumulación", time: "1 min", address: "0x3a2... → 0x7f1...", sourceUrl: "https://blockchain.info/" },
-    { symbol: "ETH", amount: "45,000", type: "Distribución", time: "4 min", address: "0x9e4... → 0x2b8...", sourceUrl: "https://etherscan.io/" },
-    { symbol: "SOL", amount: "250,000", type: "Depósito", time: "9 min", address: "0x5c3... → Exchange", sourceUrl: "https://solscan.io/" },
-    { symbol: "BNB", amount: "15,000", type: "Retiro", time: "14 min", address: "Exchange → 0x1d9...", sourceUrl: "https://bscscan.com/" },
+    { symbol: "BTC", amount: "1,250", type: "Acumulación", time: "1 min", address: "0x3a2... → 0x7f1...", sourceUrl: "https://blockchain.info/", recommendation: "COMPRA", details: "Transferencia masiva desde exchange a billetera privada. Típico comportamiento de 'HODL' institucional que reduce la oferta circulante." },
+    { symbol: "ETH", amount: "45,000", type: "Distribución", time: "4 min", address: "0x9e4... → 0x2b8...", sourceUrl: "https://etherscan.io/", recommendation: "VENTA", details: "Movimiento desde billetera Génesis hacia múltiples direcciones. Sugiere una distribución estratégica por parte de ballenas tempranas." },
+    { symbol: "SOL", amount: "250,000", type: "Depósito", time: "9 min", address: "0x5c3... → Exchange", sourceUrl: "https://solscan.io/", recommendation: "VENTA", details: "Depósito masivo en billetera caliente de exchange. Históricamente precede a una presión de venta inmediata en el mercado spot." },
+    { symbol: "BNB", amount: "15,000", type: "Retiro", time: "14 min", address: "Exchange → 0x1d9...", sourceUrl: "https://bscscan.com/", recommendation: "COMPRA", details: "Retiro de fondos hacia billetera de staking. Indica una intención de bloqueo de activos a largo plazo, reduciendo la liquidez de venta." },
   ];
 }
 
