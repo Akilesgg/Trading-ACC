@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const getApiKey = () => {
+const getApiKey = (attempt = 0) => {
   const providedKeys = [
     "AIzaSyD44Nrz1-GjW-3h1BTfMhupLxtk1ZoN-Co",
     "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E",
@@ -15,27 +15,28 @@ const getApiKey = () => {
   if (userKey) return userKey;
   if (envKey) return envKey;
 
-  // Rotation logic based on current minute to distribute load across provided keys
+  // Rotation logic based on current minute + attempt to distribute load across provided keys
   const minute = new Date().getMinutes();
-  const rotatedKey = providedKeys[minute % providedKeys.length];
+  const index = (minute + attempt) % providedKeys.length;
+  const rotatedKey = providedKeys[index];
   
-  console.log(`Using rotated Gemini API Key (Index: ${minute % providedKeys.length})`);
+  console.log(`Using rotated Gemini API Key (Index: ${index}, Attempt: ${attempt})`);
   return rotatedKey;
 };
 
 export async function analyzeMarket(symbol: string, price: string, change: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    console.error("GEMINI_API_KEY is missing");
-    return "Error: Configuración de API de IA faltante. Por favor, configura tu GEMINI_API_KEY en los ajustes o en el panel de análisis.";
-  }
-  
-  const ai = new GoogleGenAI({ apiKey });
-  
-  const maxRetries = 2;
+  const maxRetries = 3;
   let retryCount = 0;
 
   while (retryCount <= maxRetries) {
+    const apiKey = getApiKey(retryCount);
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is missing");
+      return "Error: Configuración de API de IA faltante. Por favor, configura tu GEMINI_API_KEY en los ajustes o en el panel de análisis.";
+    }
+    
+    const ai = new GoogleGenAI({ apiKey });
+    
     try {
       let modePrompt = "";
       if (mode === "Scalping") {
@@ -137,69 +138,99 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
 }
 
 export async function fetchRealTimeNews() {
-  const apiKey = getApiKey();
-  if (!apiKey) return [];
+  const maxRetries = 2;
+  let retryCount = 0;
 
-  const ai = new GoogleGenAI({ apiKey });
+  while (retryCount <= maxRetries) {
+    const apiKey = getApiKey(retryCount);
+    if (!apiKey) return [];
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas hoy ${new Date().toLocaleDateString()}.
-      Para cada noticia, proporciona:
-      1. Título de la noticia.
-      2. Un breve resumen (2 frases).
-      3. El impacto estimado en el mercado (CRITICAL, HIGH, MEDIUM, LOW).
-      4. Una puntuación de impacto de la IA (0-100).
-      5. El efecto esperado (ej: Volatilidad, Tendencia Alcista, etc.).
-      6. Una URL de fuente real y válida (Reuters, Bloomberg, CNBC, etc.).
-      
-      Responde estrictamente en formato JSON con esta estructura:
-      [
-        {
-          "event": "Título",
-          "description": "Resumen",
-          "impact": "HIGH",
-          "aiScore": 85,
-          "effect": "Efecto",
-          "time": "Hace X min",
-          "sourceUrl": "URL"
-        }
-      ]`,
-      config: {
-        tools: [{ googleSearch: {} }],
-        responseMimeType: "application/json"
-      },
-    });
+    const ai = new GoogleGenAI({ apiKey });
 
-    const text = response.text;
-    if (text) {
-      return JSON.parse(text);
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas hoy ${new Date().toLocaleDateString()}.
+        Para cada noticia, proporciona:
+        1. Título de la noticia.
+        2. Un breve resumen (2 frases).
+        3. El impacto estimado en el mercado (CRITICAL, HIGH, MEDIUM, LOW).
+        4. Una puntuación de impacto de la IA (0-100).
+        5. El efecto esperado (ej: Volatilidad, Tendencia Alcista, etc.).
+        6. Una URL de fuente real y válida (Reuters, Bloomberg, CNBC, etc.).
+        
+        Responde estrictamente en formato JSON con esta estructura:
+        [
+          {
+            "event": "Título",
+            "description": "Resumen",
+            "impact": "HIGH",
+            "aiScore": 85,
+            "effect": "Efecto",
+            "time": "Hace X min",
+            "sourceUrl": "URL"
+          }
+        ]`,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json"
+        },
+      });
+
+      const text = response.text;
+      if (text) {
+        return JSON.parse(text);
+      }
+      return [];
+    } catch (error: any) {
+      const isQuotaError = error.message?.toLowerCase().includes("quota") || 
+                           error.status === 429 || 
+                           error.message?.includes("429");
+
+      if (isQuotaError && retryCount < maxRetries) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      console.error("Error fetching real-time news:", error);
+      return [];
     }
-    return [];
-  } catch (error) {
-    console.error("Error fetching real-time news:", error);
-    return [];
   }
+  return [];
 }
 
 export async function getMarketSentiment() {
-  const apiKey = getApiKey();
-  if (!apiKey) return "Sentimiento neutral (API Key faltante).";
-  
-  const ai = new GoogleGenAI({ apiKey });
-  
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: "Analiza el sentimiento actual del mercado cripto global en una frase corta y profesional en ESPAÑOL. Incluye una estimación del índice Fear & Greed.",
-      config: {
-        tools: [{ googleSearch: {} }],
-      },
-    });
-    return response.text || "Sentimiento neutral basado en tendencias recientes.";
-  } catch (error) {
-    console.error("Gemini sentiment error:", error);
-    return "Sentimiento neutral basado en tendencias recientes.";
+  const maxRetries = 2;
+  let retryCount = 0;
+
+  while (retryCount <= maxRetries) {
+    const apiKey = getApiKey(retryCount);
+    if (!apiKey) return "Sentimiento neutral (API Key faltante).";
+    
+    const ai = new GoogleGenAI({ apiKey });
+    
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: "Analiza el sentimiento actual del mercado cripto global en una frase corta y profesional en ESPAÑOL. Incluye una estimación del índice Fear & Greed.",
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+      return response.text || "Sentimiento neutral basado en tendencias recientes.";
+    } catch (error: any) {
+      const isQuotaError = error.message?.toLowerCase().includes("quota") || 
+                           error.status === 429 || 
+                           error.message?.includes("429");
+
+      if (isQuotaError && retryCount < maxRetries) {
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      console.error("Gemini sentiment error:", error);
+      return "Sentimiento neutral basado en tendencias recientes.";
+    }
   }
+  return "Sentimiento neutral basado en tendencias recientes.";
 }
