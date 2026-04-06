@@ -53,7 +53,7 @@ import {
   fetchTopTraders,
   fetchLargeTransactions
 } from "@/services/cryptoService";
-import { analyzeMarket } from "@/services/geminiService";
+import { analyzeMarket, fetchRealTimeNews } from "@/services/geminiService";
 import { sendTelegramAlert } from "@/services/telegramService";
 import { toast } from "sonner";
 import { 
@@ -357,16 +357,38 @@ const TerminalModule = ({
               </h4>
               <div className="space-y-3">
                 {economicEvents.map((event: any, i: number) => (
-                  <div key={i} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 space-y-1">
+                  <a 
+                    key={i} 
+                    href={event.sourceUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 space-y-2 block hover:border-primary/30 transition-all group"
+                  >
                     <div className="flex justify-between items-center">
                       <span className="text-[8px] font-bold text-on-surface-variant uppercase">{event.time}</span>
-                      <span className={cn(
-                        "text-[8px] font-black px-1.5 py-0.5 rounded uppercase",
-                        event.impact === "HIGH" ? "bg-secondary/20 text-secondary" : "bg-primary/20 text-primary"
-                      )}>{event.impact}</span>
+                      <div className="flex gap-1">
+                        {event.aiScore && (
+                          <span className="text-[8px] font-black px-1.5 py-0.5 rounded uppercase bg-primary text-on-primary">
+                            IA: {event.aiScore}
+                          </span>
+                        )}
+                        <span className={cn(
+                          "text-[8px] font-black px-1.5 py-0.5 rounded uppercase",
+                          (event.impact === "HIGH" || event.impact === "CRITICAL") ? "bg-secondary/20 text-secondary" : "bg-primary/20 text-primary"
+                        )}>{event.impact}</span>
+                      </div>
                     </div>
-                    <p className="text-[10px] font-bold text-on-surface leading-tight">{event.event}</p>
-                  </div>
+                    <p className="text-[10px] font-bold text-on-surface leading-tight group-hover:text-primary transition-colors">{event.event}</p>
+                    {event.description && (
+                      <p className="text-[9px] text-on-surface-variant line-clamp-2">{event.description}</p>
+                    )}
+                    {event.effect && (
+                      <div className="flex items-center gap-1 pt-1 border-t border-outline-variant/5">
+                        <Zap className="w-2 h-2 text-primary" />
+                        <span className="text-[8px] font-bold text-primary uppercase">{event.effect}</span>
+                      </div>
+                    )}
+                  </a>
                 ))}
               </div>
             </div>
@@ -714,17 +736,19 @@ const Terminal = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [data, chartData, events, whales, traders, txs] = await Promise.all([
+        const [data, chartData, events, aiNews, whales, traders, txs] = await Promise.all([
           fetchTicker(symbolParam),
           fetchKlines(symbolParam, timeframe, 100),
           fetchEconomicEvents(),
+          fetchRealTimeNews(),
           fetchWhaleMovements(),
           fetchTopTraders(),
           fetchLargeTransactions()
         ]);
         setTicker(data);
         setKlines(chartData);
-        setEconomicEvents(events);
+        // Combine mock events with real-time AI news
+        setEconomicEvents([...aiNews, ...events]);
         setWhaleMovements(whales);
         setTopTraders(traders);
         setLargeTransactions(txs);
@@ -739,13 +763,14 @@ const Terminal = () => {
     // Auto-refresh every 2 minutes
     const interval = setInterval(async () => {
       try {
-        const [events, whales, traders, txs] = await Promise.all([
+        const [events, aiNews, whales, traders, txs] = await Promise.all([
           fetchEconomicEvents(),
+          fetchRealTimeNews(),
           fetchWhaleMovements(),
           fetchTopTraders(),
           fetchLargeTransactions()
         ]);
-        setEconomicEvents(events);
+        setEconomicEvents([...aiNews, ...events]);
         setWhaleMovements(whales);
         setTopTraders(traders);
         setLargeTransactions(txs);

@@ -1,21 +1,26 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = () => {
+  const providedKeys = [
+    "AIzaSyD44Nrz1-GjW-3h1BTfMhupLxtk1ZoN-Co",
+    "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E",
+    "AIzaSyCTum6NIABcoalRhVhQyZOO45QFiPS7cHA",
+    "AIzaSyDJpXYT9pbUJwGLdENZf8iLr20IfJj54rM"
+  ];
+
   // Try multiple sources for the API key
-  const key = (
-    process.env.GEMINI_API_KEY || 
-    (import.meta as any).env?.VITE_GEMINI_API_KEY || 
-    localStorage.getItem("GEMINI_API_KEY") || 
-    "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E" // Hardcoded fallback provided by user
-  );
-  if (key && key !== "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E") {
-    console.log("Gemini API Key found (masked):", key.substring(0, 4) + "..." + key.substring(key.length - 4));
-  } else if (key === "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E") {
-    console.log("Using hardcoded Gemini API Key fallback.");
-  } else {
-    console.warn("Gemini API Key NOT found in any source.");
-  }
-  return key;
+  const userKey = localStorage.getItem("GEMINI_API_KEY");
+  const envKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+
+  if (userKey) return userKey;
+  if (envKey) return envKey;
+
+  // Rotation logic based on current minute to distribute load across provided keys
+  const minute = new Date().getMinutes();
+  const rotatedKey = providedKeys[minute % providedKeys.length];
+  
+  console.log(`Using rotated Gemini API Key (Index: ${minute % providedKeys.length})`);
+  return rotatedKey;
 };
 
 export async function analyzeMarket(symbol: string, price: string, change: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") {
@@ -129,6 +134,53 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
     }
   }
   return "Error: Máximo de reintentos alcanzado sin éxito.";
+}
+
+export async function fetchRealTimeNews() {
+  const apiKey = getApiKey();
+  if (!apiKey) return [];
+
+  const ai = new GoogleGenAI({ apiKey });
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas hoy ${new Date().toLocaleDateString()}.
+      Para cada noticia, proporciona:
+      1. Título de la noticia.
+      2. Un breve resumen (2 frases).
+      3. El impacto estimado en el mercado (CRITICAL, HIGH, MEDIUM, LOW).
+      4. Una puntuación de impacto de la IA (0-100).
+      5. El efecto esperado (ej: Volatilidad, Tendencia Alcista, etc.).
+      6. Una URL de fuente real y válida (Reuters, Bloomberg, CNBC, etc.).
+      
+      Responde estrictamente en formato JSON con esta estructura:
+      [
+        {
+          "event": "Título",
+          "description": "Resumen",
+          "impact": "HIGH",
+          "aiScore": 85,
+          "effect": "Efecto",
+          "time": "Hace X min",
+          "sourceUrl": "URL"
+        }
+      ]`,
+      config: {
+        tools: [{ googleSearch: {} }],
+        responseMimeType: "application/json"
+      },
+    });
+
+    const text = response.text;
+    if (text) {
+      return JSON.parse(text);
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching real-time news:", error);
+    return [];
+  }
 }
 
 export async function getMarketSentiment() {

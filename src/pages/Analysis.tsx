@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link, useSearchParams } from "react-router-dom";
-import { getMarketSentiment, analyzeMarket } from "@/services/geminiService";
+import { getMarketSentiment, analyzeMarket, fetchRealTimeNews } from "@/services/geminiService";
 import { 
   fetchTickers, 
   fetchTicker, 
@@ -672,11 +672,12 @@ const Analysis = () => {
   const loadInitialData = async () => {
     setLoading(true);
     try {
-      const [assets, aiSentiment, initialTicker, events, whales, traders, txs] = await Promise.all([
+      const [assets, aiSentiment, initialTicker, events, aiNews, whales, traders, txs] = await Promise.all([
         fetchCryptoData(),
         getMarketSentiment(),
         fetchTicker(selectedSymbol),
         fetchEconomicEvents(),
+        fetchRealTimeNews(),
         fetchWhaleMovements(),
         fetchTopTraders(),
         fetchLargeTransactions()
@@ -685,7 +686,7 @@ const Analysis = () => {
       setAllAssets(assets);
       setSentiment(aiSentiment);
       setTicker(initialTicker);
-      setEconomicEvents(events);
+      setEconomicEvents([...aiNews, ...events]);
       setWhaleMovements(whales);
       setTopTraders(traders);
       setLargeTransactions(txs);
@@ -707,17 +708,18 @@ const Analysis = () => {
     const interval = setInterval(async () => {
       setRefreshing(true);
       try {
-        const [aiSentiment, currentTicker, events, whales, traders, txs] = await Promise.all([
+        const [aiSentiment, currentTicker, events, aiNews, whales, traders, txs] = await Promise.all([
           getMarketSentiment(),
           fetchTicker(selectedSymbol),
           fetchEconomicEvents(),
+          fetchRealTimeNews(),
           fetchWhaleMovements(),
           fetchTopTraders(),
           fetchLargeTransactions()
         ]);
         setSentiment(aiSentiment);
         setTicker(currentTicker);
-        setEconomicEvents(events);
+        setEconomicEvents([...aiNews, ...events]);
         setWhaleMovements(whales);
         setTopTraders(traders);
         setLargeTransactions(txs);
@@ -1339,22 +1341,35 @@ const Analysis = () => {
           </h3>
           <div className="space-y-4">
             {economicEvents.map((event, i) => (
-              <div key={i} className="p-4 bg-surface-container rounded-xl border border-outline-variant/5 space-y-2">
+              <a 
+                key={i} 
+                href={event.sourceUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="p-4 bg-surface-container rounded-xl border border-outline-variant/5 space-y-3 block hover:border-primary/30 transition-all group"
+              >
                 <div className="flex justify-between items-start">
-                  <h4 className="text-sm font-bold text-on-surface">{event.event}</h4>
-                  <span className={cn(
-                    "text-[8px] font-black px-2 py-0.5 rounded uppercase",
-                    event.impact === "CRITICAL" ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"
-                  )}>
-                    {event.impact}
-                  </span>
+                  <h4 className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{event.event}</h4>
+                  <div className="flex gap-1">
+                    {event.aiScore && (
+                      <span className="text-[8px] font-black px-2 py-0.5 rounded uppercase bg-primary text-on-primary">
+                        IA: {event.aiScore}
+                      </span>
+                    )}
+                    <span className={cn(
+                      "text-[8px] font-black px-2 py-0.5 rounded uppercase",
+                      (event.impact === "CRITICAL" || event.impact === "HIGH") ? "bg-secondary/10 text-secondary" : "bg-primary/10 text-primary"
+                    )}>
+                      {event.impact}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-[10px] text-on-surface-variant leading-relaxed">{event.description}</p>
-                <div className="flex justify-between text-[8px] font-bold text-on-surface-variant uppercase">
-                  <span>{event.date} • {event.time}</span>
+                <p className="text-[10px] text-on-surface-variant leading-relaxed line-clamp-2">{event.description}</p>
+                <div className="flex justify-between text-[8px] font-bold text-on-surface-variant uppercase pt-2 border-t border-outline-variant/5">
+                  <span>{event.date || "HOY"} • {event.time}</span>
                   <span className="text-primary">{event.effect}</span>
                 </div>
-              </div>
+              </a>
             ))}
           </div>
         </section>
