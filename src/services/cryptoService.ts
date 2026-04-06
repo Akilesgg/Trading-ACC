@@ -177,11 +177,61 @@ export async function fetchWhaleMovements() {
 
 export async function fetchTopTraders() {
   return [
-    { name: "CryptoGod", exchange: "Binance", followers: "12.5K", trade: "LARGO BTC", profit: "+12.4%", score: 94, sourceUrl: "https://www.binance.com/en/copy-trading", recommendation: "COMPRA", details: "Trader con 90% de winrate en los últimos 30 días. Su posición actual en largo BTC tiene un apalancamiento de 10x con stop loss ajustado." },
-    { name: "WhaleHunter", exchange: "Bybit", followers: "8.9K", trade: "CORTO ETH", profit: "+8.2%", score: 88, sourceUrl: "https://www.bybit.com/copyTrading", recommendation: "VENTA", details: "Especialista en detectar techos de mercado. Ha abierto una posición corta tras detectar una divergencia bajista en el RSI diario de ETH." },
-    { name: "SmartMoney", exchange: "OKX", followers: "6.7K", trade: "LARGO SOL", profit: "+15.7%", score: 85, sourceUrl: "https://www.okx.com/copy-trading", recommendation: "COMPRA", details: "Enfocado en ecosistemas de alta velocidad. Su entrada en SOL se basa en el aumento del TVL (Total Value Locked) en la red Solana." },
-    { name: "AlphaTrader", exchange: "Binance", followers: "15.4K", trade: "LARGO BTC", profit: "+9.3%", score: 91, sourceUrl: "https://www.binance.com/en/copy-trading", recommendation: "COMPRA", details: "Estrategia de seguimiento de tendencia macro. Mantiene posiciones largas mientras BTC se mantenga por encima de la EMA de 200 periodos." },
-    { name: "MoonMaker", exchange: "Kucoin", followers: "5.2K", trade: "CORTO BNB", profit: "+5.8%", score: 72, sourceUrl: "https://www.kucoin.com/copy-trading", recommendation: "VENTA", details: "Trader oportunista. Busca ineficiencias en el libro de órdenes. Su corto en BNB es una cobertura ante la volatilidad esperada." },
+    { 
+      name: "CryptoGod", 
+      exchange: "Binance", 
+      followers: "12.5K", 
+      trade: "LARGO BTC", 
+      profit: "+12.4%", 
+      score: 94, 
+      sourceUrl: "https://www.binance.com/en/copy-trading", 
+      recommendation: "COMPRA", 
+      details: "Estrategia basada en la ruptura de la resistencia de los $68k con confirmación de volumen institucional. Se observa una absorción de oferta en el Order Book, lo que sugiere una continuación alcista hacia el siguiente nivel de liquidez en $72k." 
+    },
+    { 
+      name: "WhaleHunter", 
+      exchange: "Bybit", 
+      followers: "8.9K", 
+      trade: "CORTO ETH", 
+      profit: "+8.2%", 
+      score: 88, 
+      sourceUrl: "https://www.bybit.com/copyTrading", 
+      recommendation: "VENTA", 
+      details: "Posición corta fundamentada en una divergencia bajista clase A en el RSI de 4H y el rechazo del nivel de Fibonacci 0.618. El flujo de órdenes muestra una presión vendedora agresiva superando a los compradores pasivos." 
+    },
+    { 
+      name: "SmartMoney", 
+      exchange: "OKX", 
+      followers: "6.7K", 
+      trade: "LARGO SOL", 
+      profit: "+15.7%", 
+      score: 85, 
+      sourceUrl: "https://www.okx.com/copy-trading", 
+      recommendation: "COMPRA", 
+      details: "Estrategia de rotación de capital. Se observa un incremento del 25% en el TVL de Solana en las últimas 48h y una ruptura de estructura (BOS) al alza en temporalidades de 1H, validando una entrada institucional." 
+    },
+    { 
+      name: "AlphaTrader", 
+      exchange: "Binance", 
+      followers: "15.4K", 
+      trade: "LARGO BTC", 
+      profit: "+9.3%", 
+      score: 91, 
+      sourceUrl: "https://www.binance.com/en/copy-trading", 
+      recommendation: "COMPRA", 
+      details: "Seguimiento de tendencia macro. El precio se mantiene por encima de la EMA de 200 periodos y ha retesteado con éxito el POC (Point of Control) del perfil de volumen semanal. Objetivo técnico: Máximos históricos." 
+    },
+    { 
+      name: "MoonMaker", 
+      exchange: "Kucoin", 
+      followers: "5.2K", 
+      trade: "CORTO BNB", 
+      profit: "+5.8%", 
+      score: 72, 
+      sourceUrl: "https://www.kucoin.com/copy-trading", 
+      recommendation: "VENTA", 
+      details: "Estrategia de arbitraje y cobertura. Se detecta una ineficiencia en el libro de órdenes (Fair Value Gap) que el precio tiende a rellenar. La debilidad relativa de BNB frente a BTC justifica esta cobertura táctica." 
+    },
   ];
 }
 
