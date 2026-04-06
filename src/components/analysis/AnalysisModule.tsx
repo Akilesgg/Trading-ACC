@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Reorder, useDragControls } from "motion/react";
+import Markdown from "react-markdown";
 import { 
   Brain, 
   Zap, 
@@ -14,7 +15,11 @@ import {
   MessageSquare, 
   Flame, 
   GripVertical,
-  Scale 
+  Scale,
+  Terminal,
+  Copy,
+  Check,
+  Maximize2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -27,6 +32,7 @@ import {
   ReferenceDot 
 } from 'recharts';
 import ChartComparator from "./ChartComparator";
+import { toast } from "sonner";
 
 const WyckoffArrow = (props: any) => {
   const { cx, cy } = props;
@@ -181,6 +187,14 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   allAssets = []
 }) => {
   const controls = useDragControls();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(analysis);
+    setCopied(true);
+    toast.success("Análisis copiado al portapapeles");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <Reorder.Item 
@@ -507,14 +521,72 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "raw" && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
-          <h4 className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest flex items-center gap-2">
-            <Brain className="w-3 h-3" /> CAMPO DE ANÁLISIS IA (RAW)
-          </h4>
-          <div className="p-4 bg-surface-container-high/50 rounded-xl border border-outline-variant/10 max-h-40 overflow-y-auto">
-            <pre className="text-[10px] text-on-surface-variant whitespace-pre-wrap font-mono leading-relaxed">
-              {analysis || "No hay datos de análisis disponibles."}
-            </pre>
+        <div className="bg-neutral-950 rounded-3xl border border-white/10 overflow-hidden shadow-2xl group/terminal">
+          {/* Terminal Header */}
+          <div className="bg-white/5 px-6 py-4 border-b border-white/10 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                <div className="w-3 h-3 rounded-full bg-amber-500/50" />
+                <div className="w-3 h-3 rounded-full bg-emerald-500/50" />
+              </div>
+              <div className="h-4 w-px bg-white/10 mx-2" />
+              <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Terminal className="w-3 h-3" /> 
+                Terminal de Análisis Cuántico v4.2
+              </h4>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleCopy}
+                className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/40 hover:text-primary"
+                title="Copiar Análisis"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </button>
+              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white/40 hover:text-white">
+                <Maximize2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Terminal Content */}
+          <div className="p-8 min-h-[400px] max-h-[800px] overflow-y-auto custom-scrollbar bg-[radial-gradient(circle_at_top_left,rgba(0,255,163,0.05),transparent)]">
+            <div className="prose prose-invert prose-sm max-w-none">
+              <div className="font-mono text-base leading-relaxed text-white/80 selection:bg-primary/30 selection:text-white">
+                <Markdown
+                  components={{
+                    p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                    strong: ({ children }) => <strong className="text-primary font-black tracking-tight">{children}</strong>,
+                    h1: ({ children }) => <h1 className="text-2xl font-black text-white mb-6 border-b border-white/10 pb-2">{children}</h1>,
+                    h2: ({ children }) => <h2 className="text-xl font-black text-white mt-8 mb-4">{children}</h2>,
+                    ul: ({ children }) => <ul className="space-y-2 mb-4 list-disc list-inside">{children}</ul>,
+                    li: ({ children }) => <li className="text-white/70">{children}</li>,
+                  }}
+                >
+                  {analysis || "### SISTEMA EN ESPERA\n\nEsperando flujo de datos para iniciar el procesamiento de análisis profundo..."}
+                </Markdown>
+              </div>
+            </div>
+            
+            {/* Cursor Effect */}
+            <div className="mt-4 flex items-center gap-2">
+              <span className="text-primary font-bold">{">"}</span>
+              <div className="w-2 h-5 bg-primary/50 animate-pulse" />
+            </div>
+          </div>
+
+          {/* Terminal Footer */}
+          <div className="bg-white/5 px-6 py-3 border-t border-white/10 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-white/20">
+            <div className="flex gap-4">
+              <span>Status: Online</span>
+              <span>Encoding: UTF-8</span>
+              <span>Model: Gemini-3-Flash</span>
+            </div>
+            <div className="flex gap-4">
+              <span>Lines: {analysis?.split('\n').length || 0}</span>
+              <span>Characters: {analysis?.length || 0}</span>
+            </div>
           </div>
         </div>
       )}
