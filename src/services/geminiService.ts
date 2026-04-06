@@ -1,27 +1,24 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getApiKey = (attempt = 0) => {
-  const providedKeys = [
-    "AIzaSyD44Nrz1-GjW-3h1BTfMhupLxtk1ZoN-Co",
-    "AIzaSyAe6AZU5UZAwl--4YTd0kUkQiCELvIB98E",
-    "AIzaSyCTum6NIABcoalRhVhQyZOO45QFiPS7cHA",
-    "AIzaSyDJpXYT9pbUJwGLdENZf8iLr20IfJj54rM"
-  ];
-
   // Try multiple sources for the API key
   const userKey = localStorage.getItem("GEMINI_API_KEY");
   const envKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
 
   if (userKey) return userKey;
-  if (envKey) return envKey;
+  if (envKey) {
+    // Support comma-separated keys for rotation
+    const keys = envKey.split(',').map((k: string) => k.trim()).filter(Boolean);
+    if (keys.length > 0) {
+      const minute = new Date().getMinutes();
+      const index = (minute + attempt) % keys.length;
+      return keys[index];
+    }
+  }
 
-  // Rotation logic based on current minute + attempt to distribute load across provided keys
-  const minute = new Date().getMinutes();
-  const index = (minute + attempt) % providedKeys.length;
-  const rotatedKey = providedKeys[index];
-  
-  console.log(`Using rotated Gemini API Key (Index: ${index}, Attempt: ${attempt})`);
-  return rotatedKey;
+  // Fallback to a default key if provided in a safe way, 
+  // but for now we'll return null if no keys are found
+  return null;
 };
 
 function generateTechnicalFallback(symbol: string, price: string, change: string, mode: string) {
