@@ -47,6 +47,7 @@ import SignalDetail from "./pages/SignalDetail";
 import Terminal from "./pages/Terminal";
 import CopyTrading from "./pages/CopyTrading";
 import News from "./pages/News";
+import BTCComparison from "./pages/BTCComparison";
 
 const LoginScreen = () => {
   const { login } = useAuth();
@@ -92,6 +93,7 @@ const TopAppBar = () => {
     { icon: Target, label: "Analizador IA", path: "/terminal", desc: "Análisis técnico profundo con Wyckoff" },
     { icon: Users, label: "Copy Trading", path: "/copy-trading", desc: "Sigue a ballenas y top traders" },
     { icon: Newspaper, label: "Noticias", path: "/news", desc: "Impacto económico y geopolítico" },
+    { icon: Activity, label: "Comparativa BTC", path: "/btc-comparison", desc: "Correlación y volatilidad vs BTC" },
     { icon: TrendingUp, label: "Análisis IA", path: "/analysis", desc: "Análisis exhaustivo de activos con IA" },
     { icon: Shield, label: "Seguridad", path: "/dashboard", desc: "Configuración de cuenta y llaves API" },
     { icon: HelpCircle, label: "Soporte", path: "/dashboard", desc: "Centro de ayuda y tutoriales" },
@@ -319,6 +321,7 @@ export default function App() {
                 <Route path="/terminal" element={<Terminal />} />
                 <Route path="/copy-trading" element={<CopyTrading />} />
                 <Route path="/news" element={<News />} />
+                <Route path="/btc-comparison" element={<BTCComparison />} />
                 {/* Fallbacks */}
                 <Route path="/signals" element={<Dashboard />} />
               </Routes>
