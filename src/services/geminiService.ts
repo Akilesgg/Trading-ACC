@@ -71,6 +71,51 @@ TAKE PROFIT 3: ${tp3.toFixed(2)}
 **METÁFORA TÉCNICA**: El precio actúa como una reacción química exotérmica, liberando energía tras romper la barrera de activación de la resistencia actual.`;
 }
 
+export async function findBestSetups(marketData: any[]) {
+  const apiKey = getApiKey();
+  if (!apiKey) return [];
+  
+  const ai = new GoogleGenAI({ apiKey });
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Analiza los siguientes datos de mercado y encuentra los 3 mejores setups de trading actuales.
+      DATOS: ${JSON.stringify(marketData)}
+      
+      Para cada setup, proporciona:
+      1. Símbolo
+      2. Tipo (LONG/SHORT)
+      3. Precio de Entrada
+      4. Stop Loss
+      5. Take Profit (3 niveles)
+      6. Puntuación de confianza (0-100)
+      7. Justificación breve (BOS, RSI, Volumen, etc.)
+      
+      Responde estrictamente en formato JSON:
+      [
+        {
+          "symbol": "BTCUSDT",
+          "type": "LONG",
+          "entry": 64000,
+          "sl": 63000,
+          "tp": [65000, 66000, 68000],
+          "score": 85,
+          "reason": "BOS alcista + RSI en 40"
+        }
+      ]`,
+      config: {
+        responseMimeType: "application/json"
+      },
+    });
+    
+    return JSON.parse(response.text || "[]");
+  } catch (error) {
+    console.error("Error finding best setups:", error);
+    return [];
+  }
+}
+
 export async function analyzeMarket(symbol: string, price: string, change: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") {
   const maxRetries = 3;
   let retryCount = 0;
