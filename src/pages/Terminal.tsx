@@ -4,6 +4,7 @@ import TerminalChart from "../ui/widgets/TerminalChart";
 import TerminalSignals from "../ui/widgets/TerminalSignals";
 import TerminalOrderbook from "../ui/widgets/TerminalOrderbook";
 import TerminalConsole from "../ui/widgets/TerminalConsole";
+import TerminalTradePanel from "../ui/widgets/TerminalTradePanel";
 import { useTerminalStore } from "../store/useTerminalStore";
 import { SignalStatus } from "../core/signals/types";
 import { Search, Activity, Shield, History, Zap, TrendingUp } from "lucide-react";
@@ -126,6 +127,7 @@ const Terminal: React.FC = () => {
           {{
             chart: <TerminalChart />,
             signals: <TerminalSignals />,
+            trade: <TerminalTradePanel />,
             orderbook: <TerminalOrderbook />,
             console: <TerminalConsole />,
           }}
