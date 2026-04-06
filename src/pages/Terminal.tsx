@@ -834,12 +834,6 @@ const Terminal = () => {
       try {
         const aiResponse = await analyzeMarket(symbolParam, ticker.price, ticker.priceChangePercent, strategy as any);
         
-        if (aiResponse.startsWith("Error:")) {
-          toast.error(aiResponse);
-          setAnalyzing(false);
-          return;
-        }
-
         const sections = parseAnalysis(aiResponse);
         
         const adxVal = Math.floor(Math.random() * 30) + 15; // 15-45
@@ -1155,61 +1149,35 @@ const Terminal = () => {
       </div>
 
       <div className="max-w-7xl mx-auto p-4 space-y-6">
-        {analysis?.startsWith("Error:") ? (
-          <div className="bg-secondary/10 border border-secondary/20 p-8 rounded-2xl flex flex-col items-center text-center gap-4">
-            <Shield className="w-16 h-16 text-secondary animate-pulse" />
-            <div className="space-y-2">
-              <h3 className="text-xl font-black text-secondary uppercase tracking-tighter">Error de Configuración</h3>
-              <p className="text-sm text-on-surface-variant max-w-md italic">
-                {analysis}
-              </p>
-            </div>
-            <div className="flex gap-4 mt-4">
-              <button 
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="px-6 py-3 bg-secondary text-on-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
-              >
-                Configurar API Key
-              </button>
-              <button 
-                onClick={runAnalysis}
-                className="px-6 py-3 bg-surface-container-highest text-on-surface-variant rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all"
-              >
-                Reintentar
-              </button>
-            </div>
-          </div>
-        ) : (
-          <Reorder.Group 
-            axis="y" 
-            values={moduleOrder} 
-            onReorder={setModuleOrder}
-            className="space-y-6"
-          >
-            {moduleOrder.map((moduleId) => (
-              <TerminalModule 
-                key={moduleId} 
-                moduleId={moduleId}
-                ticker={ticker}
-                whaleMovements={whaleMovements}
-                topTraders={topTraders}
-                largeTransactions={largeTransactions}
-                economicEvents={economicEvents}
-                analysis={analysis}
-                setSelectedTraderStrategy={setSelectedTraderStrategy}
-                accountSize={accountSize}
-                setAccountSize={setAccountSize}
-                riskAmount={riskAmount}
-                setRiskAmount={setRiskAmount}
-                copySignal={copySignal}
-                shareToTelegram={shareToTelegram}
-                timeframe={timeframe}
-                setTimeframe={setTimeframe}
-                assetSentiments={assetSentiments}
-              />
-            ))}
-          </Reorder.Group>
-        )}
+        <Reorder.Group 
+          axis="y" 
+          values={moduleOrder} 
+          onReorder={setModuleOrder}
+          className="space-y-6"
+        >
+          {moduleOrder.map((moduleId) => (
+            <TerminalModule 
+              key={moduleId} 
+              moduleId={moduleId}
+              ticker={ticker}
+              whaleMovements={whaleMovements}
+              topTraders={topTraders}
+              largeTransactions={largeTransactions}
+              economicEvents={economicEvents}
+              analysis={analysis}
+              setSelectedTraderStrategy={setSelectedTraderStrategy}
+              accountSize={accountSize}
+              setAccountSize={setAccountSize}
+              riskAmount={riskAmount}
+              setRiskAmount={setRiskAmount}
+              copySignal={copySignal}
+              shareToTelegram={shareToTelegram}
+              timeframe={timeframe}
+              setTimeframe={setTimeframe}
+              assetSentiments={assetSentiments}
+            />
+          ))}
+        </Reorder.Group>
       </div>
         {!analysis && !analyzing && (
           <div className="py-20 text-center space-y-4">

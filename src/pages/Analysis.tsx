@@ -624,11 +624,11 @@ const Analysis = () => {
 
   const [moduleOrder, setModuleOrder] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem("analysis_module_order");
+      const saved = localStorage.getItem("analysis_module_order_v2");
       const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) ? parsed : ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+      return Array.isArray(parsed) ? parsed : ["context", "strategy", "recommendation", "levels", "objectives", "wyckoff", "indicators", "leverage", "justification", "predictions", "comments", "sentiment_gauges", "liquidity", "dominance", "raw"];
     } catch (e) {
-      return ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+      return ["context", "strategy", "recommendation", "levels", "objectives", "wyckoff", "indicators", "leverage", "justification", "predictions", "comments", "sentiment_gauges", "liquidity", "dominance", "raw"];
     }
   });
 
@@ -657,14 +657,14 @@ const Analysis = () => {
   };
 
   const resetLayout = () => {
-    const defaultOrder = ["sentiment_gauges", "context", "comments", "predictions", "recommendation", "liquidity", "dominance", "wyckoff", "strategy", "indicators", "levels", "objectives", "leverage", "justification", "raw"];
+    const defaultOrder = ["context", "strategy", "recommendation", "levels", "objectives", "wyckoff", "indicators", "leverage", "justification", "predictions", "comments", "sentiment_gauges", "liquidity", "dominance", "raw"];
     setModuleOrder(defaultOrder);
-    localStorage.setItem("analysis_module_order", JSON.stringify(defaultOrder));
+    localStorage.setItem("analysis_module_order_v2", JSON.stringify(defaultOrder));
     toast.success("Diseño restablecido");
   };
 
   useEffect(() => {
-    localStorage.setItem("analysis_module_order", JSON.stringify(moduleOrder));
+    localStorage.setItem("analysis_module_order_v2", JSON.stringify(moduleOrder));
   }, [moduleOrder]);
 
   const analysisSections = parseAnalysis(analysis);
@@ -1130,60 +1130,34 @@ const Analysis = () => {
                   </div>
                 </div>
 
-                {analysis?.startsWith("Error:") ? (
-                  <div className="bg-secondary/10 border border-secondary/20 p-8 rounded-2xl flex flex-col items-center text-center gap-4">
-                    <Shield className="w-16 h-16 text-secondary animate-pulse" />
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-black text-secondary uppercase tracking-tighter">Error de Configuración</h3>
-                      <p className="text-sm text-on-surface-variant max-w-md italic">
-                        {analysis}
-                      </p>
-                    </div>
-                    <div className="flex gap-4 mt-4">
-                      <button 
-                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        className="px-6 py-3 bg-secondary text-on-secondary rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all"
-                      >
-                        Configurar API Key
-                      </button>
-                      <button 
-                        onClick={handleRunAnalysis}
-                        className="px-6 py-3 bg-surface-container-highest text-on-surface-variant rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all"
-                      >
-                        Reintentar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <Reorder.Group 
-                    axis="y" 
-                    values={moduleOrder} 
-                    onReorder={setModuleOrder}
-                    className="space-y-6"
-                  >
-                  {moduleOrder.map((moduleId) => (
-                    <AnalysisModule 
-                      key={moduleId} 
-                      moduleId={moduleId} 
-                      analysisSections={analysisSections}
-                      analysis={analysis}
-                      ticker={ticker}
-                      btcSentiment={btcSentiment}
-                      setBtcSentiment={setBtcSentiment}
-                      top100Sentiment={top100Sentiment}
-                      setTop100Sentiment={setTop100Sentiment}
-                      generalSentiment={generalSentiment}
-                      setGeneralSentiment={setGeneralSentiment}
-                      btcTF={btcTF}
-                      setBtcTF={setBtcTF}
-                      top100TF={top100TF}
-                      setTop100TF={setTop100TF}
-                      generalTF={generalTF}
-                      setGeneralTF={setGeneralTF}
-                    />
-                  ))}
-                  </Reorder.Group>
-                )}
+                <Reorder.Group 
+                  axis="y" 
+                  values={moduleOrder} 
+                  onReorder={setModuleOrder}
+                  className="space-y-6"
+                >
+                {moduleOrder.map((moduleId) => (
+                  <AnalysisModule 
+                    key={moduleId} 
+                    moduleId={moduleId} 
+                    analysisSections={analysisSections}
+                    analysis={analysis}
+                    ticker={ticker}
+                    btcSentiment={btcSentiment}
+                    setBtcSentiment={setBtcSentiment}
+                    top100Sentiment={top100Sentiment}
+                    setTop100Sentiment={setTop100Sentiment}
+                    generalSentiment={generalSentiment}
+                    setGeneralSentiment={setGeneralSentiment}
+                    btcTF={btcTF}
+                    setBtcTF={setBtcTF}
+                    top100TF={top100TF}
+                    setTop100TF={setTop100TF}
+                    generalTF={generalTF}
+                    setGeneralTF={setGeneralTF}
+                  />
+                ))}
+                </Reorder.Group>
 
               <div className="pt-8 border-t border-outline-variant/10 flex flex-col gap-4">
                 <div className="flex flex-col gap-2 p-4 bg-surface-container rounded-xl border border-outline-variant/10">
