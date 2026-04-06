@@ -8,8 +8,8 @@
 
   --color-surface-container-highest: #1a1d21;
   --color-error-container: #4a0006;
-  --color-surface-container-low: #0b0e11;
-  --color-surface: #06080a;
+  --color-surface-container-low: #0b0f14;
+  --color-surface: #0b0f14;
   --color-on-tertiary: #00363f;
   --color-surface-bright: #1c2024;
   --color-inverse-primary: #006d43;
@@ -56,7 +56,7 @@
   --color-outline: #333a41;
   --color-error-dim: #d7383b;
   --color-on-primary-fixed-variant: #00673f;
-  --color-background: #06080a;
+  --color-background: #0b0f14;
 }
 
 @layer base {

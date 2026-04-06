@@ -34,7 +34,7 @@ const TerminalLayout: React.FC<TerminalLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div ref={containerRef} className="min-h-full bg-surface text-on-surface font-mono selection:bg-primary/30">
+    <div ref={containerRef} className="min-h-full bg-background text-on-surface font-mono selection:bg-primary/30">
       <ResponsiveGridLayout
         className="layout"
         layouts={{ lg: layout, md: layout, sm: layout, xs: layout, xxs: layout }}
@@ -43,23 +43,24 @@ const TerminalLayout: React.FC<TerminalLayoutProps> = ({ children }) => {
         rowHeight={30}
         width={width}
         onLayoutChange={onLayoutChange}
-        margin={[12, 12]}
+        margin={[16, 16]}
       >
         {layout.map((item: any) => (
           <div 
             key={item.i} 
-            className="bg-surface-container-low border border-outline-variant/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col group"
+            className="bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden shadow-sm flex flex-col group"
           >
-            <div className="drag-handle bg-surface-container-high/50 px-4 py-2 border-b border-outline-variant/10 flex items-center justify-between cursor-grab active:cursor-grabbing">
+            <div className="drag-handle bg-surface-container-high/30 px-4 py-2 border-b border-outline-variant/10 flex items-center justify-between cursor-grab active:cursor-grabbing">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-50 group-hover:opacity-100 transition-opacity">
+                <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
                   {item.i}
                 </span>
               </div>
-              <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/10" />
-                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/10" />
+              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-1 h-1 rounded-full bg-on-surface-variant/20" />
+                <div className="w-1 h-1 rounded-full bg-on-surface-variant/20" />
+                <div className="w-1 h-1 rounded-full bg-on-surface-variant/20" />
               </div>
             </div>
             <div className="flex-1 overflow-hidden">

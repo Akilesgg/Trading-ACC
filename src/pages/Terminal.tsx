@@ -6,7 +6,7 @@ import TerminalOrderbook from "../ui/widgets/TerminalOrderbook";
 import TerminalConsole from "../ui/widgets/TerminalConsole";
 import { useTerminalStore } from "../store/useTerminalStore";
 import { SignalStatus } from "../core/signals/types";
-import { Search, Activity, Shield, History } from "lucide-react";
+import { Search, Activity, Shield, History, Zap, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Terminal: React.FC = () => {
@@ -47,19 +47,18 @@ const Terminal: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col bg-surface min-h-screen pt-16 pb-20 overflow-hidden">
-      {/* Sub-header for Trading Controls */}
-      <div className="h-14 bg-surface-container-low/50 backdrop-blur-xl border-b border-outline-variant/10 flex items-center justify-between px-6 z-40">
-        <div className="flex items-center gap-6">
-          <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant group-focus-within:text-primary transition-colors" />
-            <input 
-              type="text" 
-              value={activeSymbol}
-              onChange={(e) => setActiveSymbol(e.target.value.toUpperCase())}
-              className="bg-surface-container-high border border-outline-variant/10 rounded-xl py-2 pl-10 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:border-primary transition-all w-48"
-              placeholder="BUSCAR ACTIVO..."
-            />
+    <div className="flex flex-col bg-background min-h-screen pt-16 pb-20 overflow-hidden">
+      {/* 4. HEADER DEL ANALIZADOR (Single Line, Clean) */}
+      <div className="h-14 bg-surface-container-low border-b border-outline-variant/10 flex items-center justify-between px-6 z-40">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
+              <Zap className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-sm font-black uppercase tracking-tighter text-on-surface leading-none">{activeSymbol}</h1>
+              <span className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Binance Spot</span>
+            </div>
           </div>
 
           <div className="h-6 w-px bg-outline-variant/20" />
@@ -80,29 +79,49 @@ const Terminal: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => {
-              localStorage.removeItem("terminal-storage");
-              window.location.reload();
-            }}
-            className="p-2 hover:bg-surface-container-high rounded-xl transition-colors text-on-surface-variant hover:text-primary active:scale-95 duration-200"
-            title="Restablecer Diseño"
-          >
-            <History className="w-4 h-4" />
-          </button>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full border border-primary/20">
-            <Activity className="w-3 h-3 text-primary" />
-            <span className="text-[10px] font-black text-primary uppercase tracking-widest">Live: Binance</span>
+        <div className="flex items-center gap-12">
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-end">
+              <span className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-1">Precio Actual</span>
+              <span className="text-sm font-black text-primary leading-none">$64,231.42</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-1">Cambio 24h</span>
+              <span className="text-sm font-black text-primary leading-none flex items-center gap-1">
+                <TrendingUp className="w-3 h-3" /> +2.45%
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-secondary/10 rounded-full border border-secondary/20">
-            <Shield className="w-3 h-3 text-secondary" />
-            <span className="text-[10px] font-black text-secondary uppercase tracking-widest">Secure: SMC-V4</span>
+
+          <div className="h-6 w-px bg-outline-variant/20" />
+
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                localStorage.removeItem("terminal-storage");
+                window.location.reload();
+              }}
+              className="p-2 hover:bg-surface-container-high rounded-xl transition-colors text-on-surface-variant hover:text-primary active:scale-95 duration-200"
+              title="Restablecer Diseño"
+            >
+              <History className="w-4 h-4" />
+            </button>
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant group-focus-within:text-primary transition-colors" />
+              <input 
+                type="text" 
+                value={activeSymbol}
+                onChange={(e) => setActiveSymbol(e.target.value.toUpperCase())}
+                className="bg-surface-container-high border border-outline-variant/10 rounded-xl py-2 pl-10 pr-4 text-xs font-black uppercase tracking-widest focus:outline-none focus:border-primary transition-all w-48"
+                placeholder="BUSCAR ACTIVO..."
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto custom-scrollbar p-4">
+      {/* 1. CONTENEDOR PRINCIPAL (GRID) */}
+      <div className="flex-1 overflow-hidden p-4">
         <TerminalLayout>
           {{
             chart: <TerminalChart />,
@@ -111,6 +130,34 @@ const Terminal: React.FC = () => {
             console: <TerminalConsole />,
           }}
         </TerminalLayout>
+      </div>
+
+      {/* 5. FOOTER DEL ANALIZADOR */}
+      <div className="h-10 bg-surface-container-low border-t border-outline-variant/10 px-6 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-on-surface-variant">
+        <div className="flex gap-8">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span>SMC ENGINE: BULLISH BOS DETECTED AT $63,500</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-secondary" />
+            <span>LIQUIDITY: SWEEP AT $63,800</span>
+          </div>
+        </div>
+        <div className="flex gap-8 items-center">
+          <div className="flex items-center gap-2">
+            <Activity className="w-3 h-3" />
+            <span>LATENCY: 12ms</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Shield className="w-3 h-3" />
+            <span>ENGINE: SMC-V4.2.0</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="w-3 h-3 text-primary" />
+            <span>STATUS: LIVE MONITORING</span>
+          </div>
+        </div>
       </div>
     </div>
   );
