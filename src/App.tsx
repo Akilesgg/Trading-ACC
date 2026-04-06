@@ -108,7 +108,7 @@ const TopAppBar = () => {
             <Link to="/dashboard" className="text-xl font-bold tracking-tighter text-primary font-headline uppercase">TRADING ACC</Link>
           </div>
           <div className="hidden lg:flex items-center gap-6 font-label text-[9px] font-black uppercase tracking-widest text-on-background/60">
-            {menuItems.slice(0, 7).map((item) => (
+            {menuItems.slice(0, 8).map((item) => (
               <Link 
                 key={item.label}
                 to={item.path} 
@@ -127,7 +127,7 @@ const TopAppBar = () => {
                 MÁS
               </button>
               <div className="absolute top-full right-0 mt-2 w-56 bg-surface-container-low border border-outline-variant/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all p-2 z-[100]">
-                {menuItems.slice(7).map((item) => (
+                {menuItems.slice(8).map((item) => (
                   <Link 
                     key={item.label}
                     to={item.path}

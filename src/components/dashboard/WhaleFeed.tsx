@@ -144,7 +144,7 @@ const WhaleFeed: React.FC<WhaleFeedProps> = ({ whaleMovements, topTraders, large
                     rel="noopener noreferrer"
                     className="text-[8px] font-black text-orange-500 uppercase hover:underline flex items-center gap-1"
                   >
-                    Copiar Estrategia <ArrowRightLeft className="w-2 h-2" />
+                    Mostrar Estrategia <ArrowRightLeft className="w-2 h-2" />
                   </a>
                 </div>
               </div>
