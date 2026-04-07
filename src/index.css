@@ -66,11 +66,11 @@
 }
 
 .glass-card {
-  @apply bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10 rounded-2xl overflow-hidden;
+  @apply bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10 rounded-xl overflow-hidden;
 }
 
 .trading-card {
-  @apply bg-surface-container-high/40 backdrop-blur-md border border-outline-variant/10 rounded-3xl p-6 transition-all duration-300 hover:border-primary/20;
+  @apply bg-surface-container-high/40 backdrop-blur-md border border-outline-variant/10 rounded-xl p-6 transition-all duration-300 hover:border-primary/20;
 }
 
 .trading-grid {
@@ -108,6 +108,16 @@
 
 .animate-fast-flash {
   animation: fast-flash 0.8s infinite;
+}
+
+.bubble-node {
+  @apply transition-all duration-500 cursor-pointer;
+}
+
+.bubble-node:hover rect {
+  @apply scale-[1.02] brightness-125;
+  transform-origin: center;
+  filter: drop-shadow(0 0 20px var(--color-primary));
 }
 
 .custom-scrollbar::-webkit-scrollbar {

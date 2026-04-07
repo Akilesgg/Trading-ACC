@@ -10,41 +10,54 @@ interface MarketPulseProps {
 
 const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) => {
   return (
-    <div className="lg:col-span-2 trading-card border-l-4 border-primary relative overflow-hidden group">
-      <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -mr-40 -mt-40 group-hover:bg-primary/10 transition-all duration-1000"></div>
-      <div className="relative z-10 flex flex-col h-full justify-between">
-        <div>
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <span className="section-title mb-0">Sentimiento Global</span>
-              <div className="flex h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(0,255,163,0.5)]"></div>
-            </div>
-            <button 
-              onClick={onShowSettings}
-              className="p-3 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all group/btn shadow-lg"
-            >
-              <Bell className="w-5 h-5 text-on-surface-variant group-hover/btn:text-primary transition-colors" />
-            </button>
+    <div className="lg:col-span-2 trading-card border-l-4 border-primary relative overflow-visible group min-h-[420px] flex flex-col p-8">
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -mr-48 -mt-48 group-hover:bg-primary/10 transition-all duration-1000 pointer-events-none"></div>
+      
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_15px_rgba(0,255,163,0.8)]"></div>
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface opacity-80">Sentimiento Global</span>
           </div>
-          <h2 className="text-[4.5rem] font-black tracking-tighter leading-[0.9] mb-6 uppercase">
-            <span className="text-primary drop-shadow-[0_0_20px_rgba(0,255,163,0.3)]">CODICIA</span><br />
-            <span className="text-on-surface">EXTREMA</span>
-          </h2>
-          <p className="text-on-surface-variant text-[11px] font-black uppercase tracking-widest max-w-md leading-relaxed opacity-70">
-            {sentiment}
-          </p>
+          <button 
+            onClick={onShowSettings}
+            className="p-3 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all group/btn shadow-xl active:scale-90"
+          >
+            <Bell className="w-5 h-5 text-on-surface-variant group-hover/btn:text-primary transition-colors" />
+          </button>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-12">
+
+        {/* Main Content Section */}
+        <div className="flex-1 flex flex-col justify-center py-6 space-y-6">
           <div className="space-y-2">
-            <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest opacity-50">Fear & Greed Index</p>
-            <div className="flex items-baseline gap-3">
-              <span className="text-5xl font-black tracking-tighter text-on-surface">84</span>
-              <span className="text-primary font-black text-[11px] uppercase tracking-widest bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 shadow-lg shadow-primary/5">+12% VS AYER</span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.9] uppercase flex flex-col">
+              <span className="text-primary drop-shadow-[0_0_30px_rgba(0,255,163,0.4)] filter brightness-110">CODICIA</span>
+              <span className="text-on-surface">EXTREMA</span>
+            </h2>
+            <p className="text-on-surface-variant text-[12px] font-medium uppercase tracking-widest max-w-md leading-relaxed opacity-60 border-l-2 border-primary/20 pl-4">
+              {sentiment}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <div className="flex items-baseline gap-4">
+              <span className="text-7xl font-black tracking-tighter text-on-surface drop-shadow-2xl">84</span>
+              <div className="flex flex-col">
+                <span className="text-primary font-black text-[11px] uppercase tracking-widest bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 shadow-lg shadow-primary/5 inline-flex items-center gap-2">
+                  <Zap className="w-3.5 h-3.5" />
+                  +12% VS AYER
+                </span>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Footer Section */}
+        <div className="pt-6 border-t border-outline-variant/5">
           <Link 
             to="/market"
-            className="btn-primary px-10 py-4 text-[11px]"
+            className="btn-primary w-full py-5 text-[11px] font-black uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(0,255,163,0.15)] hover:shadow-primary/30 transition-all active:scale-95 text-center block"
           >
             Ver Mapa de Calor
           </Link>
