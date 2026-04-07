@@ -10,7 +10,7 @@ interface MarketPulseProps {
 
 const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) => {
   return (
-    <div className="lg:col-span-2 trading-card border-l-4 border-primary relative overflow-visible group min-h-[420px] flex flex-col p-8">
+    <div className="trading-card border-l-4 border-primary relative overflow-visible group min-h-[420px] flex flex-col p-8 h-full">
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -mr-48 -mt-48 group-hover:bg-primary/10 transition-all duration-1000 pointer-events-none"></div>
       
       <div className="relative z-10 flex flex-col h-full">
@@ -18,7 +18,7 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) 
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_15px_rgba(0,255,163,0.8)]"></div>
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface opacity-80">Sentimiento Global</span>
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface opacity-80">Fear & Greed Index</span>
           </div>
           <button 
             onClick={onShowSettings}
@@ -31,9 +31,9 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) 
         {/* Main Content Section */}
         <div className="flex-1 flex flex-col justify-center py-6 space-y-6">
           <div className="space-y-2">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.9] uppercase flex flex-col">
-              <span className="text-primary drop-shadow-[0_0_30px_rgba(0,255,163,0.4)] filter brightness-110">CODICIA</span>
-              <span className="text-on-surface">EXTREMA</span>
+            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter leading-[0.85] uppercase flex flex-col">
+              <span className="text-primary drop-shadow-[0_0_30px_rgba(0,255,163,0.4)] filter brightness-110">EXTREME</span>
+              <span className="text-on-surface">GREED</span>
             </h2>
             <p className="text-on-surface-variant text-[12px] font-medium uppercase tracking-widest max-w-md leading-relaxed opacity-60 border-l-2 border-primary/20 pl-4">
               {sentiment}

@@ -57,7 +57,28 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
   }, []);
 
   return (
-    <div className="trading-card p-8 space-y-8">
+    <div className="space-y-8">
+      {/* Superior Explanation Block */}
+      <div className="bg-primary/5 border border-primary/20 rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center gap-10 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32 group-hover:bg-primary/20 transition-all duration-1000"></div>
+        <div className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10 flex-shrink-0">
+          <Brain className="w-12 h-12 text-primary" />
+        </div>
+        <div className="space-y-4 flex-1 relative z-10">
+          <div className="flex items-center gap-3">
+            <span className="px-3 py-1 bg-primary text-on-primary text-[8px] font-black rounded-full uppercase tracking-widest">SISTEMA EXPERTO v4.2</span>
+            <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-primary">¿Qué hace este Analizador por ti?</h3>
+          </div>
+          <p className="text-sm text-on-surface-variant leading-relaxed max-w-5xl">
+            Nuestro motor de IA no solo lee datos; <span className="text-on-surface font-bold">interpreta el contexto global</span>. 
+            Cruza movimientos de ballenas, eventos macroeconómicos, sentimiento de redes sociales y patrones técnicos avanzados (Wyckoff, SMC) para entregarte una 
+            <span className="text-on-surface font-bold"> hoja de ruta accionable</span>. 
+            No es un indicador más, es un consultor financiero que reduce el ruido y te dice exactamente dónde están las probabilidades de éxito.
+          </p>
+        </div>
+      </div>
+
+      <div className="trading-card p-8 space-y-8">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
         <div className="flex flex-wrap items-center gap-6 w-full lg:w-auto">
           <div className="space-y-2 w-full md:w-72" ref={dropdownRef}>
@@ -208,6 +229,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
         </button>
       </div>
     </div>
+  </div>
   );
 };
 

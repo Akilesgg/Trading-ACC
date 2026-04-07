@@ -365,6 +365,12 @@ const Analysis = () => {
                 </div>
               ))}
             </div>
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+              <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-1">RECOMENDACIÓN IA</p>
+              <p className="text-[10px] text-on-surface-variant font-medium leading-relaxed">
+                Acumulación detectada en zonas de soporte. Las ballenas están posicionándose para una ruptura alcista.
+              </p>
+            </div>
           </div>
 
           {/* Economic Events */}
@@ -386,6 +392,12 @@ const Analysis = () => {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="p-4 bg-secondary/5 border border-secondary/20 rounded-2xl">
+              <p className="text-[8px] font-black text-secondary uppercase tracking-widest mb-1">RECOMENDACIÓN IA</p>
+              <p className="text-[10px] text-on-surface-variant font-medium leading-relaxed">
+                Alta volatilidad esperada. Evitar apalancamiento excesivo durante la publicación de datos del IPC.
+              </p>
             </div>
           </div>
 
@@ -415,9 +427,60 @@ const Analysis = () => {
                 </div>
               ))}
             </div>
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
+              <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-1">RECOMENDACIÓN IA</p>
+              <p className="text-[10px] text-on-surface-variant font-medium leading-relaxed">
+                El 80% de los traders rentables están en posiciones LONG. El sentimiento institucional es fuertemente alcista.
+              </p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Global Market Recommendation Block */}
+      {analysis && (
+        <section className="trading-card p-12 bg-primary/5 border-primary/20 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/10 rounded-full blur-[150px] -mr-80 -mt-80"></div>
+          <div className="relative z-10 space-y-8">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-primary/10 rounded-[2.5rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10">
+                <Target className="w-10 h-10 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-5xl font-black tracking-tighter uppercase text-on-surface">RECOMENDACIÓN GLOBAL DE MERCADO</h2>
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.4em] mt-2 opacity-70">Integración de todos los módulos de análisis</p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <div className="lg:col-span-8 space-y-6">
+                <div className="p-8 bg-surface-container-high/60 rounded-[2.5rem] border border-primary/20 backdrop-blur-xl">
+                  <h3 className="text-2xl font-black text-on-surface uppercase tracking-tight mb-4">Estrategia Maestra Recomendada</h3>
+                  <p className="text-lg text-on-surface-variant leading-relaxed font-medium italic">
+                    "Basado en la confluencia de ballenas acumulando, un sentimiento de mercado controlado y la estructura técnica de Wyckoff en fase C, la recomendación es <span className="text-primary font-bold">LONG con apalancamiento moderado (3x-5x)</span> buscando la liquidez por encima de los máximos previos."
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="px-6 py-3 bg-primary/10 border border-primary/20 rounded-xl text-[10px] font-black text-primary uppercase tracking-widest">Confirmación: 92%</div>
+                  <div className="px-6 py-3 bg-secondary/10 border border-secondary/20 rounded-xl text-[10px] font-black text-secondary uppercase tracking-widest">Riesgo: Bajo-Medio</div>
+                </div>
+              </div>
+              <div className="lg:col-span-4">
+                <div className="p-10 bg-primary rounded-[3rem] text-on-primary shadow-2xl shadow-primary/30 flex flex-col items-center text-center space-y-4">
+                  <Zap className="w-12 h-12" />
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Señal de Entrada</p>
+                    <p className="text-4xl font-black tracking-tighter uppercase">COMPRA FUERTE</p>
+                  </div>
+                  <button className="w-full py-4 bg-on-primary text-primary rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all">
+                    Ejecutar en Exchange
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Global Sentiment Section */}
       <section className="trading-card p-12 relative overflow-hidden group">

@@ -272,7 +272,9 @@ const Dashboard = () => {
       />
 
       <div className="trading-grid">
-        <MarketPulse sentiment={sentiment} onShowSettings={() => setShowNotifSettings(true)} />
+        <div className="md:col-span-8">
+          <MarketPulse sentiment={sentiment} onShowSettings={() => setShowNotifSettings(true)} />
+        </div>
         <div className="md:col-span-4">
           <SignalSummary signals={signalStats} activeFilter={filter} onFilterClick={setFilter} />
         </div>

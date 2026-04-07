@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "motion/react";
-import { Search, TrendingUp, TrendingDown, Filter, LayoutGrid, List, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Search, TrendingUp, TrendingDown, Filter, LayoutGrid, List, ArrowUpRight, ArrowDownRight, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchCryptoData } from "@/services/cryptoService";
 
@@ -33,6 +33,23 @@ const MarketPage = () => {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  const marketSummary = useMemo(() => {
+    const avgChange = marketData.reduce((acc, coin) => acc + coin.price_change_percentage_24h, 0) / (marketData.length || 1);
+    const bullishCount = marketData.filter(c => c.price_change_percentage_24h > 0).length;
+    const dominance = bullishCount / (marketData.length || 1);
+    
+    return {
+      trend: avgChange > 1 ? "BULLISH" : avgChange < -1 ? "BEARISH" : "NEUTRAL",
+      avgChange,
+      dominance: (dominance * 100).toFixed(1),
+      conclusion: avgChange > 1 
+        ? "Mercado dominado por presión compradora. Alta probabilidad de continuidad alcista en altcoins." 
+        : avgChange < -1 
+          ? "Mercado dominado por presión bajista en futuros. Alta probabilidad de continuidad bajista a corto plazo." 
+          : "Mercado en fase de consolidación lateral. Se recomienda esperar confirmación de ruptura."
+    };
+  }, [marketData]);
+
   const handleRefreshMap = () => {
     setRefreshing(true);
     setTimeout(() => {
@@ -47,6 +64,78 @@ const MarketPage = () => {
       exit={{ opacity: 0, y: -20 }}
       className="pt-24 pb-32 px-8 max-w-[1600px] mx-auto space-y-10"
     >
+      {/* Market Summary & Spot vs Futures */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 trading-card p-10 flex flex-col md:flex-row items-center gap-10 bg-primary/5 border-primary/20">
+          <div className="w-32 h-32 bg-primary/10 rounded-[2.5rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10 flex-shrink-0">
+            <TrendingUp className={cn("w-16 h-16", marketSummary.trend === "BEARISH" ? "text-secondary rotate-180" : "text-primary")} />
+          </div>
+          <div className="space-y-4 flex-1">
+            <div className="flex items-center gap-4">
+              <span className={cn(
+                "px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg",
+                marketSummary.trend === "BULLISH" ? "bg-primary/20 text-primary shadow-primary/10" : 
+                marketSummary.trend === "BEARISH" ? "bg-secondary/20 text-secondary shadow-secondary/10" : "bg-on-surface/10 text-on-surface"
+              )}>
+                TENDENCIA: {marketSummary.trend}
+              </span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Dominancia Alcista: {marketSummary.dominance}%</span>
+            </div>
+            <h2 className="text-3xl font-black uppercase tracking-tighter text-on-surface leading-tight">
+              {marketSummary.conclusion}
+            </h2>
+            <div className="flex items-center gap-6 pt-4 border-t border-outline-variant/5">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Cambio Promedio</span>
+                <span className={cn("text-lg font-black", marketSummary.avgChange > 0 ? "text-primary" : "text-secondary")}>
+                  {marketSummary.avgChange > 0 ? "+" : ""}{marketSummary.avgChange.toFixed(2)}%
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Flujo de Dinero</span>
+                <span className="text-lg font-black text-on-surface">INSTITUCIONAL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-4 trading-card p-8 space-y-6">
+          <h3 className="section-title flex items-center gap-2 mb-0">
+            <Activity className="w-4 h-4 text-primary" /> SPOT VS FUTURES
+          </h3>
+          <div className="space-y-4">
+            <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Funding Rate</span>
+                <span className="text-[10px] font-black text-primary">0.0100%</span>
+              </div>
+              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: "65%" }}></div>
+              </div>
+            </div>
+            <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Open Interest</span>
+                <span className="text-[10px] font-black text-on-surface">$12.4B</span>
+              </div>
+              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                <div className="h-full bg-primary" style={{ width: "45%" }}></div>
+              </div>
+            </div>
+            <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Long/Short Ratio</span>
+                <span className="text-[10px] font-black text-secondary">0.85</span>
+              </div>
+              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden flex">
+                <div className="h-full bg-primary" style={{ width: "45%" }}></div>
+                <div className="h-full bg-secondary" style={{ width: "55%" }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 trading-card p-8">
         <div>
           <h1 className="text-4xl font-black uppercase tracking-tighter text-on-surface mb-2">Mercados Spot</h1>

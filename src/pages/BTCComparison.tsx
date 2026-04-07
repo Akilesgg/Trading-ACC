@@ -51,14 +51,28 @@ const BTCComparison: React.FC = () => {
       .map(asset => {
         const estimatedMove = estimateAssetMove(btcMove, asset);
         const impact = getImpactLevel(asset);
+        // New logic: Profit Potential = expectedMoveAsset - btcMove
+        const profitPotential = Math.abs(estimatedMove) - Math.abs(btcMove);
+        const recommendation = profitPotential > 1.5 
+          ? "MEJOR QUE BTC" 
+          : profitPotential > 0 
+            ? "SIMILAR A BTC" 
+            : "PEOR QUE BTC";
+            
         return {
           ...asset,
           estimatedMove,
-          impact
+          impact,
+          profitPotential,
+          recommendation
         };
       })
-      .sort((a, b) => Math.abs(b.estimatedMove) - Math.abs(a.estimatedMove));
+      .sort((a, b) => b.profitPotential - a.profitPotential);
   }, [btcMove, selectedAssets]);
+
+  const topOpportunities = useMemo(() => {
+    return results.filter(r => r.profitPotential > 0).slice(0, 3);
+  }, [results]);
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-32 px-6">
@@ -74,36 +88,59 @@ const BTCComparison: React.FC = () => {
               <h1 className="text-3xl font-black uppercase tracking-tighter text-on-surface">Comparativa BTC vs Cripto</h1>
             </div>
             <p className="text-on-surface-variant font-label text-xs uppercase tracking-widest max-w-2xl">
-              Analiza el impacto de los movimientos de Bitcoin en el mercado de altcoins mediante modelos de correlación y volatilidad relativa.
+              Detecta qué altcoins pueden generar MÁS beneficio que BTC aprovechando la dominancia y volatilidad relativa.
             </p>
           </div>
           
           <div className="flex items-center gap-4 bg-surface-container-low p-2 rounded-2xl border border-outline-variant/10">
             <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-xl border border-primary/20">
               <Zap className="w-4 h-4 text-primary" />
-              <span className="text-[10px] font-black text-primary uppercase tracking-widest">Motor Cuántico v2.0</span>
+              <span className="text-[10px] font-black text-primary uppercase tracking-widest">Motor de Decisión v3.0</span>
             </div>
           </div>
         </div>
 
-        {/* Explanation Block (New) */}
+        {/* Explanation Block */}
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-surface-container-high/40 backdrop-blur-md border border-primary/20 rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6"
+          className="bg-surface-container-high/40 backdrop-blur-md border border-primary/20 rounded-3xl p-8 flex flex-col md:flex-row items-start gap-8"
         >
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0 border border-primary/20">
-            <Info className="w-6 h-6 text-primary" />
+          <div className="w-16 h-16 bg-primary/10 rounded-[2rem] flex items-center justify-center flex-shrink-0 border border-primary/20 shadow-2xl shadow-primary/10">
+            <Info className="w-8 h-8 text-primary" />
           </div>
-          <div className="space-y-1">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">¿Cómo funciona esta herramienta?</h3>
-            <p className="text-xs text-on-surface-variant leading-relaxed max-w-4xl">
-              Esta herramienta estima cómo pueden reaccionar diferentes criptomonedas ante un movimiento de Bitcoin. 
-              Se basa en la <span className="text-on-surface font-bold">Correlación histórica con BTC</span>, la <span className="text-on-surface font-bold">Volatilidad relativa (ATR)</span> y la <span className="text-on-surface font-bold">Sensibilidad del activo al mercado</span>. 
-              Esto permite anticipar caídas o subidas más realistas en altcoins basándose en el dominio de mercado de Bitcoin.
+          <div className="space-y-3">
+            <h3 className="text-[12px] font-black uppercase tracking-[0.2em] text-primary">Estrategia de Maximización de Beneficios</h3>
+            <p className="text-sm text-on-surface-variant leading-relaxed max-w-5xl">
+              Esta herramienta analiza cómo reaccionan las altcoins frente a Bitcoin para identificar oportunidades donde el movimiento sea mayor y potencialmente más rentable. 
+              Dado que Bitcoin domina el mercado: 
+              <span className="text-on-surface font-bold"> cuando BTC sube, las altcoins con alta sensibilidad suelen subir más</span>, amplificando tus ganancias. 
+              El objetivo es detectar qué activos tienen mayor sensibilidad para maximizar beneficios frente a una posición simple en BTC.
             </p>
           </div>
         </motion.div>
+
+        {/* Top Opportunities Summary */}
+        {topOpportunities.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {topOpportunities.map((opp, idx) => (
+              <div key={opp.symbol} className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between group hover:bg-primary/10 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-[10px] font-black text-primary">
+                    #{idx + 1}
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black text-on-surface uppercase">{opp.symbol}</p>
+                    <p className="text-[8px] font-bold text-primary uppercase tracking-widest">POTENCIAL: +{opp.profitPotential.toFixed(1)}% vs BTC</p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 bg-primary text-on-primary text-[8px] font-black rounded-full uppercase tracking-widest">
+                  MEJOR QUE BTC
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <div className="trading-grid">
           
@@ -249,26 +286,33 @@ const BTCComparison: React.FC = () => {
                           <h4 className="text-sm font-black text-on-surface tracking-tighter leading-none mb-1">{asset.name}</h4>
                           <div className={cn(
                             "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest",
-                            asset.impact === "HIGH" ? "bg-secondary/10 text-secondary" : 
-                            asset.impact === "MEDIUM" ? "bg-amber-500/10 text-amber-500" : "bg-primary/10 text-primary"
+                            asset.recommendation === "MEJOR QUE BTC" ? "bg-primary/20 text-primary" : 
+                            asset.recommendation === "SIMILAR A BTC" ? "bg-amber-500/10 text-amber-500" : "bg-secondary/10 text-secondary"
                           )}>
-                            {asset.impact} IMPACT
+                            {asset.recommendation}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Movimiento Estimado</p>
+                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Potencial vs BTC</p>
                         <div className={cn(
                           "text-xl font-black tracking-tighter flex items-center justify-end gap-1",
-                          asset.estimatedMove >= 0 ? "text-primary" : "text-secondary"
+                          asset.profitPotential >= 0 ? "text-primary" : "text-secondary"
                         )}>
-                          {asset.estimatedMove >= 0 ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
-                          {asset.estimatedMove > 0 ? "+" : ""}{asset.estimatedMove.toFixed(2)}%
+                          {asset.profitPotential >= 0 ? "+" : ""}{asset.profitPotential.toFixed(2)}%
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 pt-6 border-t border-outline-variant/10">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Movimiento Estimado</span>
+                        <span className={cn("text-sm font-black", asset.estimatedMove >= 0 ? "text-primary" : "text-secondary")}>
+                          {asset.estimatedMove > 0 ? "+" : ""}{asset.estimatedMove.toFixed(2)}%
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 pt-4 border-t border-outline-variant/10">
                       <div className="space-y-1">
                         <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-1">
                           <TrendingUp className="w-2 h-2" /> Correlación
@@ -292,6 +336,7 @@ const BTCComparison: React.FC = () => {
                         </div>
                       </div>
                     </div>
+                  </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
