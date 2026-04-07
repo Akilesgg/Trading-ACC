@@ -118,6 +118,12 @@ export interface AssetFundamental {
   project: string;
   summary: string;
   potential: string;
+  links: { label: string; url: string }[];
+  marketData: {
+    supply: string;
+    allTimeHigh: string;
+    marketCapRank: number;
+  };
 }
 
 export async function fetchAssetFundamentals(symbol: string): Promise<AssetFundamental> {
@@ -126,69 +132,78 @@ export async function fetchAssetFundamentals(symbol: string): Promise<AssetFunda
       symbol: "BTC",
       name: "Bitcoin",
       type: "Crypto",
-      project: "Satoshi Nakamoto",
-      summary: "La primera criptomoneda descentralizada, diseñada como oro digital y reserva de valor global.",
-      potential: "Alto como reserva de valor institucional y protección contra la inflación fiat."
+      project: "Satoshi Nakamoto (Whitepaper 2008)",
+      summary: "Bitcoin es la primera moneda digital descentralizada. Utiliza la tecnología Proof of Work (PoW) para asegurar la red. Es ampliamente considerada como el 'Oro Digital' debido a su suministro limitado de 21 millones de monedas.",
+      potential: "Máximo potencial como reserva de valor global. La adopción de ETFs institucionales y su uso como activo de tesorería por empresas como MicroStrategy validan su tesis de inversión a largo plazo.",
+      links: [
+        { label: "Whitepaper", url: "https://bitcoin.org/bitcoin.pdf" },
+        { label: "Explorador", url: "https://blockchain.info" },
+        { label: "CoinMarketCap", url: "https://coinmarketcap.com/currencies/bitcoin/" }
+      ],
+      marketData: {
+        supply: "19.6M / 21M",
+        allTimeHigh: "$73,737",
+        marketCapRank: 1
+      }
     },
     "ETH": {
       symbol: "ETH",
       name: "Ethereum",
       type: "L1",
-      project: "Vitalik Buterin",
-      summary: "Plataforma de contratos inteligentes que permite la creación de DApps y el ecosistema DeFi.",
-      potential: "Líder en utilidad y adopción de contratos inteligentes, con potencial de deflación tras el Merge."
+      project: "Vitalik Buterin (Lanzamiento 2015)",
+      summary: "Ethereum es una plataforma global descentralizada para aplicaciones que no pueden ser censuradas. Es la base de las Finanzas Descentralizadas (DeFi) y los NFTs.",
+      potential: "Líder indiscutible en utilidad. Con la transición a Proof of Stake (PoS) y las actualizaciones de escalabilidad (EIP-4844), Ethereum se posiciona como la computadora mundial definitiva.",
+      links: [
+        { label: "Sitio Oficial", url: "https://ethereum.org" },
+        { label: "Etherscan", url: "https://etherscan.io" },
+        { label: "CoinGecko", url: "https://www.coingecko.com/en/coins/ethereum" }
+      ],
+      marketData: {
+        supply: "120.1M (Dinámico)",
+        allTimeHigh: "$4,878",
+        marketCapRank: 2
+      }
     },
     "SOL": {
       symbol: "SOL",
       name: "Solana",
       type: "L1",
-      project: "Anatoly Yakovenko",
-      summary: "Blockchain de alto rendimiento enfocada en escalabilidad y bajas comisiones.",
-      potential: "Competidor directo de Ethereum en velocidad, con fuerte adopción en NFTs y retail."
-    },
-    "BNB": {
-      symbol: "BNB",
-      name: "Binance Coin",
-      type: "Crypto",
-      project: "Binance Ecosystem",
-      summary: "Token nativo de la red BNB Chain y el exchange Binance, utilizado para comisiones y gobernanza.",
-      potential: "Fuerte utilidad dentro del mayor exchange del mundo y ecosistema de apps descentralizadas."
-    },
-    "DOGE": {
-      symbol: "DOGE",
-      name: "Dogecoin",
-      type: "Meme",
-      project: "Billy Markus & Jackson Palmer",
-      summary: "La moneda meme original, ahora respaldada por una comunidad masiva y figuras como Elon Musk.",
-      potential: "Especulativo, pero con utilidad creciente en micropagos y propinas."
-    },
-    "PEPE": {
-      symbol: "PEPE",
-      name: "Pepe",
-      type: "Meme",
-      project: "Anónimo",
-      summary: "Moneda meme basada en el popular personaje de internet Pepe the Frog.",
-      potential: "Altamente volátil, depende puramente del sentimiento de la comunidad y hype en redes sociales."
-    },
-    "XRP": {
-      symbol: "XRP",
-      name: "Ripple",
-      type: "Crypto",
-      project: "Ripple Labs",
-      summary: "Diseñado para pagos transfronterizos rápidos y eficientes para instituciones financieras.",
-      potential: "Alto si logra resolver sus disputas legales y se convierte en el estándar bancario global."
+      project: "Anatoly Yakovenko (Solana Labs)",
+      summary: "Solana es una blockchain de alto rendimiento que utiliza Proof of History (PoH) para lograr velocidades de hasta 65,000 transacciones por segundo con costos mínimos.",
+      potential: "Fuerte competidor de Ethereum en el sector retail y juegos. Su ecosistema de DEXs (como Jupiter) y su rapidez la hacen la opción preferida para nuevos usuarios y desarrolladores.",
+      links: [
+        { label: "Documentación", url: "https://docs.solana.com" },
+        { label: "Solscan", url: "https://solscan.io" },
+        { label: "Twitter", url: "https://twitter.com/solana" }
+      ],
+      marketData: {
+        supply: "443.8M",
+        allTimeHigh: "$259",
+        marketCapRank: 5
+      }
     }
   };
 
   const cleanSymbol = symbol.replace("USDT", "").toUpperCase();
-  return data[cleanSymbol] || {
+  const baseData = data[cleanSymbol] || {
     symbol: cleanSymbol,
     name: cleanSymbol,
     type: "Crypto",
-    project: "Proyecto Comunitario",
-    summary: `Activo digital del ecosistema ${cleanSymbol}.`,
-    potential: "Depende de la adopción del mercado y desarrollos del protocolo."
+    project: "Desarrollo Comunitario",
+    summary: `Activo digital nativo del ecosistema ${cleanSymbol}. Enfocado en proporcionar soluciones descentralizadas dentro de su nicho de mercado.`,
+    potential: "Depende directamente de la ejecución del roadmap técnico y la adopción de la comunidad en los próximos ciclos de mercado.",
+    links: [
+      { label: "CoinMarketCap", url: `https://coinmarketcap.com/currencies/${cleanSymbol.toLowerCase()}/` },
+      { label: "Twitter Search", url: `https://twitter.com/search?q=%24${cleanSymbol}` }
+    ],
+    marketData: {
+      supply: "N/A",
+      allTimeHigh: "Variable",
+      marketCapRank: 0
+    }
   };
+
+  return baseData;
 }
 
 export async function fetchEconomicEvents() {

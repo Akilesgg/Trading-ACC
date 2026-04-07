@@ -122,23 +122,46 @@ const BTCComparison: React.FC = () => {
 
         {/* Top Opportunities Summary */}
         {topOpportunities.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {topOpportunities.map((opp, idx) => (
-              <div key={opp.symbol} className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between group hover:bg-primary/10 transition-all">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-[10px] font-black text-primary">
-                    #{idx + 1}
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {topOpportunities.map((opp, idx) => (
+                <div key={opp.symbol} className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-center justify-between group hover:bg-primary/10 transition-all">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center text-[10px] font-black text-primary">
+                      #{idx + 1}
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-on-surface uppercase">{opp.symbol}</p>
+                      <p className="text-[8px] font-bold text-primary uppercase tracking-widest">POTENCIAL: +{opp.profitPotential.toFixed(1)}% vs BTC</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-on-surface uppercase">{opp.symbol}</p>
-                    <p className="text-[8px] font-bold text-primary uppercase tracking-widest">POTENCIAL: +{opp.profitPotential.toFixed(1)}% vs BTC</p>
+                  <div className="px-3 py-1 bg-primary text-on-primary text-[8px] font-black rounded-full uppercase tracking-widest">
+                    MEJOR QUE BTC
                   </div>
                 </div>
-                <div className="px-3 py-1 bg-primary text-on-primary text-[8px] font-black rounded-full uppercase tracking-widest">
-                  MEJOR QUE BTC
+              ))}
+            </div>
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-6 bg-surface-container-high/60 rounded-3xl border border-primary/30 backdrop-blur-xl relative overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
+                  <Zap className="w-6 h-6 text-primary" />
                 </div>
+                <h3 className="text-sm font-black text-primary uppercase tracking-widest">Recomendación Estratégica del Sistema</h3>
               </div>
-            ))}
+              <p className="text-sm text-on-surface leading-relaxed font-medium">
+                Basado en la secuencia actual de Bitcoin ({btcMove > 0 ? "Tendencia Alcista" : "Tendencia Bajista"}), el sistema recomienda priorizar posiciones en <span className="text-primary font-black">{topOpportunities.map(o => o.symbol).join(", ")}</span>. 
+                Estos activos presentan la mayor rentabilidad esperada debido a su volatilidad relativa y correlación optimizada. 
+                <span className="block mt-2 text-on-surface-variant italic opacity-80">
+                  *Estrategia: Ejecutar entradas escalonadas en zonas de retroceso para maximizar el ratio riesgo/beneficio frente a una posición estática en BTC.
+                </span>
+              </p>
+            </motion.div>
           </div>
         )}
 

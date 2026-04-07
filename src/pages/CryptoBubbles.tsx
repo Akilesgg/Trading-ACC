@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import * as d3 from "d3";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -38,6 +39,7 @@ interface CryptoBubbleData extends d3.SimulationNodeDatum {
 }
 
 const CryptoBubbles: React.FC = () => {
+  const navigate = useNavigate();
   const svgRef = useRef<SVGSVGElement>(null);
   const [data, setData] = useState<CryptoBubbleData[]>([]);
   const [timeframe, setTimeframe] = useState("15m");
@@ -535,7 +537,10 @@ const CryptoBubbles: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-3 relative z-10">
-                  <button className="w-full py-5 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                  <button 
+                    onClick={() => navigate("/analysis")}
+                    className="w-full py-5 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                  >
                     <LayoutGrid className="w-4 h-4" />
                     Abrir Analizador Pro
                   </button>
