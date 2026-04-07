@@ -75,45 +75,52 @@ const SignalDetail = () => {
       <div className="flex items-center justify-between">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors"
+          className="flex items-center gap-3 text-on-surface-variant hover:text-primary transition-all group"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-xs font-bold uppercase tracking-widest">Volver al Panel</span>
+          <div className="w-10 h-10 bg-surface-container-high rounded-xl flex items-center justify-center border border-outline-variant/10 group-hover:border-primary/30 transition-all">
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          </div>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em]">Volver al Panel</span>
         </button>
         <div className="flex items-center gap-4">
-          <button className="p-2 bg-surface-container-high rounded-lg hover:bg-surface-container-highest transition-colors">
+          <button className="p-3 bg-surface-container-high rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all shadow-lg">
             <Shield className="w-5 h-5 text-primary" />
           </button>
-          <button className="p-2 bg-surface-container-high rounded-lg hover:bg-surface-container-highest transition-colors">
+          <button className="p-3 bg-surface-container-high rounded-xl border border-outline-variant/10 hover:border-tertiary/30 transition-all shadow-lg">
             <Clock className="w-5 h-5 text-tertiary" />
           </button>
         </div>
       </div>
 
       {/* Main Signal Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 relative overflow-hidden group">
-            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center shadow-lg">
-                  <Zap className="w-8 h-8 text-primary" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+        <div className="lg:col-span-2 space-y-10">
+          <div className="trading-card p-10 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[100px] -mr-32 -mt-32 group-hover:bg-primary/10 transition-all duration-1000"></div>
+            
+            <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+              <div className="flex items-center gap-6">
+                <div className="w-20 h-20 rounded-[2rem] bg-surface-container-high flex items-center justify-center shadow-2xl border border-outline-variant/10 group-hover:scale-105 transition-transform">
+                  <Zap className="w-10 h-10 text-primary drop-shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
                 </div>
                 <div>
-                  <h2 className="font-headline text-3xl font-bold tracking-tight">{ticker.symbol.replace("USDT", " / USDT")}</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Binance Spot</span>
-                    <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Señal en Vivo</span>
+                  <h2 className="text-4xl font-black tracking-tighter uppercase text-on-surface">{ticker.symbol.replace("USDT", " / USDT")}</h2>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Binance Spot</span>
+                    <div className="flex h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(0,255,163,0.8)]"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Señal en Vivo</span>
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-headline text-4xl font-bold tracking-tight">${parseFloat(ticker.price).toLocaleString()}</p>
-                <p className={cn("text-lg font-bold flex items-center justify-end gap-1", isPositive ? "text-primary" : "text-secondary")}>
-                  {isPositive ? <ArrowUpRight className="w-5 h-5" /> : <ArrowDownRight className="w-5 h-5" />}
+                <p className="text-5xl font-black tracking-tighter text-on-surface drop-shadow-sm">${parseFloat(ticker.price).toLocaleString()}</p>
+                <div className={cn(
+                  "text-xl font-black flex items-center justify-end gap-2 mt-1",
+                  isPositive ? "text-primary" : "text-secondary"
+                )}>
+                  {isPositive ? <ArrowUpRight className="w-6 h-6" /> : <ArrowDownRight className="w-6 h-6" />}
                   {ticker.priceChangePercent}%
-                </p>
+                </div>
               </div>
             </div>
 
@@ -145,18 +152,18 @@ const SignalDetail = () => {
           </div>
 
           {/* AI Analysis */}
-          <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6">
+          <div className="trading-card p-10 space-y-8">
             <div className="flex items-center justify-between">
-              <h3 className="font-headline text-xl font-bold flex items-center gap-2">
-                <Brain className="w-6 h-6 text-primary" />
+              <h3 className="text-2xl font-black flex items-center gap-3 uppercase tracking-tight">
+                <Brain className="w-8 h-8 text-primary" />
                 ANÁLISIS PROFUNDO IA
               </h3>
-              <div className="wyckoff-label">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Fase de Acumulación</span>
+              <div className="px-4 py-1.5 bg-primary/10 rounded-full border border-primary/20">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Fase de Acumulación</span>
               </div>
             </div>
             <div className="prose prose-invert max-w-none">
-              <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap bg-surface-container-high/20 p-6 rounded-xl border border-outline-variant/5">
+              <div className="text-on-surface-variant leading-relaxed text-sm whitespace-pre-wrap bg-surface-container-high/30 p-8 rounded-[2rem] border border-outline-variant/10 shadow-inner">
                 {analysis.split('\n').map((line, i) => {
                   const trimmedLine = line.trim();
                   if (!trimmedLine) return <div key={i} className="h-4" />;
@@ -164,32 +171,32 @@ const SignalDetail = () => {
                   if (trimmedLine.startsWith('**') && trimmedLine.includes(':')) {
                     const [header, ...rest] = trimmedLine.replace(/\*\*/g, '').split(':');
                     return (
-                      <div key={i} className="mb-6 last:mb-0">
-                        <h4 className="text-primary font-black uppercase tracking-[0.2em] text-[10px] mb-2 flex items-center gap-2">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full" />
+                      <div key={i} className="mb-8 last:mb-0">
+                        <h4 className="text-primary font-black uppercase tracking-[0.3em] text-[10px] mb-3 flex items-center gap-3">
+                          <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
                           {header}
                         </h4>
-                        <p className="text-on-surface-variant text-xs leading-relaxed font-medium pl-3.5 border-l border-outline-variant/20">
+                        <p className="text-on-surface-variant text-xs leading-relaxed font-medium pl-5 border-l-2 border-outline-variant/20">
                           {rest.join(':').trim()}
                         </p>
                       </div>
                     );
                   }
-                  return <p key={i} className="text-on-surface-variant text-xs leading-relaxed mb-4 last:mb-0">{trimmedLine}</p>;
+                  return <p key={i} className="text-on-surface-variant text-xs leading-relaxed mb-5 last:mb-0 opacity-80">{trimmedLine}</p>;
                 })}
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-4">
               {[
-                { label: "RSI (14)", value: "42.5", status: "Neutral", color: "text-tertiary" },
-                { label: "MACD", value: "Alcista", status: "Fuerte", color: "text-primary" },
-                { label: "Volumen", value: "Alto", status: "Aumentando", color: "text-primary" },
-                { label: "Volatilidad", value: "Bajo", status: "Estable", color: "text-tertiary" },
+                { label: "RSI (14)", value: "42.5", status: "Neutral", color: "text-tertiary", bg: "bg-tertiary/10" },
+                { label: "MACD", value: "Alcista", status: "Fuerte", color: "text-primary", bg: "bg-primary/10" },
+                { label: "Volumen", value: "Alto", status: "Aumentando", color: "text-primary", bg: "bg-primary/10" },
+                { label: "Volatilidad", value: "Bajo", status: "Estable", color: "text-tertiary", bg: "bg-tertiary/10" },
               ].map((stat) => (
-                <div key={stat.label} className="bg-surface-container-high p-4 rounded-xl text-center space-y-1">
-                  <p className="text-[10px] font-label uppercase text-on-surface-variant">{stat.label}</p>
-                  <p className="font-bold text-sm">{stat.value}</p>
-                  <p className={cn("text-[10px] font-bold uppercase tracking-widest", stat.color)}>{stat.status}</p>
+                <div key={stat.label} className="bg-surface-container-high p-6 rounded-2xl text-center space-y-2 border border-outline-variant/5 hover:border-primary/20 transition-all shadow-lg">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">{stat.label}</p>
+                  <p className="font-black text-lg tracking-tight">{stat.value}</p>
+                  <p className={cn("text-[10px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-full inline-block", stat.color, stat.bg)}>{stat.status}</p>
                 </div>
               ))}
             </div>
@@ -197,63 +204,63 @@ const SignalDetail = () => {
         </div>
 
         {/* Execution Panel */}
-        <div className="space-y-8">
-          <div className="bg-surface-container-high p-8 rounded-2xl border border-primary/20 space-y-8">
-            <h3 className="font-headline text-xl font-bold uppercase tracking-wide">Ejecución de Señal</h3>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+        <div className="space-y-10">
+          <div className="trading-card p-10 space-y-10 border-primary/30 shadow-2xl shadow-primary/5">
+            <h3 className="text-2xl font-black uppercase tracking-tight text-on-surface">Ejecución de Señal</h3>
+            <div className="space-y-8">
+              <div className="space-y-3">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 ml-1">
                   <span>Zona de Entrada</span>
                   <span className="text-primary">Activa</span>
                 </div>
-                <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/20 flex justify-between items-center">
-                  <span className="font-headline font-bold text-lg">${(parseFloat(ticker.price) * 0.99).toFixed(2)}</span>
-                  <ChevronRight className="w-5 h-5 text-on-surface-variant" />
+                <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner">
+                  <span className="text-2xl font-black tracking-tighter text-on-surface">${(parseFloat(ticker.price) * 0.99).toFixed(2)}</span>
+                  <ChevronRight className="w-6 h-6 text-on-surface-variant group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+              <div className="space-y-3">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 ml-1">
                   <span>Objetivo 1</span>
                   <span className="text-primary">+15.4%</span>
                 </div>
-                <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/20 flex justify-between items-center">
-                  <span className="font-headline font-bold text-lg">${(parseFloat(ticker.price) * 1.15).toFixed(2)}</span>
-                  <Target className="w-5 h-5 text-primary" />
+                <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner">
+                  <span className="text-2xl font-black tracking-tighter text-on-surface">${(parseFloat(ticker.price) * 1.15).toFixed(2)}</span>
+                  <Target className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
                 </div>
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">
+              <div className="space-y-3">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 ml-1">
                   <span>Stop Loss</span>
                   <span className="text-secondary">-5.2%</span>
                 </div>
-                <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/20 flex justify-between items-center">
-                  <span className="font-headline font-bold text-lg">${(parseFloat(ticker.price) * 0.95).toFixed(2)}</span>
-                  <Shield className="w-5 h-5 text-secondary" />
+                <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-secondary/50 transition-all shadow-inner">
+                  <span className="text-2xl font-black tracking-tighter text-on-surface">${(parseFloat(ticker.price) * 0.95).toFixed(2)}</span>
+                  <Shield className="w-6 h-6 text-secondary drop-shadow-[0_0_8px_rgba(255,107,107,0.5)]" />
                 </div>
               </div>
             </div>
             <Link 
               to={`/terminal?symbol=${ticker.symbol}`}
-              className="block w-full py-5 bg-gradient-to-br from-primary to-primary-dim text-on-primary-fixed rounded-2xl font-extrabold uppercase tracking-widest text-center shadow-[0_20px_40px_rgba(0,255,163,0.2)] active:scale-95 transition-all"
+              className="block w-full py-6 bg-primary text-on-primary rounded-[2rem] font-black uppercase tracking-[0.3em] text-[11px] text-center shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all"
             >
               EJECUTAR AHORA
             </Link>
           </div>
 
-          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant flex items-center gap-2">
+          <div className="trading-card p-8 space-y-6">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant flex items-center gap-3 opacity-60">
               <Activity className="w-4 h-4" />
               Métricas de Velocidad
             </h4>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {[
-                { label: "Actividad de Ballenas", value: "Alta", color: "text-primary" },
-                { label: "Calor Social", value: "Subiendo", color: "text-primary" },
-                { label: "Flujo de Entrada", value: "Neutral", color: "text-tertiary" },
+                { label: "Actividad de Ballenas", value: "Alta", color: "text-primary", bg: "bg-primary/10" },
+                { label: "Calor Social", value: "Subiendo", color: "text-primary", bg: "bg-primary/10" },
+                { label: "Flujo de Entrada", value: "Neutral", color: "text-tertiary", bg: "bg-tertiary/10" },
               ].map((m) => (
-                <div key={m.label} className="flex justify-between items-center text-xs">
-                  <span className="text-on-surface-variant font-label">{m.label}</span>
-                  <span className={cn("font-bold uppercase tracking-widest", m.color)}>{m.value}</span>
+                <div key={m.label} className="flex justify-between items-center">
+                  <span className="text-on-surface-variant font-black uppercase tracking-widest text-[9px] opacity-70">{m.label}</span>
+                  <span className={cn("text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full", m.color, m.bg)}>{m.value}</span>
                 </div>
               ))}
             </div>

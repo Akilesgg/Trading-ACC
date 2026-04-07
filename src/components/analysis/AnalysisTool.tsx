@@ -57,49 +57,54 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
   }, []);
 
   return (
-    <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 shadow-xl">
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-          <div className="space-y-1 w-full md:w-64" ref={dropdownRef}>
-            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Activo</label>
+    <div className="trading-card p-8 space-y-8">
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
+        <div className="flex flex-wrap items-center gap-6 w-full lg:w-auto">
+          <div className="space-y-2 w-full md:w-72" ref={dropdownRef}>
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Activo de Referencia</label>
             <div className="relative">
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 pl-4 pr-10 text-left focus:outline-none focus:border-primary transition-all text-sm font-bold flex items-center justify-between"
+                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 text-left focus:outline-none focus:border-primary transition-all text-[10px] font-black uppercase tracking-widest text-on-surface flex items-center justify-between group"
               >
-                <span className="truncate">
-                  {selectedAsset ? `${selectedAsset.name} (USDT)` : "Seleccionar Activo"}
-                </span>
-                <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform", isSearchOpen && "rotate-180")} />
+                <div className="flex items-center gap-3">
+                  {selectedAsset && (
+                    <img src={selectedAsset.image} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                  )}
+                  <span className="truncate">
+                    {selectedAsset ? `${selectedAsset.name} (USDT)` : "Seleccionar Activo"}
+                  </span>
+                </div>
+                <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform group-hover:text-primary", isSearchOpen && "rotate-180")} />
               </button>
               
               <button 
-                onClick={() => onShowFundamentals(selectedSymbol)}
-                className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 bg-surface-container-high border border-outline-variant/20 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+                onClick={() => onShowFundamentals?.(selectedSymbol)}
+                className="absolute -right-14 top-1/2 -translate-y-1/2 p-3 bg-surface-container-high border border-outline-variant/10 rounded-2xl hover:border-primary/30 hover:text-primary transition-all text-on-surface-variant"
                 title="Historial Fundamental"
               >
                 <Info className="w-5 h-5" />
               </button>
 
               {isSearchOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in duration-200">
-                  <div className="p-2 border-b border-outline-variant/10 flex items-center gap-2">
+                <div className="absolute top-full left-0 right-0 mt-3 bg-surface-container-high border border-outline-variant/10 rounded-2xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in duration-200 backdrop-blur-xl">
+                  <div className="p-3 border-b border-outline-variant/10 flex items-center gap-3 bg-surface-container-highest/50">
                     <Search className="w-4 h-4 text-on-surface-variant" />
                     <input 
                       autoFocus
                       type="text"
-                      placeholder="Buscar activo..."
+                      placeholder="BUSCAR ACTIVO..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-transparent border-none focus:ring-0 text-sm font-bold placeholder:text-on-surface-variant/50"
+                      className="w-full bg-transparent border-none focus:ring-0 text-[10px] font-black uppercase tracking-widest placeholder:text-on-surface-variant/30 text-on-surface"
                     />
                     {searchQuery && (
                       <button onClick={() => setSearchQuery("")}>
-                        <X className="w-4 h-4 text-on-surface-variant" />
+                        <X className="w-4 h-4 text-on-surface-variant hover:text-primary" />
                       </button>
                     )}
                   </div>
-                  <div className="max-h-64 overflow-y-auto p-1">
+                  <div className="max-h-72 overflow-y-auto p-2 custom-scrollbar">
                     {filteredAssets.length > 0 ? (
                       filteredAssets.map(asset => (
                         <button
@@ -110,24 +115,24 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
                             setSearchQuery("");
                           }}
                           className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-3",
-                            selectedSymbol === asset.id ? "bg-primary text-on-primary" : "hover:bg-primary/10 text-on-surface"
+                            "w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-4 mb-1",
+                            selectedSymbol === asset.id ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "hover:bg-primary/10 text-on-surface"
                           )}
                         >
                           <img 
                             src={asset.image} 
                             alt={asset.name} 
-                            className="w-5 h-5 rounded-full"
+                            className="w-6 h-6 rounded-full"
                             referrerPolicy="no-referrer"
                           />
                           <div className="flex flex-col">
-                            <span>{asset.name}</span>
-                            <span className="text-[8px] opacity-70 uppercase tracking-tighter">{asset.id}</span>
+                            <span className="leading-none mb-0.5">{asset.name}</span>
+                            <span className="text-[8px] opacity-50 tracking-tighter">{asset.id}</span>
                           </div>
                         </button>
                       ))
                     ) : (
-                      <div className="p-4 text-center text-xs text-on-surface-variant font-bold italic">
+                      <div className="p-6 text-center text-[10px] text-on-surface-variant font-black uppercase tracking-widest italic">
                         No se encontraron activos
                       </div>
                     )}
@@ -137,25 +142,25 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
             </div>
           </div>
 
-          <div className="space-y-1 w-full md:w-32">
+          <div className="space-y-2 w-full md:w-40">
             <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Temporalidad</label>
             <div className="relative">
               <select 
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 pl-4 pr-10 appearance-none focus:outline-none focus:border-primary transition-all text-sm font-bold"
+                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 appearance-none focus:outline-none focus:border-primary transition-all text-[10px] font-black uppercase tracking-widest text-on-surface cursor-pointer"
               >
                 {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
-                  <option key={tf} value={tf}>{tf.toUpperCase()}</option>
+                  <option key={tf} value={tf} className="bg-surface-container-high">{tf.toUpperCase()}</option>
                 ))}
               </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
+              <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant pointer-events-none" />
             </div>
           </div>
 
-          <div className="space-y-1 w-full md:w-auto flex-1">
-            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Estrategia</label>
-            <div className="flex gap-2">
+          <div className="space-y-2 w-full md:w-auto flex-1">
+            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Modelo de Ejecución</label>
+            <div className="flex gap-3">
               {[
                 { id: "Standard", label: "Estándar", tf: "1h" },
                 { id: "Scalping", label: "Scalping", tf: "5m" },
@@ -168,10 +173,10 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
                     setSelectedTimeframe(mode.tf);
                   }}
                   className={cn(
-                    "flex-1 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all border",
+                    "flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
                     selectedMode === mode.id 
-                      ? "bg-primary text-on-primary border-primary shadow-lg shadow-primary/20" 
-                      : "bg-surface-container-high text-on-surface-variant border-outline-variant/20 hover:border-primary/50"
+                      ? "bg-primary text-on-primary border-primary shadow-xl shadow-primary/20 scale-[1.02]" 
+                      : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:border-primary/30"
                   )}
                 >
                   {mode.label}
@@ -185,8 +190,8 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
           onClick={onRunAnalysis}
           disabled={analyzing}
           className={cn(
-            "w-full lg:w-auto px-10 py-4 rounded-xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 transition-all shadow-2xl",
-            analyzing ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed" : "bg-primary text-on-primary shadow-primary/20 hover:scale-105 active:scale-95"
+            "w-full lg:w-auto px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-4 transition-all shadow-2xl",
+            analyzing ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed" : "btn-primary shadow-primary/30 hover:scale-105 active:scale-95"
           )}
         >
           {analyzing ? (
@@ -196,7 +201,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
             </>
           ) : (
             <>
-              <Brain className="w-5 h-5" />
+              <Brain className="w-6 h-6" />
               Ejecutar Análisis Profundo
             </>
           )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db, collection, addDoc, query, where, orderBy, onSnapshot, Timestamp, OperationType, handleFirestoreError } from '@/firebase';
+import { db, collection, addDoc, query, where, orderBy, onSnapshot, Timestamp, OperationType, handleFirestoreError } from '@/services/firebase';
 import { useAuth } from '@/AuthProvider';
 
 export interface TradeRecord {

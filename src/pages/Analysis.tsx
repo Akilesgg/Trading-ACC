@@ -224,32 +224,38 @@ const Analysis = () => {
   return (
     <div className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-12">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="space-y-2">
-          <h1 className="font-headline text-5xl font-black tracking-tighter uppercase">
-            Deep <span className="text-primary">Analysis</span>
-          </h1>
-          <p className="text-on-surface-variant font-label uppercase tracking-widest text-xs">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5">
+              <Brain className="w-7 h-7 text-primary" />
+            </div>
+            <h1 className="text-5xl font-black tracking-tighter uppercase text-on-surface">
+              Deep <span className="text-primary">Analysis</span>
+            </h1>
+          </div>
+          <p className="text-on-surface-variant font-black uppercase tracking-[0.3em] text-[10px] ml-1 opacity-70">
             Motor de Inteligencia Artificial Cuántica v4.2
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-4">
           <button 
             onClick={handleShareToTelegram}
-            className="p-3 bg-surface-container-low rounded-xl border border-outline-variant/10 hover:bg-primary/10 hover:text-primary transition-all group"
+            className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 hover:bg-primary/5 transition-all group shadow-lg"
+            title="Compartir en Telegram"
           >
-            <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <Share2 className="w-5 h-5 text-on-surface-variant group-hover:text-primary transition-colors" />
           </button>
           <div className="relative group">
-            <button className="flex items-center gap-2 px-6 py-3 bg-surface-container-low rounded-xl border border-outline-variant/10 hover:border-primary/50 transition-all font-bold text-xs uppercase tracking-widest">
-              <Save className="w-4 h-4" />
+            <button className="flex items-center gap-3 px-8 py-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 hover:bg-primary/5 transition-all font-black text-[10px] uppercase tracking-[0.2em] text-on-surface shadow-lg">
+              <Save className="w-4 h-4 text-primary" />
               Diseño
-              <ChevronDown className="w-4 h-4" />
+              <ChevronDown className="w-4 h-4 text-on-surface-variant group-hover:rotate-180 transition-transform" />
             </button>
-            <div className="absolute right-0 top-full mt-2 w-48 bg-surface-container-high border border-outline-variant/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
-              <button onClick={() => handleSaveLayout("Pro Trader")} className="w-full px-4 py-3 text-left text-[10px] font-black uppercase hover:bg-primary/10 hover:text-primary transition-colors border-b border-outline-variant/5">Guardar Actual</button>
-              <button onClick={handleResetLayout} className="w-full px-4 py-3 text-left text-[10px] font-black uppercase hover:bg-secondary/10 hover:text-secondary transition-colors flex items-center gap-2">
-                <RotateCcw className="w-3 h-3" /> Restablecer
+            <div className="absolute right-0 top-full mt-3 w-56 bg-surface-container-high border border-outline-variant/10 rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden backdrop-blur-xl">
+              <button onClick={() => handleSaveLayout("Pro Trader")} className="w-full px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-colors border-b border-outline-variant/5">Guardar Actual</button>
+              <button onClick={handleResetLayout} className="w-full px-6 py-4 text-left text-[10px] font-black uppercase tracking-widest hover:bg-secondary/10 hover:text-secondary transition-colors flex items-center gap-3">
+                <RotateCcw className="w-4 h-4" /> Restablecer
               </button>
             </div>
           </div>
@@ -274,9 +280,9 @@ const Analysis = () => {
         onShowFundamentals={showFundamentals}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="trading-grid">
         {/* Main Column: AI Detailed Analysis (LEFT) */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="md:col-span-8 space-y-8">
           <ErrorBoundary>
             {analysis ? (
               <Reorder.Group 
@@ -312,20 +318,20 @@ const Analysis = () => {
                 ))}
               </Reorder.Group>
             ) : (
-              <div className="h-full min-h-[600px] flex flex-col items-center justify-center bg-surface-container-low rounded-3xl border border-dashed border-outline-variant/30 p-12 text-center space-y-6">
-                <div className="w-24 h-24 bg-surface-container rounded-full flex items-center justify-center relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full animate-ping"></div>
-                  <Brain className="w-12 h-12 text-primary relative z-10" />
+              <div className="h-full min-h-[600px] flex flex-col items-center justify-center bg-surface-container-high/20 rounded-[2.5rem] border-2 border-dashed border-outline-variant/10 p-12 text-center space-y-8">
+                <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center relative">
+                  <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping"></div>
+                  <Brain className="w-16 h-16 text-primary relative z-10" />
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-2xl font-headline font-bold text-on-surface">Esperando Instrucciones</h4>
-                  <p className="text-sm text-on-surface-variant max-w-xs mx-auto">
+                <div className="space-y-3">
+                  <h4 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Esperando Instrucciones</h4>
+                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest max-w-xs mx-auto leading-relaxed">
                     Selecciona un activo y temporalidad arriba para que nuestra IA realice un análisis exhaustivo de mercado.
                   </p>
                 </div>
                 <button 
                   onClick={handleRunAnalysis}
-                  className="px-8 py-4 bg-primary text-on-primary rounded-xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-primary/20"
+                  className="btn-primary px-10 py-4 text-[10px]"
                 >
                   Comenzar Análisis Ahora
                 </button>
@@ -335,7 +341,7 @@ const Analysis = () => {
         </div>
 
         {/* Sidebar: Market Overview & Secondary Data (RIGHT) */}
-        <div className="space-y-8">
+        <div className="md:col-span-4 space-y-8">
           <MarketOverview 
             ticker={ticker}
             selectedSymbol={selectedSymbol}
@@ -344,38 +350,38 @@ const Analysis = () => {
           />
 
           {/* Whale Movements */}
-          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
-            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-              <Activity className="w-3 h-3" /> MOVIMIENTOS DE BALLENAS
+          <div className="trading-card space-y-6">
+            <h4 className="section-title mb-0 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-primary" /> MOVIMIENTOS DE BALLENAS
             </h4>
             <div className="space-y-3">
               {whales.slice(0, 4).map((whale, idx) => (
-                <div key={idx} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 flex justify-between items-center">
+                <div key={idx} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 flex justify-between items-center group hover:border-primary/30 transition-all">
                   <div className="flex items-center gap-3">
-                    <div className={cn("w-2 h-2 rounded-full", whale.type === "buy" ? "bg-primary" : "bg-secondary")}></div>
-                    <span className="text-[10px] font-bold text-on-surface">{whale.amount} {whale.asset}</span>
+                    <div className={cn("w-2.5 h-2.5 rounded-full shadow-lg", whale.type === "buy" ? "bg-primary shadow-primary/20" : "bg-secondary shadow-secondary/20")}></div>
+                    <span className="text-[10px] font-black text-on-surface uppercase tracking-tighter">{whale.amount} {whale.asset}</span>
                   </div>
-                  <span className="text-[8px] font-black text-on-surface-variant uppercase">{whale.time}</span>
+                  <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">{whale.time}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Economic Events */}
-          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
-            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-              <BarChart3 className="w-3 h-3" /> EVENTOS ECONÓMICOS
+          <div className="trading-card space-y-6">
+            <h4 className="section-title mb-0 flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" /> EVENTOS ECONÓMICOS
             </h4>
             <div className="space-y-3">
               {events.slice(0, 3).map((event, idx) => (
-                <div key={idx} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 space-y-1">
+                <div key={idx} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-2 group hover:border-primary/30 transition-all">
                   <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-on-surface uppercase">{event.event}</span>
-                    <span className="text-[8px] font-bold text-on-surface-variant">{event.time}</span>
+                    <span className="text-[10px] font-black text-on-surface uppercase tracking-widest">{event.event}</span>
+                    <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">{event.time}</span>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1.5">
                     {[...Array(event.impact)].map((_, i) => (
-                      <Flame key={i} className="w-3 h-3 text-secondary" />
+                      <Flame key={i} className="w-3.5 h-3.5 text-secondary" />
                     ))}
                   </div>
                 </div>
@@ -384,27 +390,27 @@ const Analysis = () => {
           </div>
 
           {/* Top Traders Copy */}
-          <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-xl">
-            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-              <Users className="w-3 h-3" /> TOP TRADERS (COPIAR)
+          <div className="trading-card space-y-6">
+            <h4 className="section-title mb-0 flex items-center gap-2">
+              <Users className="w-4 h-4 text-primary" /> TOP TRADERS (COPIAR)
             </h4>
             <div className="space-y-3">
               {topTraders.slice(0, 3).map((trader, idx) => (
-                <div key={idx} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 flex justify-between items-center group">
+                <div key={idx} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 flex justify-between items-center group hover:border-primary/30 transition-all">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-[10px] font-black text-primary">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-[12px] font-black text-primary border border-primary/20">
                       {trader.name[0]}
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-on-surface uppercase">{trader.name}</p>
-                      <p className="text-[8px] font-bold text-primary">ROI: {trader.roi}%</p>
+                      <p className="text-[10px] font-black text-on-surface uppercase tracking-widest leading-none mb-1">{trader.name}</p>
+                      <p className="text-[9px] font-black text-primary uppercase tracking-widest">ROI: {trader.roi}%</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => handleCopyStrategy(trader.id)}
-                    className="p-2 bg-surface-container-highest rounded-lg hover:bg-primary hover:text-on-primary transition-all"
+                    className="p-2.5 bg-surface-container-highest rounded-xl border border-outline-variant/10 hover:bg-primary hover:text-on-primary transition-all"
                   >
-                    {copied === trader.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                    {copied === trader.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
                 </div>
               ))}
@@ -414,45 +420,50 @@ const Analysis = () => {
       </div>
 
       {/* Global Sentiment Section */}
-      <section className="bg-surface-container-low p-8 rounded-3xl border border-outline-variant/10 relative overflow-hidden group shadow-2xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[100px] -mr-48 -mt-48 group-hover:bg-primary/10 transition-all duration-1000"></div>
-        <div className="relative z-10 space-y-8">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
-              <Activity className="w-6 h-6 text-primary" />
+      <section className="trading-card p-12 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-primary/5 rounded-full blur-[150px] -mr-80 -mt-80 group-hover:bg-primary/10 transition-all duration-1000"></div>
+        <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-secondary/5 rounded-full blur-[120px] -ml-60 -mb-60 group-hover:bg-secondary/10 transition-all duration-1000"></div>
+        
+        <div className="relative z-10 space-y-12">
+          <div className="flex items-center gap-6">
+            <div className="w-20 h-20 bg-primary/10 rounded-[2.5rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10">
+              <Activity className="w-10 h-10 text-primary" />
             </div>
             <div>
-              <h2 className="font-headline text-3xl font-bold tracking-tight uppercase">Informe de Sentimiento Global</h2>
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">Actualizado hace 2 minutos</p>
+              <h2 className="text-5xl font-black tracking-tighter uppercase text-on-surface">Informe de Sentimiento Global</h2>
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.4em] mt-2 opacity-70">Actualizado en tiempo real por Red Neuronal v4</p>
             </div>
           </div>
           
-          <div className="p-8 bg-surface-container-high/30 rounded-2xl border border-outline-variant/10 backdrop-blur-sm">
-            <p className="text-on-surface-variant leading-relaxed text-xl italic font-medium">
+          <div className="p-12 bg-surface-container-high/40 rounded-[3rem] border border-outline-variant/10 backdrop-blur-xl shadow-2xl relative group/sentiment">
+            <div className="absolute -top-4 -left-4 w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/30 rotate-12 group-hover/sentiment:rotate-0 transition-transform">
+              <Brain className="w-6 h-6 text-primary" />
+            </div>
+            <p className="text-on-surface-variant leading-relaxed text-3xl italic font-medium tracking-tight">
               "{sentiment}"
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 bg-surface-container rounded-2xl border border-outline-variant/5 space-y-3">
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Miedo & Codicia</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-headline font-black text-primary">84</span>
-                <span className="text-xs font-bold text-primary-dim uppercase">Codicia Extrema</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-10 bg-surface-container-high rounded-[2.5rem] border border-outline-variant/5 space-y-6 group hover:border-primary/30 hover:bg-primary/5 transition-all shadow-xl">
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] opacity-60">Miedo & Codicia</p>
+              <div className="flex items-baseline gap-4">
+                <span className="text-6xl font-black text-primary tracking-tighter drop-shadow-[0_0_15px_rgba(0,255,163,0.3)]">84</span>
+                <span className="text-[10px] font-black text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full">Codicia Extrema</span>
               </div>
             </div>
-            <div className="p-6 bg-surface-container rounded-2xl border border-outline-variant/5 space-y-3">
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Volatilidad</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-headline font-black text-secondary">Alta</span>
-                <span className="text-xs font-bold text-secondary/70 uppercase">+18% vs Promedio</span>
+            <div className="p-10 bg-surface-container-high rounded-[2.5rem] border border-outline-variant/5 space-y-6 group hover:border-secondary/30 hover:bg-secondary/5 transition-all shadow-xl">
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] opacity-60">Volatilidad</p>
+              <div className="flex items-baseline gap-4">
+                <span className="text-6xl font-black text-secondary tracking-tighter drop-shadow-[0_0_15px_rgba(255,107,107,0.3)]">Alta</span>
+                <span className="text-[10px] font-black text-secondary uppercase tracking-widest bg-secondary/10 px-3 py-1 rounded-full">+18% vs Promedio</span>
               </div>
             </div>
-            <div className="p-6 bg-surface-container rounded-2xl border border-outline-variant/5 space-y-3">
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Dominancia BTC</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-headline font-black text-tertiary">52.4%</span>
-                <span className="text-xs font-bold text-tertiary/70 uppercase">Estable</span>
+            <div className="p-10 bg-surface-container-high rounded-[2.5rem] border border-outline-variant/5 space-y-6 group hover:border-tertiary/30 hover:bg-tertiary/5 transition-all shadow-xl">
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em] opacity-60">Dominancia BTC</p>
+              <div className="flex items-baseline gap-4">
+                <span className="text-6xl font-black text-tertiary tracking-tighter drop-shadow-[0_0_15px_rgba(0,224,255,0.3)]">52.4%</span>
+                <span className="text-[10px] font-black text-tertiary uppercase tracking-widest bg-tertiary/10 px-3 py-1 rounded-full">Estable</span>
               </div>
             </div>
           </div>
@@ -514,7 +525,7 @@ const Analysis = () => {
       </AnimatePresence>
       {/* Fundamental Modal */}
       <FundamentalModal 
-        fundamental={selectedFundamental} 
+        data={selectedFundamental} 
         onClose={() => setSelectedFundamental(null)} 
       />
     </div>

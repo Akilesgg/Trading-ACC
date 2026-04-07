@@ -91,17 +91,17 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
   };
 
   return (
-    <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 flex flex-col items-center text-center space-y-4 shadow-lg">
+    <div className="trading-card flex flex-col items-center text-center space-y-6 group hover:border-primary/30 transition-all">
       <div className="flex items-center justify-between w-full">
         <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{label}</h4>
-        <div className="flex bg-surface-container-highest rounded-lg p-0.5 border border-outline-variant/10">
+        <div className="flex bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10 shadow-inner">
           {["1h", "4h", "1d"].map((tf) => (
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
               className={cn(
-                "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest transition-all",
-                timeframe === tf ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+                "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                timeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface"
               )}
             >
               {tf}
@@ -110,37 +110,39 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
         </div>
       </div>
       
-      <div className="relative w-32 h-32">
-        <svg className="w-full h-full" viewBox="0 0 100 100">
+      <div className="relative w-40 h-40">
+        <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all"></div>
+        <svg className="w-full h-full relative z-10" viewBox="0 0 100 100">
           <circle
             cx="50"
             cy="50"
-            r="40"
+            r="42"
             fill="none"
             stroke="currentColor"
-            strokeWidth="8"
+            strokeWidth="10"
             className="text-surface-container-highest"
-            strokeDasharray="188.5"
-            strokeDashoffset="62.8"
+            strokeDasharray="210"
+            strokeDashoffset="70"
             transform="rotate(150 50 50)"
           />
           <circle
             cx="50"
             cy="50"
-            r="40"
+            r="42"
             fill="none"
             stroke="currentColor"
-            strokeWidth="8"
+            strokeWidth="10"
             className={getColor(value)}
-            strokeDasharray="188.5"
-            strokeDashoffset={188.5 - (188.5 * 0.66 * value / 100)}
+            strokeDasharray="210"
+            strokeDashoffset={210 - (210 * 0.66 * value / 100)}
             transform="rotate(150 50 50)"
             strokeLinecap="round"
+            style={{ transition: 'stroke-dashoffset 1.5s ease-in-out' }}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={cn("text-2xl font-black", getColor(value))}>{value}</span>
-          <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest">{getLabel(value)}</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+          <span className={cn("text-4xl font-black tracking-tighter", getColor(value))}>{value}</span>
+          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{getLabel(value)}</span>
         </div>
       </div>
     </div>
@@ -251,56 +253,58 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "context" && analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Brain className="w-3 h-3" /> CONTEXTO Y RESUMEN EJECUTIVO
+        <div className="trading-card p-8 space-y-4 border-l-4 border-primary/50 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-all"></div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3 relative z-10">
+            <Brain className="w-4 h-4" /> CONTEXTO Y RESUMEN EJECUTIVO
           </h4>
-          <p className="text-sm text-on-surface leading-relaxed font-medium italic">
+          <p className="text-base text-on-surface leading-relaxed font-bold italic relative z-10">
             "{analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}"
           </p>
         </div>
       )}
 
       {moduleId === "comments" && analysisSections["COMENTARIOS Y OBSERVACIONES"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <MessageSquare className="w-3 h-3" /> COMENTARIOS Y OBSERVACIONES
+        <div className="trading-card p-8 space-y-4">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <MessageSquare className="w-4 h-4" /> COMENTARIOS Y OBSERVACIONES
           </h4>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
+          <p className="text-sm text-on-surface-variant leading-relaxed font-medium">
             {analysisSections["COMENTARIOS Y OBSERVACIONES"]}
           </p>
         </div>
       )}
 
       {moduleId === "predictions" && analysisSections["PREDICCIONES DE MERCADO"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-3 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Target className="w-3 h-3" /> PREDICCIONES DE MERCADO
+        <div className="trading-card p-8 space-y-4">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Target className="w-4 h-4" /> PREDICCIONES DE MERCADO
           </h4>
-          <p className="text-sm text-on-surface-variant leading-relaxed">
+          <p className="text-sm text-on-surface-variant leading-relaxed font-medium">
             {analysisSections["PREDICCIONES DE MERCADO"]}
           </p>
         </div>
       )}
 
       {moduleId === "recommendation" && analysisSections["RECOMENDACIÓN IA"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border-2 border-primary/20 bg-primary/5 space-y-3 shadow-lg shadow-primary/5">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Zap className="w-3 h-3" /> RECOMENDACIÓN FINAL DE LA IA
+        <div className="trading-card p-8 space-y-4 border-2 border-primary/30 bg-primary/5 shadow-xl shadow-primary/10 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-50"></div>
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3 relative z-10">
+            <Zap className="w-5 h-5 animate-pulse" /> RECOMENDACIÓN FINAL DE LA IA
           </h4>
-          <p className="text-base text-on-surface leading-relaxed font-bold">
+          <p className="text-lg text-on-surface leading-relaxed font-black tracking-tight relative z-10">
             {analysisSections["RECOMENDACIÓN IA"]}
           </p>
         </div>
       )}
 
       {moduleId === "dominance" && analysisSections["DOMINANCIA BTC"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Activity className="w-3 h-3" /> DOMINANCIA BTC & ESTRATEGIA ALTCOINS
+        <div className="trading-card p-8 space-y-6">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Activity className="w-4 h-4" /> DOMINANCIA BTC & ESTRATEGIA ALTCOINS
           </h4>
-          <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/5">
-            <p className="text-sm text-on-surface-variant leading-relaxed">
+          <div className="p-6 bg-surface-container-high rounded-2xl border border-outline-variant/10 shadow-inner">
+            <p className="text-sm text-on-surface leading-relaxed font-medium">
               {analysisSections["DOMINANCIA BTC"]}
             </p>
           </div>
@@ -308,43 +312,51 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "wyckoff" && analysisSections["FASE WYCKOFF"] && (
-        <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6 shadow-lg">
+        <div className="trading-card p-10 space-y-8">
           <div className="flex items-center justify-between">
-            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-              <Layers className="w-3 h-3" /> ANALIZADOR WYCKOFF (ESTADO ACTUAL)
+            <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+              <Layers className="w-5 h-5" /> ANALIZADOR WYCKOFF (ESTADO ACTUAL)
             </h4>
-            <span className="text-[10px] font-black bg-primary/10 text-primary px-3 py-1 rounded-full uppercase tracking-widest">
+            <span className="text-[10px] font-black bg-primary/10 text-primary px-4 py-2 rounded-xl uppercase tracking-widest border border-primary/20 shadow-lg shadow-primary/5">
               {analysisSections["FASE WYCKOFF"]?.split(":")[0] || "ANALIZANDO"}
             </span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-4">
-              <p className="text-sm text-on-surface-variant leading-relaxed">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div className="space-y-6">
+              <p className="text-sm text-on-surface leading-relaxed font-medium">
                 {analysisSections["FASE WYCKOFF"]}
               </p>
-              <div className="flex items-center gap-4 pt-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span className="text-[8px] font-bold text-on-surface-variant uppercase">Soporte</span>
+              <div className="flex items-center gap-6 pt-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-primary rounded-full shadow-lg shadow-primary/30"></div>
+                  <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Soporte</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-secondary rounded-full"></div>
-                  <span className="text-[8px] font-bold text-on-surface-variant uppercase">Resistencia</span>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-secondary rounded-full shadow-lg shadow-secondary/30"></div>
+                  <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Resistencia</span>
                 </div>
               </div>
             </div>
             
-            <div className="h-48 w-full bg-surface-container-high/20 rounded-xl p-4 border border-outline-variant/10 relative">
+            <div className="h-56 w-full bg-surface-container-high/20 rounded-[2rem] p-6 border border-outline-variant/10 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
                   <XAxis dataKey="name" hide />
                   <YAxis hide domain={['auto', 'auto']} />
-                  <Line type="monotone" dataKey="price" stroke="#fff" strokeWidth={2} dot={false} />
-                  <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={6} shape={<WyckoffArrow />} />
-                  <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={6} shape={<WyckoffArrow />} />
-                  <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={6} shape={<WyckoffArrow />} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke="#fff" 
+                    strokeWidth={3} 
+                    dot={false} 
+                    animationDuration={2000}
+                  />
+                  <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={8} shape={<WyckoffArrow />} />
+                  <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={8} shape={<WyckoffArrow />} />
+                  <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={8} shape={<WyckoffArrow />} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -353,40 +365,41 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "strategy" && analysisSections["ESTRATEGIA"] && (
-        <div className="bg-surface-container-low border-2 border-outline-variant/10 p-8 rounded-2xl relative overflow-hidden flex flex-col items-center text-center shadow-lg">
-          <div className="mb-4">
+        <div className="trading-card p-10 relative overflow-hidden flex flex-col items-center text-center group">
+          <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="mb-6 relative z-10">
             {analysisSections["ESTRATEGIA"]?.toUpperCase().includes("ALCISTA") ? (
-              <div className="flex flex-col items-center gap-2">
-                <TrendingUp className="w-20 h-20 text-primary animate-bounce" />
-                <span className="text-4xl font-black text-primary uppercase tracking-tighter">ALCISTA</span>
+              <div className="flex flex-col items-center gap-3">
+                <TrendingUp className="w-24 h-24 text-primary animate-bounce" />
+                <span className="text-5xl font-black text-primary uppercase tracking-tighter">ALCISTA</span>
               </div>
             ) : analysisSections["ESTRATEGIA"]?.toUpperCase().includes("BAJISTA") ? (
-              <div className="flex flex-col items-center gap-2">
-                <TrendingDown className="w-20 h-20 text-secondary animate-bounce" />
-                <span className="text-4xl font-black text-secondary uppercase tracking-tighter">BAJISTA</span>
+              <div className="flex flex-col items-center gap-3">
+                <TrendingDown className="w-24 h-24 text-secondary animate-bounce" />
+                <span className="text-5xl font-black text-secondary uppercase tracking-tighter">BAJISTA</span>
               </div>
             ) : (
-              <div className="flex flex-col items-center gap-2">
-                <Minus className="w-20 h-20 text-on-surface-variant" />
-                <span className="text-4xl font-black text-on-surface-variant uppercase tracking-tighter">NEUTRAL</span>
+              <div className="flex flex-col items-center gap-3">
+                <Minus className="w-24 h-24 text-on-surface-variant" />
+                <span className="text-5xl font-black text-on-surface-variant uppercase tracking-tighter">NEUTRAL</span>
               </div>
             )}
           </div>
-          <div className="max-w-xl">
-            <p className="text-sm text-on-surface-variant leading-relaxed italic">
+          <div className="max-w-2xl relative z-10">
+            <p className="text-base text-on-surface leading-relaxed italic font-medium">
               {analysisSections["ESTRATEGIA"]}
             </p>
           </div>
           {analysisSections["NIVEL DE CONFIANZA"] && (
-            <div className="mt-4 flex items-center gap-2">
-              <div className="w-32 h-2 bg-surface-container rounded-full overflow-hidden">
+            <div className="mt-8 flex flex-col items-center gap-3 relative z-10">
+              <div className="w-48 h-3 bg-surface-container-highest rounded-full overflow-hidden border border-outline-variant/10 shadow-inner">
                 <div 
-                  className="h-full bg-primary" 
+                  className="h-full bg-primary shadow-lg shadow-primary/50 transition-all duration-1000" 
                   style={{ width: `${analysisSections["NIVEL DE CONFIANZA"]}%` }}
                 />
               </div>
               <span className="text-[10px] font-black text-primary uppercase tracking-widest">
-                CONFIANZA: {analysisSections["NIVEL DE CONFIANZA"]}%
+                NIVEL DE CONFIANZA: {analysisSections["NIVEL DE CONFIANZA"]}%
               </span>
             </div>
           )}
@@ -394,15 +407,15 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "indicators" && analysisSections["INDICADORES TÉCNICOS (TOP 2026)"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <BarChart3 className="w-3 h-3" /> INDICADORES TÉCNICOS (TOP 2026)
+        <div className="trading-card p-8 space-y-6">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <BarChart3 className="w-4 h-4" /> INDICADORES TÉCNICOS (TOP 2026)
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {analysisSections["INDICADORES TÉCNICOS (TOP 2026)"].split("\n").filter((line: string) => line.trim()).map((line: string, idx: number) => (
-              <div key={idx} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 flex items-center justify-between">
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase">{line.split(":")[0]?.replace(/^[-\s*]+/, "")}</span>
-                <span className="text-[10px] font-black text-primary text-right">{line.split(":")[1] || "ACTIVO"}</span>
+              <div key={idx} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 flex items-center justify-between group hover:border-primary/30 transition-all">
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{line.split(":")[0]?.replace(/^[-\s*]+/, "")}</span>
+                <span className="text-[10px] font-black text-primary text-right uppercase tracking-widest">{line.split(":")[1] || "ACTIVO"}</span>
               </div>
             ))}
           </div>
@@ -410,21 +423,21 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "levels" && analysisSections["NIVELES OPERATIVOS"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Target className="w-3 h-3" /> NIVELES OPERATIVOS
+        <div className="trading-card p-8 space-y-6">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Target className="w-4 h-4" /> NIVELES OPERATIVOS
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-surface-container rounded-xl border-l-4 border-primary">
-              <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Entrada Sugerida</p>
-              <p className="text-xl font-headline font-black text-on-surface">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 bg-surface-container-high rounded-2xl border-l-4 border-primary shadow-lg group hover:scale-[1.02] transition-all">
+              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Entrada Sugerida</p>
+              <p className="text-3xl font-black text-on-surface tracking-tighter">
                 {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
                  analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
               </p>
             </div>
-            <div className="p-4 bg-surface-container rounded-xl border-l-4 border-secondary">
-              <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Stop Loss</p>
-              <p className="text-xl font-headline font-black text-secondary">
+            <div className="p-6 bg-surface-container-high rounded-2xl border-l-4 border-secondary shadow-lg group hover:scale-[1.02] transition-all">
+              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Stop Loss</p>
+              <p className="text-3xl font-black text-secondary tracking-tighter">
                 {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
                  analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
               </p>
@@ -434,15 +447,15 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "objectives" && analysisSections["NIVELES OPERATIVOS"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <TrendingUp className="w-3 h-3" /> OBJETIVOS (TAKE PROFITS)
+        <div className="trading-card p-8 space-y-6">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <TrendingUp className="w-4 h-4" /> OBJETIVOS (TAKE PROFITS)
           </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="flex flex-col p-3 bg-surface-container rounded-xl border border-outline-variant/5">
-                <span className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">TP {i}</span>
-                <span className="text-sm font-black text-primary">
+              <div key={i} className="flex flex-col p-5 bg-surface-container-high rounded-2xl border border-outline-variant/10 group hover:border-primary/30 transition-all shadow-lg">
+                <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">TP {i}</span>
+                <span className="text-lg font-black text-primary tracking-tighter">
                   {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || 
                    analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}
                 </span>
@@ -453,64 +466,66 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "leverage" && analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"] && (
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Shield className="w-3 h-3" /> APALANCAMIENTO & GESTIÓN DE RIESGO
+        <div className="trading-card p-8 space-y-6">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Shield className="w-4 h-4" /> APALANCAMIENTO & GESTIÓN DE RIESGO
           </h4>
-          <div className="p-4 bg-surface-container rounded-xl border border-outline-variant/5 flex items-center justify-between">
+          <div className="p-6 bg-surface-container-high rounded-2xl border border-outline-variant/10 flex items-center justify-between shadow-inner">
             <div className="space-y-1">
-              <p className="text-[8px] font-bold text-on-surface-variant uppercase">Apalancamiento Sugerido</p>
-              <p className="text-2xl font-black text-primary">
+              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Apalancamiento Sugerido</p>
+              <p className="text-3xl font-black text-primary tracking-tighter">
                 {analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.match(/x\d+/i)?.[0] || "x3"}
               </p>
             </div>
-            <div className="text-right space-y-1">
-              <p className="text-[8px] font-bold text-on-surface-variant uppercase">Nivel de Riesgo</p>
+            <div className="text-right space-y-2">
+              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Nivel de Riesgo</p>
               <span className={cn(
-                "text-[10px] font-black px-2 py-1 rounded uppercase",
-                analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("BAJO") ? "bg-primary/10 text-primary" :
-                analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("ALTO") ? "bg-secondary/10 text-secondary" :
-                "bg-orange-500/10 text-orange-500"
+                "text-[10px] font-black px-4 py-2 rounded-xl uppercase tracking-widest shadow-lg",
+                analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("BAJO") ? "bg-primary/10 text-primary border border-primary/20" :
+                analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("ALTO") ? "bg-secondary/10 text-secondary border border-secondary/20" :
+                "bg-orange-500/10 text-orange-500 border border-orange-500/20"
               )}>
                 {analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("BAJO") ? "BAJO" :
                  analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]?.toUpperCase().includes("ALTO") ? "ALTO" : "MODERADO"}
               </span>
             </div>
           </div>
-          <p className="text-[10px] text-on-surface-variant leading-relaxed italic px-2">
+          <p className="text-[10px] text-on-surface-variant leading-relaxed italic px-4 font-medium">
             {analysisSections["RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO"]}
           </p>
         </div>
       )}
 
       {moduleId === "justification" && (analysisSections["JUSTIFICACIÓN TÉCNICA"] || analysisSections["ANÁLISIS DE ESTRUCTURA"]) && (
-        <div className="bg-surface-container-low p-8 rounded-2xl border border-outline-variant/10 space-y-6 shadow-lg">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-            <Activity className="w-3 h-3" /> JUSTIFICACIÓN TÉCNICA EXHAUSTIVA
+        <div className="trading-card p-10 space-y-8">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Activity className="w-4 h-4" /> JUSTIFICACIÓN TÉCNICA EXHAUSTIVA
           </h4>
-          <div className="space-y-6">
+          <div className="space-y-8">
             {analysisSections["ANÁLISIS DE ESTRUCTURA"] && (
-              <div>
-                <p className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest">Análisis de Estructura</p>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
+              <div className="group">
+                <p className="text-[10px] font-black text-on-surface-variant uppercase mb-3 tracking-widest group-hover:text-primary transition-colors">Análisis de Estructura</p>
+                <p className="text-sm text-on-surface leading-relaxed font-medium">
                   {analysisSections["ANÁLISIS DE ESTRUCTURA"]}
                 </p>
               </div>
             )}
             {analysisSections["JUSTIFICACIÓN TÉCNICA"] && (
-              <div className="pt-6 border-t border-outline-variant/5">
-                <p className="text-[10px] font-black text-on-surface-variant uppercase mb-2 tracking-widest">Lógica de Niveles</p>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
+              <div className="pt-8 border-t border-outline-variant/10 group">
+                <p className="text-[10px] font-black text-on-surface-variant uppercase mb-3 tracking-widest group-hover:text-primary transition-colors">Lógica de Niveles</p>
+                <p className="text-sm text-on-surface leading-relaxed font-medium">
                   {analysisSections["JUSTIFICACIÓN TÉCNICA"]}
                 </p>
               </div>
             )}
             {analysisSections["METÁFORA TÉCNICA"] && (
-              <div className="pt-6 border-t border-outline-variant/5 flex items-center gap-3">
-                <Flame className="w-5 h-5 text-primary animate-pulse" />
+              <div className="pt-8 border-t border-outline-variant/10 flex items-center gap-4 group">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5 group-hover:scale-110 transition-transform">
+                  <Flame className="w-6 h-6 text-primary animate-pulse" />
+                </div>
                 <div>
-                  <p className="text-[8px] font-black text-primary uppercase tracking-widest">Metáfora Técnica</p>
-                  <p className="text-[10px] text-on-surface-variant italic leading-tight">
+                  <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Metáfora Técnica</p>
+                  <p className="text-[11px] text-on-surface-variant italic leading-relaxed font-medium">
                     {analysisSections["METÁFORA TÉCNICA"]}
                   </p>
                 </div>

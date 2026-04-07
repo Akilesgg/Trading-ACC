@@ -62,7 +62,7 @@ const BTCComparison: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-32 px-6">
-      <div className="max-w-7xl mx-auto space-y-10">
+      <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -86,16 +86,35 @@ const BTCComparison: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Explanation Block (New) */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-surface-container-high/40 backdrop-blur-md border border-primary/20 rounded-3xl p-6 flex flex-col md:flex-row items-start md:items-center gap-6"
+        >
+          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center flex-shrink-0 border border-primary/20">
+            <Info className="w-6 h-6 text-primary" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">¿Cómo funciona esta herramienta?</h3>
+            <p className="text-xs text-on-surface-variant leading-relaxed max-w-4xl">
+              Esta herramienta estima cómo pueden reaccionar diferentes criptomonedas ante un movimiento de Bitcoin. 
+              Se basa en la <span className="text-on-surface font-bold">Correlación histórica con BTC</span>, la <span className="text-on-surface font-bold">Volatilidad relativa (ATR)</span> y la <span className="text-on-surface font-bold">Sensibilidad del activo al mercado</span>. 
+              Esto permite anticipar caídas o subidas más realistas en altcoins basándose en el dominio de mercado de Bitcoin.
+            </p>
+          </div>
+        </motion.div>
+
+        <div className="trading-grid">
           
           {/* Left Column: Controls */}
-          <div className="lg:col-span-4 space-y-8">
+          <div className="md:col-span-4 space-y-6">
             
             {/* BTC Scenario Card */}
-            <section className="glass-card p-8 rounded-[2rem] space-y-8 border border-outline-variant/10">
+            <section className="trading-card space-y-8">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" /> Escenario BTC
+                <h3 className="section-title flex items-center gap-2 mb-0">
+                  <TrendingUp className="w-4 h-4" /> Escenario BTC
                 </h3>
                 <div className={cn(
                   "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest",
@@ -109,7 +128,7 @@ const BTCComparison: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Movimiento Esperado</span>
                   <span className={cn(
-                    "text-2xl font-black tracking-tighter",
+                    "text-3xl font-black tracking-tighter",
                     btcMove >= 0 ? "text-primary" : "text-secondary"
                   )}>
                     {btcMove > 0 ? "+" : ""}{btcMove.toFixed(1)}%
@@ -138,7 +157,12 @@ const BTCComparison: React.FC = () => {
                     <button 
                       key={val}
                       onClick={() => setBtcMove(val)}
-                      className="py-2 bg-surface-container-high hover:bg-primary/10 rounded-xl text-[10px] font-black transition-all border border-outline-variant/5 hover:border-primary/20"
+                      className={cn(
+                        "py-2 rounded-xl text-[10px] font-black transition-all border",
+                        btcMove === val 
+                          ? "bg-primary text-on-primary border-primary" 
+                          : "bg-surface-container-high border-outline-variant/5 hover:border-primary/20"
+                      )}
                     >
                       {val > 0 ? "+" : ""}{val}%
                     </button>
@@ -148,9 +172,9 @@ const BTCComparison: React.FC = () => {
             </section>
 
             {/* Asset Selection Card */}
-            <section className="glass-card p-8 rounded-[2rem] space-y-6 border border-outline-variant/10">
-              <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-                <Filter className="w-4 h-4 text-primary" /> Seleccionar Activos
+            <section className="trading-card space-y-6">
+              <h3 className="section-title flex items-center gap-2 mb-0">
+                <Filter className="w-4 h-4" /> Seleccionar Activos
               </h3>
 
               <div className="relative group">
@@ -193,11 +217,11 @@ const BTCComparison: React.FC = () => {
           </div>
 
           {/* Right Column: Results */}
-          <div className="lg:col-span-8 space-y-6">
+          <div className="md:col-span-8 space-y-6">
             
             <div className="flex items-center justify-between px-4">
-              <h3 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" /> Resultados Estimados
+              <h3 className="section-title flex items-center gap-2 mb-0">
+                <Activity className="w-4 h-4" /> Resultados Estimados
               </h3>
               <div className="flex items-center gap-2 text-[8px] font-black text-on-surface-variant uppercase tracking-widest">
                 <RefreshCw className="w-3 h-3 animate-spin-slow" /> Actualización en tiempo real
@@ -214,7 +238,7 @@ const BTCComparison: React.FC = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="glass-card p-6 rounded-[2rem] border border-outline-variant/10 hover:border-primary/30 transition-all group"
+                    className="trading-card group"
                   >
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-4">

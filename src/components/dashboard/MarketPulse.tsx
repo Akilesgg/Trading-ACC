@@ -10,40 +10,41 @@ interface MarketPulseProps {
 
 const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) => {
   return (
-    <div className="lg:col-span-2 bg-surface-container-low p-8 rounded-xl border-l-4 border-primary relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32 animate-pulse"></div>
+    <div className="lg:col-span-2 trading-card border-l-4 border-primary relative overflow-hidden group">
+      <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -mr-40 -mt-40 group-hover:bg-primary/10 transition-all duration-1000"></div>
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold font-label uppercase tracking-widest text-primary-dim">Sentimiento del Mercado Global</span>
-              <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <span className="section-title mb-0">Sentimiento Global</span>
+              <div className="flex h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(0,255,163,0.5)]"></div>
             </div>
             <button 
               onClick={onShowSettings}
-              className="p-2 bg-surface-container-highest rounded-xl border border-outline-variant/10 hover:bg-primary/10 transition-colors group"
+              className="p-3 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all group/btn shadow-lg"
             >
-              <Bell className="w-4 h-4 text-on-surface-variant group-hover:text-primary" />
+              <Bell className="w-5 h-5 text-on-surface-variant group-hover/btn:text-primary transition-colors" />
             </button>
           </div>
-          <h2 className="font-headline text-[3.5rem] font-bold tracking-tight leading-none mb-4 uppercase">
-            <span className="text-primary">CODICIA</span> EXTREMA
+          <h2 className="text-[4.5rem] font-black tracking-tighter leading-[0.9] mb-6 uppercase">
+            <span className="text-primary drop-shadow-[0_0_20px_rgba(0,255,163,0.3)]">CODICIA</span><br />
+            <span className="text-on-surface">EXTREMA</span>
           </h2>
-          <p className="text-on-surface-variant text-sm font-label uppercase tracking-widest max-w-md line-clamp-2">
+          <p className="text-on-surface-variant text-[11px] font-black uppercase tracking-widest max-w-md leading-relaxed opacity-70">
             {sentiment}
           </p>
         </div>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-8">
-          <div className="space-y-1">
-            <p className="text-on-surface-variant text-sm font-label uppercase tracking-widest">Índice de Miedo y Codicia</p>
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-headline font-bold">84</span>
-              <span className="text-primary-dim font-bold text-sm">+12% vs ayer</span>
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-12">
+          <div className="space-y-2">
+            <p className="text-on-surface-variant text-[10px] font-black uppercase tracking-widest opacity-50">Fear & Greed Index</p>
+            <div className="flex items-baseline gap-3">
+              <span className="text-5xl font-black tracking-tighter text-on-surface">84</span>
+              <span className="text-primary font-black text-[11px] uppercase tracking-widest bg-primary/10 px-2 py-1 rounded-lg border border-primary/20 shadow-lg shadow-primary/5">+12% VS AYER</span>
             </div>
           </div>
           <Link 
             to="/market"
-            className="bg-gradient-to-br from-primary to-primary-dim text-on-primary-fixed px-8 py-4 rounded-full font-bold uppercase tracking-wider shadow-[0_10px_20px_rgba(0,255,163,0.2)] active:scale-95 transition-transform text-center"
+            className="btn-primary px-10 py-4 text-[11px]"
           >
             Ver Mapa de Calor
           </Link>

@@ -4,69 +4,70 @@ import { X } from "lucide-react";
 import { AssetFundamental } from "@/services/cryptoService";
 
 interface FundamentalModalProps {
-  fundamental: AssetFundamental | null;
+  data: AssetFundamental | null;
   onClose: () => void;
 }
 
-const FundamentalModal: React.FC<FundamentalModalProps> = ({ fundamental, onClose }) => {
+const FundamentalModal: React.FC<FundamentalModalProps> = ({ data, onClose }) => {
   return (
     <AnimatePresence>
-      {fundamental && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      {data && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
           <motion.div 
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-surface-container-low max-w-lg w-full rounded-[2.5rem] border border-outline-variant/20 overflow-hidden shadow-2xl"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="trading-card max-w-2xl w-full rounded-[3rem] border border-outline-variant/20 overflow-hidden shadow-[0_0_100px_rgba(0,255,163,0.1)] p-0"
           >
-            <div className="bg-gradient-to-br from-primary/20 to-transparent p-8 relative">
+            <div className="bg-gradient-to-br from-primary/10 via-transparent to-transparent p-10 relative">
               <button 
                 onClick={onClose}
-                className="absolute top-6 right-6 p-2 hover:bg-white/10 rounded-full transition-colors"
+                className="absolute top-8 right-8 p-3 bg-surface-container-high hover:border-primary/30 rounded-2xl border border-outline-variant/10 transition-all group shadow-lg"
               >
-                <X className="w-6 h-6" />
+                <X className="w-6 h-6 text-on-surface-variant group-hover:text-primary transition-colors" />
               </button>
               
-              <div className="flex items-center gap-6 mb-6">
-                <div className="w-16 h-16 bg-surface-container rounded-2xl flex items-center justify-center border border-primary/30 shadow-xl">
+              <div className="flex items-center gap-8 mb-10">
+                <div className="w-20 h-20 bg-surface-container-high rounded-3xl flex items-center justify-center p-4 border border-primary/30 shadow-2xl shadow-primary/10 group-hover:scale-110 transition-transform">
                   <img 
-                    src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${fundamental.symbol.toLowerCase()}.png`} 
-                    className="w-10 h-10" 
+                    src={`https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${data.symbol.toLowerCase()}.png`} 
+                    className="w-12 h-12" 
                     alt=""
                     referrerPolicy="no-referrer"
                     onError={(e) => (e.currentTarget.src = "https://cdn-icons-png.flaticon.com/512/2584/2584687.png")}
                   />
                 </div>
                 <div>
-                  <h2 className="text-3xl font-black uppercase tracking-tighter">{fundamental.name}</h2>
-                  <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-widest border border-primary/20">
-                    {fundamental.type}
+                  <h2 className="text-4xl font-black uppercase tracking-tighter text-on-surface mb-2">{data.name}</h2>
+                  <span className="px-4 py-1.5 bg-primary/10 text-primary text-[11px] font-black rounded-xl uppercase tracking-widest border border-primary/20 shadow-lg shadow-primary/5">
+                    {data.type}
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Proyecto & Equipo</h3>
-                  <p className="text-sm font-bold text-on-surface">{fundamental.project}</p>
+              <div className="space-y-8">
+                <div className="bg-surface-container-high/50 p-6 rounded-2xl border border-outline-variant/10">
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-primary mb-3 opacity-70">Proyecto & Equipo</h3>
+                  <p className="text-sm font-black text-on-surface tracking-tight leading-relaxed">{data.project}</p>
                 </div>
                 
-                <div>
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Resumen del Activo</h3>
-                  <p className="text-sm text-on-surface-variant leading-relaxed">{fundamental.summary}</p>
+                <div className="bg-surface-container-high/50 p-6 rounded-2xl border border-outline-variant/10">
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-primary mb-3 opacity-70">Resumen del Activo</h3>
+                  <p className="text-sm text-on-surface-variant font-medium leading-relaxed opacity-80">{data.summary}</p>
                 </div>
 
-                <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                  <h3 className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Potencial de Inversión</h3>
-                  <p className="text-sm text-on-surface font-medium leading-relaxed">{fundamental.potential}</p>
+                <div className="p-8 bg-primary/5 rounded-[2rem] border border-primary/20 shadow-xl shadow-primary/5 relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-primary/5 blur-3xl -mr-32 -mt-32 group-hover:bg-primary/10 transition-all duration-1000"></div>
+                  <h3 className="text-[11px] font-black uppercase tracking-widest text-primary mb-4 relative z-10">Potencial de Inversión</h3>
+                  <p className="text-sm text-on-surface font-black leading-relaxed tracking-tight relative z-10">{data.potential}</p>
                 </div>
               </div>
             </div>
             
-            <div className="p-6 bg-surface-container-high/50 flex justify-end">
+            <div className="p-8 bg-surface-container-high/50 flex justify-end border-t border-outline-variant/10">
               <button 
                 onClick={onClose}
-                className="px-8 py-3 bg-on-surface text-surface-container-lowest rounded-xl font-black uppercase tracking-widest text-xs"
+                className="btn-primary px-12 py-4 text-[11px]"
               >
                 Cerrar
               </button>

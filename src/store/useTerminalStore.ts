@@ -20,10 +20,11 @@ export const useTerminalStore = create<TerminalState>()(
   persist(
     (set) => ({
       layout: [
-        { i: "chart", x: 0, y: 0, w: 9, h: 20, static: false },
+        { i: "chart", x: 0, y: 0, w: 9, h: 18, static: false },
         { i: "signals", x: 9, y: 0, w: 3, h: 6, static: false },
-        { i: "trade", x: 9, y: 6, w: 3, h: 8, static: false },
-        { i: "orderbook", x: 9, y: 14, w: 3, h: 6, static: false },
+        { i: "orderbook", x: 9, y: 6, w: 3, h: 6, static: false },
+        { i: "trade", x: 9, y: 12, w: 3, h: 6, static: false },
+        { i: "console", x: 0, y: 18, w: 12, h: 4, static: false },
       ],
       setLayout: (layout) => set({ layout }),
       signals: [],

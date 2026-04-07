@@ -3,7 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, query, where, orderBy, limit, getDocFromServer, Timestamp, addDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 // Import the Firebase configuration
-import firebaseConfig from '../firebase-applet-config.json';
+import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

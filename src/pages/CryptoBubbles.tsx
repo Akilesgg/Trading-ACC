@@ -412,7 +412,7 @@ const CryptoBubbles: React.FC = () => {
 
       {/* Fundamental Modal */}
       <FundamentalModal 
-        fundamental={selectedFundamental} 
+        data={selectedFundamental} 
         onClose={() => setSelectedFundamental(null)} 
       />
     </div>

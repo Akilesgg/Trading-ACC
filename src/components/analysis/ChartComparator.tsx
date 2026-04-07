@@ -79,20 +79,20 @@ const ChartComparator: React.FC<ChartComparatorProps> = ({ allAssets, defaultSym
   const asset2 = allAssets.find(a => a.id === symbol2);
 
   return (
-    <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-6 shadow-lg">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2">
-          <Scale className="w-3 h-3" /> COMPARADOR DE GRÁFICOS (RENDIMIENTO %)
+    <div className="trading-card p-8 space-y-8">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+          <Scale className="w-5 h-5" /> COMPARADOR DE GRÁFICOS (RENDIMIENTO %)
         </h4>
         
-        <div className="flex items-center gap-2 bg-surface-container rounded-lg p-1 border border-outline-variant/10">
+        <div className="flex items-center gap-2 bg-surface-container-high rounded-xl p-1 border border-outline-variant/10 shadow-inner">
           {["15m", "1h", "4h", "1d"].map((tf) => (
             <button
               key={tf}
               onClick={() => setTimeframe(tf)}
               className={cn(
-                "px-3 py-1 rounded-md text-[8px] font-black uppercase tracking-widest transition-all",
-                timeframe === tf ? "bg-primary text-on-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+                "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                timeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface"
               )}
             >
               {tf}
@@ -101,40 +101,40 @@ const ChartComparator: React.FC<ChartComparatorProps> = ({ allAssets, defaultSym
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Asset 1 Selector */}
         <div className="relative">
           <button
             onClick={() => setIsSearch1Open(!isSearch1Open)}
-            className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 px-4 text-left flex items-center justify-between"
+            className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 px-5 text-left flex items-center justify-between group hover:border-primary/30 transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-primary rounded-full" />
-              <span className="text-sm font-bold">{asset1?.name || symbol1}</span>
+              <div className="w-3 h-3 bg-primary rounded-full shadow-lg shadow-primary/30" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">{asset1?.name || symbol1}</span>
             </div>
-            <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform", isSearch1Open && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform group-hover:text-primary", isSearch1Open && "rotate-180")} />
           </button>
           {isSearch1Open && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl z-[110] overflow-hidden">
-              <div className="p-2 border-b border-outline-variant/10 flex items-center gap-2">
-                <Search className="w-3 h-3 text-on-surface-variant" />
+            <div className="absolute top-full left-0 right-0 mt-3 bg-surface-container-high border border-outline-variant/10 rounded-2xl shadow-2xl z-[110] overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in duration-200">
+              <div className="p-3 border-b border-outline-variant/10 flex items-center gap-3 bg-surface-container-highest/50">
+                <Search className="w-4 h-4 text-on-surface-variant" />
                 <input 
                   autoFocus
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder="BUSCAR..."
                   value={searchQuery1}
                   onChange={(e) => setSearchQuery1(e.target.value)}
-                  className="w-full bg-transparent border-none focus:ring-0 text-xs font-bold"
+                  className="w-full bg-transparent border-none focus:ring-0 text-[10px] font-black uppercase tracking-widest placeholder:text-on-surface-variant/30 text-on-surface"
                 />
               </div>
-              <div className="max-h-48 overflow-y-auto p-1">
+              <div className="max-h-56 overflow-y-auto p-2 custom-scrollbar">
                 {filteredAssets1.map(asset => (
                   <button
                     key={asset.id}
                     onClick={() => { setSymbol1(asset.id); setIsSearch1Open(false); }}
                     className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors",
-                      symbol1 === asset.id ? "bg-primary text-on-primary" : "hover:bg-primary/10"
+                      "w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all mb-1",
+                      symbol1 === asset.id ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "hover:bg-primary/10 text-on-surface"
                     )}
                   >
                     {asset.name}
@@ -149,35 +149,35 @@ const ChartComparator: React.FC<ChartComparatorProps> = ({ allAssets, defaultSym
         <div className="relative">
           <button
             onClick={() => setIsSearch2Open(!isSearch2Open)}
-            className="w-full bg-surface-container-high border border-outline-variant/20 rounded-xl py-3 px-4 text-left flex items-center justify-between"
+            className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 px-5 text-left flex items-center justify-between group hover:border-secondary/30 transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-secondary rounded-full" />
-              <span className="text-sm font-bold">{asset2?.name || symbol2}</span>
+              <div className="w-3 h-3 bg-secondary rounded-full shadow-lg shadow-secondary/30" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">{asset2?.name || symbol2}</span>
             </div>
-            <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform", isSearch2Open && "rotate-180")} />
+            <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform group-hover:text-secondary", isSearch2Open && "rotate-180")} />
           </button>
           {isSearch2Open && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl z-[110] overflow-hidden">
-              <div className="p-2 border-b border-outline-variant/10 flex items-center gap-2">
-                <Search className="w-3 h-3 text-on-surface-variant" />
+            <div className="absolute top-full left-0 right-0 mt-3 bg-surface-container-high border border-outline-variant/10 rounded-2xl shadow-2xl z-[110] overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in duration-200">
+              <div className="p-3 border-b border-outline-variant/10 flex items-center gap-3 bg-surface-container-highest/50">
+                <Search className="w-4 h-4 text-on-surface-variant" />
                 <input 
                   autoFocus
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder="BUSCAR..."
                   value={searchQuery2}
                   onChange={(e) => setSearchQuery2(e.target.value)}
-                  className="w-full bg-transparent border-none focus:ring-0 text-xs font-bold"
+                  className="w-full bg-transparent border-none focus:ring-0 text-[10px] font-black uppercase tracking-widest placeholder:text-on-surface-variant/30 text-on-surface"
                 />
               </div>
-              <div className="max-h-48 overflow-y-auto p-1">
+              <div className="max-h-56 overflow-y-auto p-2 custom-scrollbar">
                 {filteredAssets2.map(asset => (
                   <button
                     key={asset.id}
                     onClick={() => { setSymbol2(asset.id); setIsSearch2Open(false); }}
                     className={cn(
-                      "w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors",
-                      symbol2 === asset.id ? "bg-secondary text-on-secondary" : "hover:bg-secondary/10"
+                      "w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all mb-1",
+                      symbol2 === asset.id ? "bg-secondary text-on-secondary shadow-lg shadow-secondary/20" : "hover:bg-secondary/10 text-on-surface"
                     )}
                   >
                     {asset.name}
@@ -189,59 +189,60 @@ const ChartComparator: React.FC<ChartComparatorProps> = ({ allAssets, defaultSym
         </div>
       </div>
 
-      <div className="h-64 w-full bg-surface-container-high/20 rounded-xl p-4 border border-outline-variant/10 relative">
+      <div className="h-80 w-full bg-surface-container-high/20 rounded-[2rem] p-6 border border-outline-variant/10 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-xl">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-[2rem]">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
           </div>
         )}
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
             <XAxis dataKey="time" hide />
             <YAxis 
-              tick={{ fontSize: 10, fill: '#666' }} 
+              tick={{ fontSize: 10, fill: '#666', fontWeight: '900' }} 
               tickFormatter={(val) => `${val > 0 ? '+' : ''}${val.toFixed(1)}%`}
             />
             <Tooltip 
-              contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px' }}
-              itemStyle={{ fontSize: '10px', fontWeight: 'bold' }}
+              contentStyle={{ backgroundColor: '#0a0c10', border: '1px solid #333', borderRadius: '16px', fontWeight: '900', textTransform: 'uppercase' }}
+              itemStyle={{ fontSize: '10px', fontWeight: 'black' }}
               labelStyle={{ fontSize: '10px', color: '#666', marginBottom: '4px' }}
               formatter={(value: number) => [`${value.toFixed(2)}%`, "Rendimiento"]}
             />
-            <Legend verticalAlign="top" height={36}/>
+            <Legend verticalAlign="top" height={48} wrapperStyle={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }} />
             <Line 
               type="monotone" 
               dataKey={symbol1} 
               name={asset1?.name || symbol1} 
               stroke="#00ffa3" 
-              strokeWidth={2} 
+              strokeWidth={4} 
               dot={false} 
-              animationDuration={1000}
+              animationDuration={2000}
             />
             <Line 
               type="monotone" 
               dataKey={symbol2} 
               name={asset2?.name || symbol2} 
               stroke="#ff4d4d" 
-              strokeWidth={2} 
+              strokeWidth={4} 
               dot={false} 
-              animationDuration={1000}
+              animationDuration={2000}
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-3 bg-surface-container rounded-xl border border-outline-variant/5">
-          <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Correlación</p>
-          <p className="text-sm font-black text-on-surface">FUERTE POSITIVA (0.85)</p>
+      <div className="grid grid-cols-2 gap-6">
+        <div className="p-5 bg-surface-container-high rounded-2xl border border-outline-variant/10 group hover:border-primary/30 transition-all shadow-lg">
+          <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Correlación</p>
+          <p className="text-sm font-black text-on-surface tracking-tighter uppercase">FUERTE POSITIVA (0.85)</p>
         </div>
-        <div className="p-3 bg-surface-container rounded-xl border border-outline-variant/5">
-          <p className="text-[8px] font-bold text-on-surface-variant uppercase mb-1">Ganador (Periodo)</p>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-black text-primary">{asset1?.name}</span>
-            <TrendingUp className="w-3 h-3 text-primary" />
+        <div className="p-5 bg-surface-container-high rounded-2xl border border-outline-variant/10 group hover:border-primary/30 transition-all shadow-lg">
+          <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Ganador (Periodo)</p>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-black text-primary tracking-tighter uppercase">{asset1?.name}</span>
+            <TrendingUp className="w-4 h-4 text-primary animate-bounce" />
           </div>
         </div>
       </div>

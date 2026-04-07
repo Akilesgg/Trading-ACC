@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { db, doc, onSnapshot, setDoc, Timestamp, OperationType, handleFirestoreError } from '@/firebase';
+import { db, doc, onSnapshot, setDoc, Timestamp, OperationType, handleFirestoreError } from '@/services/firebase';
 import { useAuth } from '@/AuthProvider';
 
 export function useWatchlist() {

@@ -10,15 +10,18 @@ interface SignalSummaryProps {
 
 const SignalSummary: React.FC<SignalSummaryProps> = ({ signals, activeFilter, onFilterClick }) => {
   return (
-    <div className="bg-surface-container-high p-6 rounded-xl space-y-6 border border-outline-variant/10">
+    <div className="trading-card space-y-8">
       <div className="flex items-center justify-between">
-        <h3 className="font-headline text-lg font-bold flex items-center gap-2">
+        <h3 className="section-title flex items-center gap-3 mb-0">
           <Activity className="w-5 h-5 text-tertiary" />
           SEÑALES ACTIVAS
         </h3>
-        <span className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest animate-pulse">
-          LIVE FEED
-        </span>
+        <div className="flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">
+            LIVE FEED
+          </span>
+        </div>
       </div>
       <div className="space-y-4">
         {signals.map((s) => (
@@ -26,12 +29,14 @@ const SignalSummary: React.FC<SignalSummaryProps> = ({ signals, activeFilter, on
             key={s.label} 
             onClick={() => onFilterClick(s.id)}
             className={cn(
-              "w-full flex justify-between items-center p-3 rounded-lg transition-all active:scale-95",
-              activeFilter === s.id ? "bg-primary/10 border border-primary/30" : "bg-surface-container hover:bg-surface-container-highest"
+              "w-full flex justify-between items-center p-5 rounded-[1.5rem] transition-all active:scale-95 border group",
+              activeFilter === s.id 
+                ? "bg-primary/10 border-primary/30 shadow-lg shadow-primary/5" 
+                : "bg-surface-container-high border-outline-variant/10 hover:border-primary/30 hover:bg-surface-container-highest"
             )}
           >
-            <span className="text-sm font-label uppercase tracking-wider text-on-surface-variant">{s.label}</span>
-            <span className={cn("font-headline font-bold text-xl", s.color)}>{s.count}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-on-surface transition-colors">{s.label}</span>
+            <span className={cn("text-3xl font-black tracking-tighter transition-transform group-hover:scale-110", s.color)}>{s.count}</span>
           </button>
         ))}
       </div>

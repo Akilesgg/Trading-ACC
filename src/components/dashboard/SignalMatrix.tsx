@@ -59,18 +59,18 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/10">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 trading-card p-6">
+        <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
           {filters.map((f) => (
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={cn(
-                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                "px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border",
                 filter === f.id 
-                  ? "bg-primary text-on-primary shadow-lg shadow-primary/20" 
-                  : "bg-surface-container-highest text-on-surface-variant hover:bg-primary/10 hover:text-primary"
+                  ? "bg-primary text-on-primary border-primary shadow-xl shadow-primary/20" 
+                  : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:border-primary/30 hover:text-primary"
               )}
             >
               {f.label}
@@ -78,27 +78,27 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
           ))}
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="flex bg-surface-container-highest p-1 rounded-xl border border-outline-variant/10">
+        <div className="flex items-center gap-4">
+          <div className="flex bg-surface-container-high p-1.5 rounded-2xl border border-outline-variant/10 shadow-inner">
             <button 
               onClick={() => setViewMode("table")}
-              className={cn("p-2 rounded-lg transition-colors", viewMode === "table" ? "bg-background text-primary shadow-sm" : "text-on-surface-variant")}
+              className={cn("p-3 rounded-xl transition-all", viewMode === "table" ? "bg-background text-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
             >
-              <List className="w-4 h-4" />
+              <List className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setViewMode("grid")}
-              className={cn("p-2 rounded-lg transition-colors", viewMode === "grid" ? "bg-background text-primary shadow-sm" : "text-on-surface-variant")}
+              className={cn("p-3 rounded-xl transition-all", viewMode === "grid" ? "bg-background text-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-5 h-5" />
             </button>
           </div>
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant group-focus-within:text-primary transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant group-focus-within:text-primary transition-colors" />
             <input 
               type="text" 
               placeholder="BUSCAR ACTIVO..." 
-              className="bg-surface-container-highest border border-outline-variant/10 rounded-xl pl-10 pr-4 py-2 text-[10px] font-bold uppercase tracking-widest focus:outline-none focus:border-primary/50 w-48 transition-all"
+              className="bg-surface-container-high border border-outline-variant/10 rounded-2xl pl-12 pr-6 py-3 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:border-primary/50 w-64 transition-all shadow-inner placeholder:text-on-surface-variant/30"
             />
           </div>
         </div>
@@ -108,22 +108,22 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
         {viewMode === "table" ? (
           <motion.div 
             key="table"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-surface-container-low rounded-2xl border border-outline-variant/10 overflow-hidden shadow-xl"
+            exit={{ opacity: 0, y: -20 }}
+            className="trading-card p-0 overflow-hidden shadow-2xl"
           >
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-surface-container-high border-b border-outline-variant/10">
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Activo</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary" onClick={() => onSort('price')}>Precio</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary" onClick={() => onSort('priceChangePercent')}>24h %</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Entrada</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Objetivos</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Confianza</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Acción</th>
+                  <tr className="bg-surface-container-high/50 border-b border-outline-variant/10">
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Activo</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('price')}>Precio</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('priceChangePercent')}>24h %</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Entrada</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Objetivos</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Confianza</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Acción</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/5">
@@ -138,103 +138,103 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                         layout
                         key={ticker.symbol}
                         className={cn(
-                          "hover:bg-primary/5 transition-colors group cursor-pointer",
+                          "hover:bg-primary/5 transition-all group cursor-pointer",
                           isTriggered && "bg-secondary/10 animate-pulse"
                         )}
                       >
-                        <td className="p-4">
-                          <div className="flex items-center gap-3">
+                        <td className="p-6">
+                          <div className="flex items-center gap-4">
                             <button 
                               onClick={(e) => { e.stopPropagation(); toggleWatchlist(ticker.symbol); }}
-                              className={cn("transition-colors", isWatchlisted ? "text-yellow-500" : "text-on-surface-variant/30 hover:text-yellow-500")}
+                              className={cn("transition-all hover:scale-125", isWatchlisted ? "text-yellow-500" : "text-on-surface-variant/30 hover:text-yellow-500")}
                             >
-                              <Star className={cn("w-4 h-4", isWatchlisted && "fill-yellow-500")} />
+                              <Star className={cn("w-5 h-5", isWatchlisted && "fill-yellow-500")} />
                             </button>
-                            <div className="w-8 h-8 bg-surface-container rounded-lg flex items-center justify-center p-1.5">
+                            <div className="w-10 h-10 bg-surface-container-high rounded-xl flex items-center justify-center p-2 border border-outline-variant/10 shadow-inner group-hover:scale-110 transition-transform">
                               <img src={ticker.image} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                             </div>
                             <div>
-                              <p className="font-bold text-sm">{ticker.symbol.replace("USDT", "")}</p>
-                              <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-tighter">{ticker.timeframe} | {ticker.market}</p>
+                              <p className="font-black text-sm tracking-tight uppercase">{ticker.symbol.replace("USDT", "")}</p>
+                              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.timeframe} | {ticker.market}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 font-mono text-xs font-bold">
+                        <td className="p-6 font-mono text-xs font-black tracking-tighter text-on-surface">
                           ${parseFloat(ticker.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
                         </td>
-                        <td className="p-4">
+                        <td className="p-6">
                           <div className={cn(
-                            "flex items-center gap-1 text-xs font-black",
-                            isBullish ? "text-primary" : "text-secondary"
+                            "flex items-center gap-2 text-[11px] font-black px-3 py-1 rounded-lg w-fit border shadow-sm",
+                            isBullish ? "text-primary bg-primary/10 border-primary/20" : "text-secondary bg-secondary/10 border-secondary/20"
                           )}>
-                            {isBullish ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                            {isBullish ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                             {ticker.priceChangePercent}%
                           </div>
                         </td>
-                        <td className="p-4">
-                          <div className="space-y-1">
-                            <p className="text-xs font-mono font-bold">${ticker.entry?.toFixed(2)}</p>
-                            <div className="w-24 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                        <td className="p-6">
+                          <div className="space-y-2">
+                            <p className="text-xs font-mono font-black text-on-surface">${ticker.entry?.toFixed(2)}</p>
+                            <div className="w-28 h-1.5 bg-surface-container-highest rounded-full overflow-hidden shadow-inner">
                               <div 
-                                className={cn("h-full transition-all duration-1000", isBullish ? "bg-primary" : "bg-secondary")}
+                                className={cn("h-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,255,163,0.5)]", isBullish ? "bg-primary" : "bg-secondary")}
                                 style={{ width: `${Math.max(5, 100 - (ticker.proximity || 0) * 20)}%` }}
                               ></div>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4">
-                          <div className="flex gap-1">
+                        <td className="p-6">
+                          <div className="flex gap-2">
                             {ticker.takeProfits?.slice(0, 3).map((tp, i) => (
-                              <div key={i} className="px-1.5 py-0.5 bg-surface-container rounded text-[8px] font-bold border border-outline-variant/10">
+                              <div key={i} className="px-2 py-1 bg-surface-container-high rounded-lg text-[9px] font-black border border-outline-variant/10 shadow-sm text-on-surface-variant uppercase">
                                 T{i+1}: ${tp.toFixed(2)}
                               </div>
                             ))}
                           </div>
                         </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-10 h-10 rounded-full border-2 border-primary/20 flex items-center justify-center relative">
+                        <td className="p-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full border-2 border-primary/20 flex items-center justify-center relative shadow-lg">
                               <svg className="w-full h-full -rotate-90">
                                 <circle
-                                  cx="20" cy="20" r="18"
-                                  fill="none" stroke="currentColor" strokeWidth="2"
-                                  className="text-primary/10"
+                                  cx="24" cy="24" r="21"
+                                  fill="none" stroke="currentColor" strokeWidth="3"
+                                  className="text-primary/5"
                                 />
                                 <circle
-                                  cx="20" cy="20" r="18"
-                                  fill="none" stroke="currentColor" strokeWidth="2"
-                                  strokeDasharray={113}
-                                  strokeDashoffset={113 - (113 * (ticker.consensus || 0)) / 100}
-                                  className="text-primary"
+                                  cx="24" cy="24" r="21"
+                                  fill="none" stroke="currentColor" strokeWidth="3"
+                                  strokeDasharray={132}
+                                  strokeDashoffset={132 - (132 * (ticker.consensus || 0)) / 100}
+                                  className="text-primary drop-shadow-[0_0_5px_rgba(0,255,163,0.5)]"
                                 />
                               </svg>
-                              <span className="absolute text-[8px] font-black">{ticker.consensus}%</span>
+                              <span className="absolute text-[9px] font-black text-on-surface">{ticker.consensus}%</span>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
+                        <td className="p-6">
+                          <div className="flex items-center gap-3">
                             <button 
                               onClick={(e) => { e.stopPropagation(); onShowFundamentals(ticker.symbol); }}
-                              className="p-2 bg-surface-container-highest text-on-surface-variant hover:bg-primary/10 hover:text-primary rounded-lg transition-all"
+                              className="p-3 bg-surface-container-high text-on-surface-variant hover:border-primary/30 hover:text-primary rounded-xl transition-all border border-outline-variant/10 shadow-lg"
                               title="Historial Fundamental"
                             >
-                              <Info className="w-4 h-4" />
+                              <Info className="w-5 h-5" />
                             </button>
                             <button 
                               onClick={(e) => onToggleAlert(e, ticker.symbol)}
                               className={cn(
-                                "p-2 rounded-lg transition-all",
-                                isAlertEnabled ? "bg-primary/20 text-primary" : "bg-surface-container-highest text-on-surface-variant hover:bg-primary/10"
+                                "p-3 rounded-xl transition-all border shadow-lg",
+                                isAlertEnabled ? "bg-primary/20 text-primary border-primary/30" : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:border-primary/30 hover:text-primary"
                               )}
                             >
-                              <Bell className={cn("w-4 h-4", isAlertEnabled && "fill-primary")} />
+                              <Bell className={cn("w-5 h-5", isAlertEnabled && "fill-primary")} />
                             </button>
                             <Link 
                               to={`/signal/${ticker.symbol}`}
-                              className="p-2 bg-primary text-on-primary rounded-lg hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-90"
+                              className="p-3 bg-primary text-on-primary rounded-xl hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-90 border border-primary/20"
                             >
-                              <Target className="w-4 h-4" />
+                              <Target className="w-5 h-5" />
                             </Link>
                           </div>
                         </td>
@@ -251,7 +251,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
           >
             {tickers.map((ticker) => (
               <SignalCard 
@@ -278,75 +278,77 @@ const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, 
   return (
     <motion.div 
       layout
-      whileHover={{ y: -5 }}
+      whileHover={{ y: -10, scale: 1.02 }}
       className={cn(
-        "bg-surface-container-low rounded-3xl border border-outline-variant/10 p-6 space-y-4 relative overflow-hidden group",
-        isTriggered && "border-secondary shadow-[0_0_30px_rgba(255,107,107,0.2)] animate-pulse"
+        "trading-card p-8 space-y-6 relative overflow-hidden group/card",
+        isTriggered && "border-secondary shadow-[0_0_40px_rgba(255,107,107,0.3)] animate-pulse"
       )}
     >
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-surface-container rounded-2xl flex items-center justify-center p-2 shadow-inner">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
+      
+      <div className="flex justify-between items-start relative z-10">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center p-3 shadow-inner border border-outline-variant/10 group-hover/card:scale-110 transition-transform">
             <img src={ticker.image} alt="" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
           </div>
           <div>
-            <h4 className="font-bold text-lg">{ticker.symbol.replace("USDT", "")}</h4>
-            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{ticker.timeframe} | {ticker.market}</span>
+            <h4 className="font-black text-xl tracking-tighter uppercase text-on-surface">{ticker.symbol.replace("USDT", "")}</h4>
+            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.timeframe} | {ticker.market}</span>
           </div>
         </div>
         <div className="flex gap-2">
           <button 
             onClick={onShowFundamentals}
-            className="p-2 rounded-xl bg-surface-container-highest text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors"
+            className="p-3 rounded-xl bg-surface-container-high text-on-surface-variant hover:border-primary/30 hover:text-primary transition-all border border-outline-variant/10 shadow-lg"
             title="Historial Fundamental"
           >
-            <Info className="w-4 h-4" />
+            <Info className="w-5 h-5" />
           </button>
           <button 
             onClick={onToggleWatchlist}
-            className={cn("p-2 rounded-xl transition-colors", isWatchlisted ? "bg-yellow-500/10 text-yellow-500" : "bg-surface-container-highest text-on-surface-variant")}
+            className={cn("p-3 rounded-xl transition-all border shadow-lg", isWatchlisted ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/30" : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:text-yellow-500")}
           >
-            <Star className={cn("w-4 h-4", isWatchlisted && "fill-yellow-500")} />
+            <Star className={cn("w-5 h-5", isWatchlisted && "fill-yellow-500")} />
           </button>
           <button 
             onClick={onToggleAlert}
-            className={cn("p-2 rounded-xl transition-colors", isAlertEnabled ? "bg-primary/10 text-primary" : "bg-surface-container-highest text-on-surface-variant")}
+            className={cn("p-3 rounded-xl transition-all border shadow-lg", isAlertEnabled ? "bg-primary/10 text-primary border-primary/30" : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:text-primary")}
           >
-            <Bell className={cn("w-4 h-4", isAlertEnabled && "fill-primary")} />
+            <Bell className={cn("w-5 h-5", isAlertEnabled && "fill-primary")} />
           </button>
         </div>
       </div>
 
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-end relative z-10">
         <div>
-          <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Precio Actual</p>
-          <p className="text-2xl font-headline font-bold">${parseFloat(ticker.price).toLocaleString()}</p>
+          <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-50">Precio Actual</p>
+          <p className="text-3xl font-black tracking-tighter text-on-surface">${parseFloat(ticker.price).toLocaleString()}</p>
         </div>
         <div className={cn(
-          "px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1",
-          isBullish ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+          "px-4 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-2 border shadow-lg",
+          isBullish ? "bg-primary/10 text-primary border-primary/20" : "bg-secondary/10 text-secondary border-secondary/20"
         )}>
-          {isBullish ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+          {isBullish ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
           {ticker.priceChangePercent}%
         </div>
       </div>
 
-      <div className="p-4 bg-surface-container rounded-2xl border border-outline-variant/5 space-y-3">
-        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-          <span className="text-on-surface-variant">Entrada Sugerida</span>
-          <span className="text-primary">${ticker.entry?.toFixed(2)}</span>
+      <div className="p-6 bg-surface-container-high rounded-[2rem] border border-outline-variant/10 space-y-4 relative z-10 shadow-inner">
+        <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
+          <span className="text-on-surface-variant opacity-60">Entrada Sugerida</span>
+          <span className="text-primary drop-shadow-[0_0_5px_rgba(0,255,163,0.3)]">${ticker.entry?.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-          <span className="text-on-surface-variant">Stop Loss</span>
-          <span className="text-secondary">${ticker.stopLoss?.toFixed(2)}</span>
+        <div className="flex justify-between text-[11px] font-black uppercase tracking-widest">
+          <span className="text-on-surface-variant opacity-60">Stop Loss</span>
+          <span className="text-secondary drop-shadow-[0_0_5px_rgba(255,107,107,0.3)]">${ticker.stopLoss?.toFixed(2)}</span>
         </div>
-        <div className="pt-2 border-t border-outline-variant/5">
-          <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Objetivos de Ganancia</p>
-          <div className="flex gap-2">
+        <div className="pt-4 border-t border-outline-variant/10">
+          <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-3 opacity-50">Objetivos de Ganancia</p>
+          <div className="flex gap-3">
             {ticker.takeProfits?.slice(0, 3).map((tp: number, i: number) => (
-              <div key={i} className="flex-1 bg-surface-container-highest p-2 rounded-lg text-center">
-                <p className="text-[8px] font-bold text-on-surface-variant mb-1">TP{i+1}</p>
-                <p className="text-[10px] font-bold">${tp.toFixed(2)}</p>
+              <div key={i} className="flex-1 bg-surface-container-highest/50 p-3 rounded-2xl text-center border border-outline-variant/5 group/tp hover:border-primary/30 transition-all">
+                <p className="text-[9px] font-black text-on-surface-variant mb-1 uppercase opacity-50 group-hover/tp:text-primary transition-colors">TP{i+1}</p>
+                <p className="text-[11px] font-black text-on-surface tracking-tighter">${tp.toFixed(2)}</p>
               </div>
             ))}
           </div>
@@ -355,9 +357,9 @@ const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, 
 
       <Link 
         to={`/signal/${ticker.symbol}`}
-        className="w-full py-3 bg-on-background text-background rounded-xl font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-primary hover:text-on-primary transition-all active:scale-95"
+        className="w-full py-4 bg-on-background text-background rounded-2xl font-black uppercase tracking-widest text-[11px] flex items-center justify-center gap-3 hover:bg-primary hover:text-on-primary transition-all active:scale-95 shadow-xl hover:shadow-primary/30 relative z-10"
       >
-        <Target className="w-4 h-4" />
+        <Target className="w-5 h-5" />
         Analizar en Profundidad
       </Link>
     </motion.div>

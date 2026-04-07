@@ -66,7 +66,35 @@
 }
 
 .glass-card {
-  @apply bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10;
+  @apply bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10 rounded-2xl overflow-hidden;
+}
+
+.trading-card {
+  @apply bg-surface-container-high/40 backdrop-blur-md border border-outline-variant/10 rounded-3xl p-6 transition-all duration-300 hover:border-primary/20;
+}
+
+.trading-grid {
+  @apply grid grid-cols-1 md:grid-cols-12 gap-6;
+}
+
+.section-title {
+  @apply text-[10px] font-black uppercase tracking-[0.2em] text-primary mb-4;
+}
+
+.value-up {
+  @apply text-primary font-bold;
+}
+
+.value-down {
+  @apply text-secondary font-bold;
+}
+
+.btn-primary {
+  @apply px-6 py-3 bg-primary text-on-primary font-black uppercase tracking-widest text-[10px] rounded-xl transition-all hover:scale-105 active:scale-95;
+}
+
+.btn-secondary {
+  @apply px-6 py-3 bg-surface-container-highest text-on-surface font-black uppercase tracking-widest text-[10px] rounded-xl border border-outline-variant/20 transition-all hover:bg-surface-bright;
 }
 
 .wyckoff-label {

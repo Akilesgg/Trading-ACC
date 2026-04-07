@@ -42,108 +42,115 @@ const MarketPage = () => {
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="pt-24 pb-32 px-8 max-w-[1600px] mx-auto space-y-10"
     >
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 trading-card p-8">
         <div>
-          <h1 className="font-headline text-3xl font-bold tracking-tighter uppercase">Mercados</h1>
-          <p className="text-on-surface-variant font-label text-xs uppercase tracking-widest mt-1">Explora todos los activos disponibles</p>
+          <h1 className="text-4xl font-black uppercase tracking-tighter text-on-surface mb-2">Mercados Spot</h1>
+          <p className="text-primary font-black text-[11px] uppercase tracking-[0.3em] opacity-70">Explora activos en tiempo real con inteligencia algorítmica</p>
         </div>
-        <div className="flex w-full md:w-auto gap-3">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-on-surface-variant" />
+        <div className="flex w-full md:w-auto gap-4">
+          <div className="relative flex-1 md:w-80 group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-on-surface-variant group-focus-within:text-primary transition-colors" />
             <input 
               type="text" 
               placeholder="BUSCAR ACTIVO..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-surface-container-high border-none rounded-xl pl-10 pr-4 py-3 text-xs font-bold uppercase tracking-widest focus:ring-2 focus:ring-primary outline-none transition-all"
+              className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl pl-12 pr-6 py-4 text-[11px] font-black uppercase tracking-widest focus:outline-none focus:border-primary/50 transition-all shadow-inner placeholder:text-on-surface-variant/30"
             />
           </div>
-          <button className="p-3 bg-surface-container-high rounded-xl hover:bg-surface-container-highest transition-all">
-            <Filter className="w-5 h-5 text-on-surface-variant" />
+          <button className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 text-on-surface-variant hover:text-primary transition-all shadow-lg">
+            <Filter className="w-6 h-6" />
           </button>
-          <div className="flex bg-surface-container-high rounded-xl p-1">
+          <div className="flex bg-surface-container-high rounded-2xl p-1.5 border border-outline-variant/10 shadow-inner">
             <button 
               onClick={() => setView("list")}
-              className={cn("p-2 rounded-lg transition-all", view === "list" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
+              className={cn("p-3 rounded-xl transition-all", view === "list" ? "bg-background text-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
             >
-              <List className="w-4 h-4" />
+              <List className="w-5 h-5" />
             </button>
             <button 
               onClick={() => setView("grid")}
-              className={cn("p-2 rounded-lg transition-all", view === "grid" ? "bg-primary text-on-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
+              className={cn("p-3 rounded-xl transition-all", view === "grid" ? "bg-background text-primary shadow-lg" : "text-on-surface-variant hover:text-on-surface")}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-5 h-5" />
             </button>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="flex flex-col justify-center items-center h-96 gap-6">
+          <div className="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin shadow-[0_0_40px_rgba(0,255,163,0.2)]"></div>
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface-variant animate-pulse">Sincronizando Datos de Mercado...</p>
         </div>
       ) : (
         <div className={cn(
-          "grid gap-4",
-          view === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" : "grid-cols-1"
+          "grid gap-8",
+          view === "grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "grid-cols-1"
         )}>
           {filteredData.map((coin) => (
             <motion.div
               layout
               key={coin.id}
+              whileHover={{ y: -10, scale: 1.02 }}
               className={cn(
-                "bg-surface-container-low border border-outline-variant/10 rounded-2xl hover:border-primary/30 transition-all group",
-                view === "list" ? "flex items-center justify-between p-4 px-6" : "p-6 flex flex-col gap-4"
+                "trading-card group/card relative overflow-hidden",
+                view === "list" ? "flex items-center justify-between p-6 px-10" : "p-8 flex flex-col gap-6"
               )}
             >
-              <div className="flex items-center gap-4">
-                <img src={coin.image} alt={coin.name} className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="flex items-center gap-6 relative z-10">
+                <div className="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center p-3 border border-outline-variant/10 group-hover/card:scale-110 transition-transform shadow-inner">
+                  <img src={coin.image} alt={coin.name} className="w-10 h-10 object-contain" referrerPolicy="no-referrer" />
+                </div>
                 <div>
-                  <p className="font-bold uppercase tracking-tight">{coin.name}</p>
-                  <p className="text-xs text-on-surface-variant font-bold uppercase tracking-widest">{coin.symbol}</p>
+                  <p className="text-lg font-black uppercase tracking-tighter text-on-surface mb-1">{coin.name}</p>
+                  <p className="text-[10px] text-on-surface-variant font-black uppercase tracking-widest opacity-50">{coin.symbol}</p>
                 </div>
               </div>
 
               {view === "list" && (
-                <div className="hidden md:block flex-1 mx-12">
-                  <div className="h-1 w-full bg-surface-container-highest rounded-full overflow-hidden">
+                <div className="hidden lg:block flex-1 mx-20 relative z-10">
+                  <div className="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden shadow-inner">
                     <div 
-                      className={cn("h-full rounded-full", coin.price_change_percentage_24h > 0 ? "bg-primary" : "bg-secondary")}
+                      className={cn("h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(0,255,163,0.5)]", coin.price_change_percentage_24h > 0 ? "bg-primary" : "bg-secondary")}
                       style={{ width: `${Math.min(Math.abs(coin.price_change_percentage_24h) * 5, 100)}%` }}
                     ></div>
                   </div>
                 </div>
               )}
 
-              <div className={cn("text-right", view === "grid" && "flex justify-between items-end")}>
+              <div className={cn("relative z-10", view === "list" ? "text-right flex items-center gap-12" : "flex justify-between items-end")}>
                 {view === "grid" && (
                   <div className="flex flex-col items-start">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Capitalización</p>
-                    <p className="text-xs font-bold">${(coin.market_cap / 1e9).toFixed(2)}B</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-2 opacity-50">Market Cap</p>
+                    <p className="text-sm font-black text-on-surface tracking-tighter">${(coin.market_cap / 1e9).toFixed(2)}B</p>
                   </div>
                 )}
-                <div>
-                  <p className="font-headline font-bold text-lg">${coin.current_price.toLocaleString()}</p>
+                <div className="text-right">
+                  <p className="text-2xl font-black text-on-surface tracking-tighter mb-2">${coin.current_price.toLocaleString()}</p>
                   <div className={cn(
-                    "flex items-center justify-end gap-1 text-xs font-bold",
-                    coin.price_change_percentage_24h > 0 ? "text-primary" : "text-secondary"
+                    "flex items-center justify-end gap-2 text-[11px] font-black uppercase tracking-widest px-3 py-1 rounded-lg border shadow-lg",
+                    coin.price_change_percentage_24h > 0 ? "text-primary bg-primary/10 border-primary/20" : "text-secondary bg-secondary/10 border-secondary/20"
                   )}>
-                    {coin.price_change_percentage_24h > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {coin.price_change_percentage_24h > 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                     {coin.price_change_percentage_24h.toFixed(2)}%
                   </div>
                 </div>
               </div>
 
-              <div className={cn("flex gap-2", view === "list" ? "ml-6" : "mt-2")}>
-                <button className="flex-1 bg-surface-container-highest hover:bg-primary hover:text-on-primary p-3 rounded-xl transition-all group/btn">
-                  <ArrowUpRight className="w-4 h-4 mx-auto group-hover/btn:scale-110 transition-transform" />
+              <div className={cn("flex gap-3 relative z-10", view === "list" ? "ml-10" : "mt-2")}>
+                <button className="flex-1 bg-surface-container-high hover:bg-primary hover:text-on-primary p-4 rounded-2xl border border-outline-variant/10 transition-all group/btn shadow-lg">
+                  <ArrowUpRight className="w-5 h-5 mx-auto group-hover/btn:scale-125 transition-transform" />
                 </button>
-                <button className="flex-1 bg-surface-container-highest hover:bg-secondary hover:text-on-primary p-3 rounded-xl transition-all group/btn">
-                  <ArrowDownRight className="w-4 h-4 mx-auto group-hover/btn:scale-110 transition-transform" />
+                <button className="flex-1 bg-surface-container-high hover:bg-secondary hover:text-on-primary p-4 rounded-2xl border border-outline-variant/10 transition-all group/btn shadow-lg">
+                  <ArrowDownRight className="w-5 h-5 mx-auto group-hover/btn:scale-125 transition-transform" />
                 </button>
               </div>
             </motion.div>
@@ -151,60 +158,68 @@ const MarketPage = () => {
         </div>
       )}
 
-      {/* Heatmap Section Placeholder */}
-      <div className="bg-surface-container-high p-8 rounded-[2rem] border border-outline-variant/10 space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="font-headline text-2xl font-bold uppercase tracking-tighter">Mapa de Calor del Mercado</h2>
+      {/* Heatmap Section */}
+      <div className="trading-card p-10 space-y-10 rounded-[3rem] shadow-[0_0_100px_rgba(0,255,163,0.05)]">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-lg">
+              <LayoutGrid className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-on-surface">Mapa de Calor del Mercado</h2>
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Visualización de dominancia y volatilidad</p>
+            </div>
+          </div>
           <button 
             onClick={handleRefreshMap}
             disabled={refreshing}
             className={cn(
-              "bg-primary text-on-primary px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest active:scale-95 transition-all flex items-center gap-2",
+              "btn-primary px-10 py-4 text-[11px]",
               refreshing && "opacity-50 cursor-not-allowed"
             )}
           >
             {refreshing ? (
-              <>
-                <div className="w-3 h-3 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></div>
+              <div className="flex items-center gap-3">
+                <div className="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></div>
                 ACTUALIZANDO...
-              </>
+              </div>
             ) : "Actualizar Mapa"}
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 h-96">
-          {/* Mock Heatmap Blocks */}
-          <div className="bg-primary/80 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
-            <span className="text-xl font-bold">BTC</span>
-            <span className="text-xs font-bold">+2.4%</span>
-          </div>
-          <div className="bg-primary/60 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
-            <span className="text-xl font-bold">ETH</span>
-            <span className="text-xs font-bold">+1.8%</span>
-          </div>
-          <div className="bg-secondary/70 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
-            <span className="text-xl font-bold">SOL</span>
-            <span className="text-xs font-bold">-3.2%</span>
-          </div>
-          <div className="bg-primary/40 rounded-lg flex flex-col items-center justify-center text-on-primary p-4">
-            <span className="text-xl font-bold">BNB</span>
-            <span className="text-xs font-bold">+0.5%</span>
-          </div>
-          <div className="bg-secondary/40 rounded-lg flex flex-col items-center justify-center text-on-primary p-4 col-span-2">
-            <span className="text-xl font-bold">XRP</span>
-            <span className="text-xs font-bold">-0.8%</span>
-          </div>
-          <div className="bg-primary/20 rounded-lg flex flex-col items-center justify-center text-on-surface p-4 col-span-2 row-span-2">
-            <span className="text-xl font-bold">ADA</span>
-            <span className="text-xs font-bold">+0.1%</span>
-          </div>
-          <div className="bg-secondary/90 rounded-lg flex flex-col items-center justify-center text-on-primary p-4 col-span-2">
-            <span className="text-xl font-bold">DOGE</span>
-            <span className="text-xs font-bold">-5.4%</span>
-          </div>
-          <div className="bg-primary/90 rounded-lg flex flex-col items-center justify-center text-on-primary p-4 col-span-2">
-            <span className="text-xl font-bold">AVAX</span>
-            <span className="text-xs font-bold">+4.2%</span>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 h-[500px]">
+          {/* Mock Heatmap Blocks with enhanced styling */}
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-primary/80 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-primary/20 shadow-2xl shadow-primary/20 cursor-pointer group">
+            <span className="text-3xl font-black tracking-tighter group-hover:scale-110 transition-transform">BTC</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">+2.4%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-primary/60 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-primary/20 shadow-2xl shadow-primary/10 cursor-pointer group">
+            <span className="text-3xl font-black tracking-tighter group-hover:scale-110 transition-transform">ETH</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">+1.8%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-secondary/70 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-secondary/20 shadow-2xl shadow-secondary/20 cursor-pointer group">
+            <span className="text-3xl font-black tracking-tighter group-hover:scale-110 transition-transform">SOL</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">-3.2%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-primary/40 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-primary/20 cursor-pointer group">
+            <span className="text-3xl font-black tracking-tighter group-hover:scale-110 transition-transform">BNB</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">+0.5%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-secondary/40 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-secondary/20 col-span-2 cursor-pointer group">
+            <span className="text-4xl font-black tracking-tighter group-hover:scale-110 transition-transform">XRP</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">-0.8%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-primary/20 rounded-3xl flex flex-col items-center justify-center text-on-surface p-6 border border-primary/20 col-span-2 row-span-2 cursor-pointer group">
+            <span className="text-5xl font-black tracking-tighter group-hover:scale-110 transition-transform">ADA</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-50">+0.1%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-secondary/90 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-secondary/20 shadow-2xl shadow-secondary/30 col-span-2 cursor-pointer group">
+            <span className="text-4xl font-black tracking-tighter group-hover:scale-110 transition-transform">DOGE</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">-5.4%</span>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} className="bg-primary/90 rounded-3xl flex flex-col items-center justify-center text-on-primary p-6 border border-primary/20 shadow-2xl shadow-primary/30 col-span-2 cursor-pointer group">
+            <span className="text-4xl font-black tracking-tighter group-hover:scale-110 transition-transform">AVAX</span>
+            <span className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">+4.2%</span>
+          </motion.div>
         </div>
       </div>
     </motion.div>

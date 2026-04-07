@@ -271,41 +271,50 @@ const Dashboard = () => {
         isSendingTest={isSendingTest}
       />
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="trading-grid">
         <MarketPulse sentiment={sentiment} onShowSettings={() => setShowNotifSettings(true)} />
-        <SignalSummary signals={signalStats} activeFilter={filter} onFilterClick={setFilter} />
-      </section>
+        <div className="md:col-span-4">
+          <SignalSummary signals={signalStats} activeFilter={filter} onFilterClick={setFilter} />
+        </div>
+      </div>
 
-      <section className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
+      <div className="trading-grid">
+        <div className="md:col-span-8">
           <WhaleFeed whaleMovements={whaleMovements} topTraders={topTraders} largeTransactions={largeTransactions} />
         </div>
-        <NewsFeed economicEvents={economicEvents} />
-      </section>
+        <div className="md:col-span-4">
+          <NewsFeed economicEvents={economicEvents} />
+        </div>
+      </div>
 
       <section className="space-y-6">
-        <div className="bg-surface-container-low p-6 rounded-2xl border border-outline-variant/10 space-y-4">
+        <div className="trading-card space-y-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Brain className="w-5 h-5 text-primary" />
-              <h3 className="text-sm font-black uppercase tracking-widest">Estrategias por Temporalidad</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center border border-primary/20">
+                <Brain className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="section-title mb-0">Estrategias por Temporalidad</h3>
+                <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Modelos de ejecución optimizados</p>
+              </div>
             </div>
             <button 
               onClick={exportToZip}
-              className="flex items-center gap-2 px-4 py-2 bg-surface-container-highest rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 hover:text-primary transition-all"
+              className="btn-secondary flex items-center gap-2"
             >
               <Download className="w-3 h-3" />
               Exportar Auditoría
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {strategies.map((strat) => (
-              <div key={strat.tf} className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 space-y-1">
+              <div key={strat.tf} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-2 group hover:border-primary/30 transition-all">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black text-primary">{strat.tf}</span>
-                  <span className="text-[8px] font-bold text-on-surface-variant uppercase">{strat.name}</span>
+                  <span className="text-[10px] font-black text-primary uppercase tracking-widest">{strat.tf}</span>
+                  <span className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">{strat.name}</span>
                 </div>
-                <p className="text-[10px] text-on-surface leading-tight font-medium">{strat.desc}</p>
+                <p className="text-[10px] text-on-surface leading-tight font-black uppercase tracking-tighter">{strat.desc}</p>
               </div>
             ))}
           </div>

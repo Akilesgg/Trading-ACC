@@ -48,23 +48,23 @@ const TerminalLayout: React.FC<TerminalLayoutProps> = ({ children }) => {
         {layout.map((item: any) => (
           <div 
             key={item.i} 
-            className="bg-surface-container-low border border-outline-variant/10 rounded-xl overflow-hidden shadow-sm flex flex-col group"
+            className="trading-card p-0 flex flex-col group overflow-hidden"
           >
-            <div className="drag-handle bg-surface-container-high/30 px-4 py-2 border-b border-outline-variant/10 flex items-center justify-between cursor-grab active:cursor-grabbing">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
+            <div className="drag-handle bg-surface-container-high/50 px-5 py-3 border-b border-outline-variant/10 flex items-center justify-between cursor-grab active:cursor-grabbing group-hover:bg-surface-container-high transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-primary/40 shadow-[0_0_8px_rgba(0,255,163,0.3)]" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant group-hover:text-primary transition-colors">
                   {item.i}
                 </span>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-1 h-1 rounded-full bg-on-surface-variant/20" />
-                <div className="w-1 h-1 rounded-full bg-on-surface-variant/20" />
-                <div className="w-1 h-1 rounded-full bg-on-surface-variant/20" />
+              <div className="flex gap-1.5 opacity-30 group-hover:opacity-100 transition-opacity">
+                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40" />
+                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40" />
+                <div className="w-1.5 h-1.5 rounded-full bg-on-surface-variant/40" />
               </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              {children[item.i] || <div className="p-4 text-xs text-on-surface-variant italic">Widget {item.i} not found</div>}
+            <div className="flex-1 overflow-hidden relative">
+              {children[item.i] || <div className="p-6 text-[10px] font-black uppercase tracking-widest text-on-surface-variant italic opacity-50">Widget {item.i} not found</div>}
             </div>
           </div>
         ))}
