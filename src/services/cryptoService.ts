@@ -111,6 +111,86 @@ export function connectTickerStream(symbol: string, onMessage: (data: any) => vo
   return ws;
 }
 
+export interface AssetFundamental {
+  symbol: string;
+  name: string;
+  type: "Crypto" | "Meme" | "Stablecoin" | "DeFi" | "L1" | "L2";
+  project: string;
+  summary: string;
+  potential: string;
+}
+
+export async function fetchAssetFundamentals(symbol: string): Promise<AssetFundamental> {
+  const data: Record<string, AssetFundamental> = {
+    "BTC": {
+      symbol: "BTC",
+      name: "Bitcoin",
+      type: "Crypto",
+      project: "Satoshi Nakamoto",
+      summary: "La primera criptomoneda descentralizada, diseñada como oro digital y reserva de valor global.",
+      potential: "Alto como reserva de valor institucional y protección contra la inflación fiat."
+    },
+    "ETH": {
+      symbol: "ETH",
+      name: "Ethereum",
+      type: "L1",
+      project: "Vitalik Buterin",
+      summary: "Plataforma de contratos inteligentes que permite la creación de DApps y el ecosistema DeFi.",
+      potential: "Líder en utilidad y adopción de contratos inteligentes, con potencial de deflación tras el Merge."
+    },
+    "SOL": {
+      symbol: "SOL",
+      name: "Solana",
+      type: "L1",
+      project: "Anatoly Yakovenko",
+      summary: "Blockchain de alto rendimiento enfocada en escalabilidad y bajas comisiones.",
+      potential: "Competidor directo de Ethereum en velocidad, con fuerte adopción en NFTs y retail."
+    },
+    "BNB": {
+      symbol: "BNB",
+      name: "Binance Coin",
+      type: "Crypto",
+      project: "Binance Ecosystem",
+      summary: "Token nativo de la red BNB Chain y el exchange Binance, utilizado para comisiones y gobernanza.",
+      potential: "Fuerte utilidad dentro del mayor exchange del mundo y ecosistema de apps descentralizadas."
+    },
+    "DOGE": {
+      symbol: "DOGE",
+      name: "Dogecoin",
+      type: "Meme",
+      project: "Billy Markus & Jackson Palmer",
+      summary: "La moneda meme original, ahora respaldada por una comunidad masiva y figuras como Elon Musk.",
+      potential: "Especulativo, pero con utilidad creciente en micropagos y propinas."
+    },
+    "PEPE": {
+      symbol: "PEPE",
+      name: "Pepe",
+      type: "Meme",
+      project: "Anónimo",
+      summary: "Moneda meme basada en el popular personaje de internet Pepe the Frog.",
+      potential: "Altamente volátil, depende puramente del sentimiento de la comunidad y hype en redes sociales."
+    },
+    "XRP": {
+      symbol: "XRP",
+      name: "Ripple",
+      type: "Crypto",
+      project: "Ripple Labs",
+      summary: "Diseñado para pagos transfronterizos rápidos y eficientes para instituciones financieras.",
+      potential: "Alto si logra resolver sus disputas legales y se convierte en el estándar bancario global."
+    }
+  };
+
+  const cleanSymbol = symbol.replace("USDT", "").toUpperCase();
+  return data[cleanSymbol] || {
+    symbol: cleanSymbol,
+    name: cleanSymbol,
+    type: "Crypto",
+    project: "Proyecto Comunitario",
+    summary: `Activo digital del ecosistema ${cleanSymbol}.`,
+    potential: "Depende de la adopción del mercado y desarrollos del protocolo."
+  };
+}
+
 export async function fetchEconomicEvents() {
   // Mocking economic calendar data as it usually requires paid APIs
   return [

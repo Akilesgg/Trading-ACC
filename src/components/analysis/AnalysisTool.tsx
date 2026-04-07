@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Brain, ChevronDown, Search, X } from "lucide-react";
+import { Brain, ChevronDown, Search, X, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface AnalysisToolProps {
@@ -16,6 +16,7 @@ interface AnalysisToolProps {
   onSaveLayout: (name: string) => void;
   savedLayouts: Record<string, string[]>;
   onLoadLayout: (name: string) => void;
+  onShowFundamentals?: (symbol: string) => void;
 }
 
 const AnalysisTool: React.FC<AnalysisToolProps> = ({
@@ -31,7 +32,8 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
   onResetLayout,
   onSaveLayout,
   savedLayouts,
-  onLoadLayout
+  onLoadLayout,
+  onShowFundamentals
 }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -69,6 +71,14 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
                   {selectedAsset ? `${selectedAsset.name} (USDT)` : "Seleccionar Activo"}
                 </span>
                 <ChevronDown className={cn("w-4 h-4 text-on-surface-variant transition-transform", isSearchOpen && "rotate-180")} />
+              </button>
+              
+              <button 
+                onClick={() => onShowFundamentals(selectedSymbol)}
+                className="absolute -right-12 top-1/2 -translate-y-1/2 p-2 bg-surface-container-high border border-outline-variant/20 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
+                title="Historial Fundamental"
+              >
+                <Info className="w-5 h-5" />
               </button>
 
               {isSearchOpen && (

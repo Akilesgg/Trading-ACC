@@ -12,7 +12,8 @@ import {
   Star,
   Bell,
   Check,
-  Target
+  Target,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CryptoData } from "@/services/cryptoService";
@@ -31,6 +32,7 @@ interface SignalMatrixProps {
   enabledAlerts: Set<string>;
   triggeredAlerts: Set<string>;
   onToggleAlert: (e: React.MouseEvent, symbol: string) => void;
+  onShowFundamentals?: (symbol: string) => void;
 }
 
 const SignalMatrix: React.FC<SignalMatrixProps> = ({
@@ -45,7 +47,8 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
   sortConfig,
   enabledAlerts,
   triggeredAlerts,
-  onToggleAlert
+  onToggleAlert,
+  onShowFundamentals
 }) => {
   const filters = [
     { id: "all", label: "TODOS" },
@@ -212,6 +215,13 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                         <td className="p-4">
                           <div className="flex items-center gap-2">
                             <button 
+                              onClick={(e) => { e.stopPropagation(); onShowFundamentals(ticker.symbol); }}
+                              className="p-2 bg-surface-container-highest text-on-surface-variant hover:bg-primary/10 hover:text-primary rounded-lg transition-all"
+                              title="Historial Fundamental"
+                            >
+                              <Info className="w-4 h-4" />
+                            </button>
+                            <button 
                               onClick={(e) => onToggleAlert(e, ticker.symbol)}
                               className={cn(
                                 "p-2 rounded-lg transition-all",
@@ -252,6 +262,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                 isAlertEnabled={enabledAlerts.has(ticker.symbol)}
                 onToggleAlert={(e) => onToggleAlert(e, ticker.symbol)}
                 isTriggered={triggeredAlerts.has(ticker.symbol)}
+                onShowFundamentals={() => onShowFundamentals(ticker.symbol)}
               />
             ))}
           </motion.div>
@@ -261,7 +272,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
   );
 };
 
-const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, onToggleAlert, isTriggered }: any) => {
+const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, onToggleAlert, isTriggered, onShowFundamentals }: any) => {
   const isBullish = parseFloat(ticker.priceChangePercent) > 0;
   
   return (
@@ -284,6 +295,13 @@ const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, 
           </div>
         </div>
         <div className="flex gap-2">
+          <button 
+            onClick={onShowFundamentals}
+            className="p-2 rounded-xl bg-surface-container-highest text-on-surface-variant hover:bg-primary/10 hover:text-primary transition-colors"
+            title="Historial Fundamental"
+          >
+            <Info className="w-4 h-4" />
+          </button>
           <button 
             onClick={onToggleWatchlist}
             className={cn("p-2 rounded-xl transition-colors", isWatchlisted ? "bg-yellow-500/10 text-yellow-500" : "bg-surface-container-highest text-on-surface-variant")}

@@ -25,13 +25,25 @@ import {
   RefreshCw 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchTicker, CryptoData, fetchKlines, fetchEconomicEvents, fetchWhaleMovements, fetchTopTraders, fetchLargeTransactions, fetchCryptoData } from "@/services/cryptoService";
+import { 
+  fetchTicker, 
+  CryptoData, 
+  fetchKlines, 
+  fetchEconomicEvents, 
+  fetchWhaleMovements, 
+  fetchTopTraders, 
+  fetchLargeTransactions, 
+  fetchCryptoData,
+  fetchAssetFundamentals,
+  AssetFundamental
+} from "@/services/cryptoService";
 import { analyzeMarket, getMarketSentiment, fetchRealTimeNews } from "@/services/geminiService";
 import { toast } from "sonner";
 import AnalysisTool from "@/components/analysis/AnalysisTool";
 import MarketOverview from "@/components/analysis/MarketOverview";
 import AnalysisModule from "@/components/analysis/AnalysisModule";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import FundamentalModal from "@/components/common/FundamentalModal";
 
 const DEFAULT_LAYOUT = [
   "comparator",
@@ -87,6 +99,12 @@ const Analysis = () => {
 
   const [showHotSignal, setShowHotSignal] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+
+  const showFundamentals = async (symbol: string) => {
+    const data = await fetchAssetFundamentals(symbol);
+    setSelectedFundamental(data);
+  };
 
   const loadMarketData = useCallback(async () => {
     try {
@@ -253,6 +271,7 @@ const Analysis = () => {
         onSaveLayout={handleSaveLayout}
         savedLayouts={savedLayouts}
         onLoadLayout={() => {}}
+        onShowFundamentals={showFundamentals}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -493,6 +512,11 @@ const Analysis = () => {
           </div>
         )}
       </AnimatePresence>
+      {/* Fundamental Modal */}
+      <FundamentalModal 
+        fundamental={selectedFundamental} 
+        onClose={() => setSelectedFundamental(null)} 
+      />
     </div>
   );
 };

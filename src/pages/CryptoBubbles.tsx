@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { motion, AnimatePresence } from "motion/react";
-import { Zap, TrendingUp, TrendingDown, Search, Filter, Maximize2, RefreshCw, X, ArrowRight } from "lucide-react";
+import { Zap, TrendingUp, TrendingDown, Search, Filter, Maximize2, RefreshCw, X, ArrowRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchAssetFundamentals, AssetFundamental } from "@/services/cryptoService";
+import FundamentalModal from "@/components/common/FundamentalModal";
 
 interface CryptoBubbleData extends d3.SimulationNodeDatum {
   id: string;
@@ -19,6 +21,12 @@ const CryptoBubbles: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedToken, setSelectedToken] = useState<CryptoBubbleData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+
+  const showFundamentals = async (symbol: string) => {
+    const data = await fetchAssetFundamentals(symbol);
+    setSelectedFundamental(data);
+  };
 
   // Generate mock data for top 100 cryptos
   const generateMockData = () => {
@@ -116,31 +124,33 @@ const CryptoBubbles: React.FC = () => {
       .attr("height", d => sizeScale(d.marketCap))
       .attr("x", d => -sizeScale(d.marketCap) / 2)
       .attr("y", d => -sizeScale(d.marketCap) / 2)
-      .attr("rx", 12) // Rounded corners for a modern look
+      .attr("rx", 12) // Elegant corner radius
       .attr("fill", d => colorScale(d.priceChange))
-      .attr("stroke", d => d.priceChange >= 0 ? "#00ffa366" : "#ff4d4d66")
+      .attr("stroke", d => d.priceChange >= 0 ? "#00ffa388" : "#ff4d4d88")
       .attr("stroke-width", 2)
-      .attr("class", "cursor-pointer transition-all duration-500 hover:brightness-125 hover:scale-110")
-      .style("filter", d => `drop-shadow(0 10px 20px ${d.priceChange >= 0 ? "rgba(0,255,163,0.3)" : "rgba(255,77,77,0.3)"})`)
+      .attr("class", "cursor-pointer transition-all duration-700 hover:brightness-125 hover:scale-110")
+      .style("filter", d => `drop-shadow(0 20px 40px ${d.priceChange >= 0 ? "rgba(0,255,163,0.3)" : "rgba(255,77,77,0.3)"})`)
       .append("title")
       .text(d => `${d.name}: ${d.priceChange.toFixed(2)}%`);
 
-    // Floating Animation
+    // Floating & Breathing Animation
     node.each(function(d, i) {
-      d3.select(this)
-        .transition()
-        .duration(2000 + Math.random() * 3000)
-        .delay(Math.random() * 1000)
-        .on("start", function repeat() {
-          d3.select(this)
-            .transition()
-            .duration(2000 + Math.random() * 2000)
-            .attr("transform", `translate(${d.x}, ${d.y - 5})`)
-            .transition()
-            .duration(2000 + Math.random() * 2000)
-            .attr("transform", `translate(${d.x}, ${d.y + 5})`)
-            .on("end", repeat);
-        });
+      const element = d3.select(this);
+      
+      function float() {
+        element
+          .transition()
+          .duration(3000 + Math.random() * 3000)
+          .ease(d3.easeSinInOut)
+          .attr("transform", `translate(${d.x}, ${d.y - 12})`)
+          .transition()
+          .duration(3000 + Math.random() * 3000)
+          .ease(d3.easeSinInOut)
+          .attr("transform", `translate(${d.x}, ${d.y + 12})`)
+          .on("end", float);
+      }
+      
+      float();
     });
 
     // Symbol Text
@@ -369,9 +379,17 @@ const CryptoBubbles: React.FC = () => {
                   </p>
                 </div>
 
-                <button className="w-full py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                  Abrir en Analizador
-                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button className="py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                    Abrir Analizador
+                  </button>
+                  <button 
+                    onClick={() => showFundamentals(selectedToken.symbol)}
+                    className="py-4 bg-surface-container text-on-surface rounded-2xl font-black uppercase tracking-widest text-[10px] border border-outline-variant/10 hover:bg-surface-container-high transition-all flex items-center justify-center gap-2"
+                  >
+                    <Info className="w-4 h-4" /> Fundamentos
+                  </button>
+                </div>
               </motion.div>
             ) : (
               <motion.div 
@@ -391,6 +409,12 @@ const CryptoBubbles: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Fundamental Modal */}
+      <FundamentalModal 
+        fundamental={selectedFundamental} 
+        onClose={() => setSelectedFundamental(null)} 
+      />
     </div>
   );
 };

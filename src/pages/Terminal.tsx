@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import TerminalLayout from "../ui/layouts/TerminalLayout";
 import TerminalChart from "../ui/widgets/TerminalChart";
 import TerminalSignals from "../ui/widgets/TerminalSignals";
@@ -7,8 +8,10 @@ import TerminalConsole from "../ui/widgets/TerminalConsole";
 import TerminalTradePanel from "../ui/widgets/TerminalTradePanel";
 import { useTerminalStore } from "../store/useTerminalStore";
 import { SignalStatus } from "../core/signals/types";
-import { Search, Activity, Shield, History, Zap, TrendingUp } from "lucide-react";
+import { Search, Activity, Shield, History, Zap, TrendingUp, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { fetchAssetFundamentals, AssetFundamental } from "@/services/cryptoService";
+import FundamentalModal from "@/components/common/FundamentalModal";
 
 const Terminal: React.FC = () => {
   const { 
@@ -19,6 +22,13 @@ const Terminal: React.FC = () => {
     timeframe, 
     setTimeframe 
   } = useTerminalStore();
+
+  const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+
+  const showFundamentals = async (symbol: string) => {
+    const data = await fetchAssetFundamentals(symbol);
+    setSelectedFundamental(data);
+  };
 
   useEffect(() => {
     // Initial mock signal to show functionality
@@ -98,6 +108,13 @@ const Terminal: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <button 
+              onClick={() => showFundamentals(activeSymbol)}
+              className="p-2 hover:bg-surface-container-high rounded-xl transition-colors text-on-surface-variant hover:text-primary active:scale-95 duration-200"
+              title="Historial Fundamental"
+            >
+              <Info className="w-4 h-4" />
+            </button>
+            <button 
               onClick={() => {
                 localStorage.removeItem("terminal-storage");
                 window.location.reload();
@@ -133,6 +150,12 @@ const Terminal: React.FC = () => {
           }}
         </TerminalLayout>
       </div>
+
+      {/* Fundamental Modal */}
+      <FundamentalModal 
+        fundamental={selectedFundamental} 
+        onClose={() => setSelectedFundamental(null)} 
+      />
 
       {/* 5. FOOTER DEL ANALIZADOR */}
       <div className="h-10 bg-surface-container-low border-t border-outline-variant/10 px-6 flex items-center justify-between text-[8px] font-black uppercase tracking-widest text-on-surface-variant">

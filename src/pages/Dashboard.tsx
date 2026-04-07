@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   Brain,
   Info,
-  Download
+  Download,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -12,13 +13,16 @@ import {
   fetchWhaleMovements, 
   fetchTopTraders, 
   fetchLargeTransactions, 
-  fetchEconomicEvents 
+  fetchEconomicEvents,
+  fetchAssetFundamentals,
+  AssetFundamental
 } from "@/services/cryptoService";
 import { getMarketSentiment } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { sendTelegramAlert } from "@/services/telegramService";
 import { toast } from "sonner";
 import JSZip from "jszip";
+import FundamentalModal from "@/components/common/FundamentalModal";
 
 // Modular Components
 import MarketPulse from "@/components/dashboard/MarketPulse";
@@ -51,6 +55,13 @@ const Dashboard = () => {
   const [enabledAlerts, setEnabledAlerts] = useState<Set<string>>(new Set());
   const [triggeredAlerts, setTriggeredAlerts] = useState<Set<string>>(new Set());
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+
+  const showFundamentals = async (symbol: string) => {
+    const data = await fetchAssetFundamentals(symbol);
+    setSelectedFundamental(data);
+  };
 
   const loadData = useCallback(async () => {
     try {
@@ -313,8 +324,15 @@ const Dashboard = () => {
           enabledAlerts={enabledAlerts}
           triggeredAlerts={triggeredAlerts}
           onToggleAlert={toggleAlert}
+          onShowFundamentals={showFundamentals}
         />
       </section>
+
+      {/* Fundamental Modal */}
+      <FundamentalModal 
+        data={selectedFundamental} 
+        onClose={() => setSelectedFundamental(null)} 
+      />
     </motion.div>
   );
 };

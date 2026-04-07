@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { 
   Target, 
   Zap, 
@@ -16,20 +17,32 @@ import {
   Activity,
   BarChart3,
   ExternalLink,
-  Copy
+  Copy,
+  Info,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   fetchWhaleMovements, 
   fetchTopTraders, 
-  fetchLargeTransactions 
+  fetchLargeTransactions,
+  fetchAssetFundamentals,
+  AssetFundamental
 } from "@/services/cryptoService";
+import FundamentalModal from "@/components/common/FundamentalModal";
 
 const CopyTrading: React.FC = () => {
+  const navigate = useNavigate();
   const [whaleMovements, setWhaleMovements] = useState<any[]>([]);
   const [topTraders, setTopTraders] = useState<any[]>([]);
   const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+
+  const showFundamentals = async (symbol: string) => {
+    const data = await fetchAssetFundamentals(symbol);
+    setSelectedFundamental(data);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -274,13 +287,30 @@ const CopyTrading: React.FC = () => {
                     </div>
                   </div>
 
-                  <button className="w-full py-3 bg-primary text-black rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20">
-                    <Copy className="w-3 h-3" /> Copiar Estrategia
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => navigate("/terminal")}
+                      className="py-3 bg-primary text-black rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                    >
+                      <Activity className="w-3 h-3" /> Analizar
+                    </button>
+                    <button 
+                      onClick={() => showFundamentals(trader.trade.split(" ")[1])}
+                      className="py-3 bg-surface-container text-on-surface rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-surface-container-high transition-colors border border-outline-variant/10"
+                    >
+                      <Info className="w-3 h-3" /> Fundamentos
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           </section>
+
+          {/* Fundamental Modal */}
+          <FundamentalModal 
+            fundamental={selectedFundamental} 
+            onClose={() => setSelectedFundamental(null)} 
+          />
 
           {/* AI Recommendation Card */}
           <section className="bg-gradient-to-br from-orange-600 to-orange-800 rounded-3xl p-8 text-white space-y-6 shadow-2xl relative overflow-hidden group">
