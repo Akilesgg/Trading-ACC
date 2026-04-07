@@ -68,9 +68,9 @@ const CryptoBubbles: React.FC = () => {
     svg.selectAll("*").remove();
 
     // Scales
-    const radiusScale = d3.scaleSqrt()
+    const sizeScale = d3.scaleSqrt()
       .domain([d3.min(data, d => d.marketCap) || 0, d3.max(data, d => d.marketCap) || 1])
-      .range([15, 90]);
+      .range([30, 120]);
 
     const colorScale = d3.scaleLinear<string>()
       .domain([-7, 0, 7])
@@ -79,10 +79,10 @@ const CryptoBubbles: React.FC = () => {
     // Simulation
     const simulation = d3.forceSimulation<CryptoBubbleData>(data)
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("charge", d3.forceManyBody().strength(10))
-      .force("collide", d3.forceCollide<CryptoBubbleData>(d => radiusScale(d.marketCap) + 3))
-      .force("x", d3.forceX(width / 2).strength(0.05))
-      .force("y", d3.forceY(height / 2).strength(0.05))
+      .force("charge", d3.forceManyBody().strength(15))
+      .force("collide", d3.forceCollide<CryptoBubbleData>(d => (sizeScale(d.marketCap) / 2) + 5))
+      .force("x", d3.forceX(width / 2).strength(0.08))
+      .force("y", d3.forceY(height / 2).strength(0.08))
       .on("tick", () => {
         node.attr("transform", d => `translate(${d.x},${d.y})`);
       });
@@ -110,21 +110,45 @@ const CryptoBubbles: React.FC = () => {
         })
       );
 
-    // Bubble Circle
-    node.append("circle")
-      .attr("r", d => radiusScale(d.marketCap))
+    // Square (Rect)
+    node.append("rect")
+      .attr("width", d => sizeScale(d.marketCap))
+      .attr("height", d => sizeScale(d.marketCap))
+      .attr("x", d => -sizeScale(d.marketCap) / 2)
+      .attr("y", d => -sizeScale(d.marketCap) / 2)
+      .attr("rx", 12) // Rounded corners for a modern look
       .attr("fill", d => colorScale(d.priceChange))
-      .attr("stroke", d => d.priceChange >= 0 ? "#00ffa344" : "#ff4d4d44")
+      .attr("stroke", d => d.priceChange >= 0 ? "#00ffa366" : "#ff4d4d66")
       .attr("stroke-width", 2)
-      .attr("class", "cursor-pointer transition-all duration-300 hover:brightness-150")
-      .style("filter", d => `drop-shadow(0 0 ${Math.abs(d.priceChange) * 3}px ${d.priceChange >= 0 ? "#00ffa333" : "#ff4d4d33"})`);
+      .attr("class", "cursor-pointer transition-all duration-500 hover:brightness-125 hover:scale-110")
+      .style("filter", d => `drop-shadow(0 10px 20px ${d.priceChange >= 0 ? "rgba(0,255,163,0.3)" : "rgba(255,77,77,0.3)"})`)
+      .append("title")
+      .text(d => `${d.name}: ${d.priceChange.toFixed(2)}%`);
+
+    // Floating Animation
+    node.each(function(d, i) {
+      d3.select(this)
+        .transition()
+        .duration(2000 + Math.random() * 3000)
+        .delay(Math.random() * 1000)
+        .on("start", function repeat() {
+          d3.select(this)
+            .transition()
+            .duration(2000 + Math.random() * 2000)
+            .attr("transform", `translate(${d.x}, ${d.y - 5})`)
+            .transition()
+            .duration(2000 + Math.random() * 2000)
+            .attr("transform", `translate(${d.x}, ${d.y + 5})`)
+            .on("end", repeat);
+        });
+    });
 
     // Symbol Text
     node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", ".3em")
+      .attr("dy", ".1em")
       .attr("fill", "#fff")
-      .attr("font-size", d => Math.max(7, radiusScale(d.marketCap) / 2.8))
+      .attr("font-size", d => Math.max(10, sizeScale(d.marketCap) / 3))
       .attr("font-weight", "900")
       .attr("class", "pointer-events-none uppercase tracking-tighter")
       .text(d => d.symbol);
@@ -132,10 +156,10 @@ const CryptoBubbles: React.FC = () => {
     // Price Change Text
     node.append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", d => radiusScale(d.marketCap) / 1.6)
+      .attr("dy", d => sizeScale(d.marketCap) / 3)
       .attr("fill", "#fff")
       .attr("opacity", 0.9)
-      .attr("font-size", d => Math.max(5, radiusScale(d.marketCap) / 4.5))
+      .attr("font-size", d => Math.max(8, sizeScale(d.marketCap) / 5))
       .attr("font-weight", "bold")
       .attr("class", "pointer-events-none")
       .text(d => `${d.priceChange >= 0 ? "+" : ""}${d.priceChange.toFixed(2)}%`);
@@ -198,49 +222,49 @@ const CryptoBubbles: React.FC = () => {
       </div>
 
       {/* Main Content Layout */}
-      <div className="flex-1 flex gap-4 overflow-hidden">
+      <div className="flex-1 flex gap-3 overflow-hidden">
         {/* Left Sidebar: Market Stats */}
-        <div className="w-72 flex flex-col gap-4">
-          <div className="bg-surface-container-low/50 rounded-[2rem] border border-outline-variant/10 p-5 space-y-6 backdrop-blur-md">
-            <div className="flex items-center gap-2 border-b border-outline-variant/10 pb-3">
+        <div className="w-64 flex flex-col gap-3">
+          <div className="bg-surface-container-low/50 rounded-2xl border border-outline-variant/10 p-4 space-y-5 backdrop-blur-md">
+            <div className="flex items-center gap-2 border-b border-outline-variant/10 pb-2">
               <TrendingUp className="w-4 h-4 text-primary" />
-              <h3 className="text-[10px] font-black uppercase tracking-widest">Top Ganadores</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface">Top Ganadores</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {topGainers.map((token) => (
-                <div key={token.symbol} className="flex items-center justify-between group cursor-pointer" onClick={() => setSelectedToken(token)}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-surface-container-highest rounded-lg flex items-center justify-center font-black text-[10px]">{token.symbol[0]}</div>
-                    <span className="text-[10px] font-black uppercase">{token.symbol}</span>
+                <div key={token.symbol} className="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors" onClick={() => setSelectedToken(token)}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 bg-surface-container-highest rounded flex items-center justify-center font-black text-[9px]">{token.symbol[0]}</div>
+                    <span className="text-[9px] font-black uppercase">{token.symbol}</span>
                   </div>
-                  <span className="text-[10px] font-black text-primary">+{token.priceChange.toFixed(2)}%</span>
+                  <span className="text-[9px] font-black text-primary">+{token.priceChange.toFixed(2)}%</span>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-2 border-b border-outline-variant/10 pb-3 pt-4">
+            <div className="flex items-center gap-2 border-b border-outline-variant/10 pb-2 pt-2">
               <TrendingDown className="w-4 h-4 text-secondary" />
-              <h3 className="text-[10px] font-black uppercase tracking-widest">Top Perdedores</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface">Top Perdedores</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {topLosers.map((token) => (
-                <div key={token.symbol} className="flex items-center justify-between group cursor-pointer" onClick={() => setSelectedToken(token)}>
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-surface-container-highest rounded-lg flex items-center justify-center font-black text-[10px]">{token.symbol[0]}</div>
-                    <span className="text-[10px] font-black uppercase">{token.symbol}</span>
+                <div key={token.symbol} className="flex items-center justify-between group cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors" onClick={() => setSelectedToken(token)}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 bg-surface-container-highest rounded flex items-center justify-center font-black text-[9px]">{token.symbol[0]}</div>
+                    <span className="text-[9px] font-black uppercase">{token.symbol}</span>
                   </div>
-                  <span className="text-[10px] font-black text-secondary">{token.priceChange.toFixed(2)}%</span>
+                  <span className="text-[9px] font-black text-secondary">{token.priceChange.toFixed(2)}%</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-primary/5 rounded-[2rem] border border-primary/20 p-5 space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Análisis de Sentimiento</h3>
-            <p className="text-[10px] text-on-surface-variant leading-relaxed">
-              El mercado muestra una <span className="text-primary font-bold">fuerte acumulación</span> en activos de Capa 1. La dominancia de BTC se mantiene estable mientras las Alts comienzan a rotar capital.
+          <div className="bg-primary/5 rounded-2xl border border-primary/20 p-4 space-y-3">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-primary">Sentimiento</h3>
+            <p className="text-[9px] text-on-surface-variant leading-relaxed">
+              Acumulación <span className="text-primary font-bold">Alcista</span> detectada en Capa 1.
             </p>
-            <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+            <div className="h-1 bg-surface-container-highest rounded-full overflow-hidden">
               <div className="h-full bg-primary w-[65%]" />
             </div>
             <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-on-surface-variant">
@@ -251,33 +275,33 @@ const CryptoBubbles: React.FC = () => {
         </div>
 
         {/* Center: Main Bubble Chart */}
-        <div className="flex-1 relative bg-[#080a0c] rounded-[3rem] border border-outline-variant/10 overflow-hidden shadow-[inset_0_0_100px_rgba(0,0,0,0.5)]">
+        <div className="flex-1 relative bg-[#050708] rounded-2xl border border-outline-variant/10 overflow-hidden shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]">
           {loading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#080a0c]/80 backdrop-blur-xl z-50">
               <div className="w-20 h-20 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6 shadow-[0_0_40px_rgba(0,255,163,0.2)]" />
-              <p className="text-[12px] font-black uppercase tracking-[0.3em] text-primary animate-pulse">Sincronizando Nodos...</p>
+              <p className="text-[12px] font-black uppercase tracking-[0.3em] text-primary animate-pulse">Sincronizando Terminal...</p>
             </div>
           )}
           <svg ref={svgRef} className="w-full h-full" />
           
           {/* Legend Overlay */}
-          <div className="absolute bottom-10 left-10 flex items-center gap-8 bg-surface-container-low/40 backdrop-blur-xl p-5 rounded-[2rem] border border-outline-variant/10">
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-primary shadow-[0_0_10px_rgba(0,255,163,0.5)]" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-on-surface">Bullish</span>
+          <div className="absolute bottom-6 left-6 flex items-center gap-6 bg-surface-container-low/60 backdrop-blur-xl p-4 rounded-xl border border-outline-variant/10">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-primary shadow-[0_0_10px_rgba(0,255,163,0.5)]" />
+              <span className="text-[8px] font-black uppercase tracking-widest text-on-surface">Bullish</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-secondary shadow-[0_0_10px_rgba(255,77,77,0.5)]" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-on-surface">Bearish</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-secondary shadow-[0_0_10px_rgba(255,77,77,0.5)]" />
+              <span className="text-[8px] font-black uppercase tracking-widest text-on-surface">Bearish</span>
             </div>
-            <div className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant border-l border-outline-variant/20 pl-8">
-              Tamaño = Market Cap
+            <div className="text-[8px] font-black uppercase tracking-widest text-on-surface-variant border-l border-outline-variant/20 pl-6">
+              Área = Market Cap
             </div>
           </div>
         </div>
 
         {/* Right Sidebar: Token Details / Smart Analysis */}
-        <div className="w-80 flex flex-col gap-4">
+        <div className="w-72 flex flex-col gap-3">
           <AnimatePresence mode="wait">
             {selectedToken ? (
               <motion.div 
