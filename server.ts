@@ -2,13 +2,10 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
-import Stripe from "stripe";
 
 dotenv.config();
-
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,48 +16,6 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Stripe Checkout Route
-  app.post("/api/stripe/create-checkout-session", async (req, res) => {
-    try {
-      if (!stripe) {
-        return res.status(500).json({ error: "Stripe not configured on server" });
-      }
-
-      const { planId, userId } = req.body;
-      
-      const plans: Record<string, any> = {
-        "pro": { name: "Trading ACC PRO", price: 4900 },
-        "elite": { name: "Trading ACC ELITE", price: 9900 }
-      };
-
-      const plan = plans[planId];
-      if (!plan) return res.status(400).json({ error: "Invalid plan" });
-
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: { name: plan.name },
-              unit_amount: plan.price,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        success_url: `${req.headers.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${req.headers.origin}/pricing`,
-        metadata: { userId, planId }
-      });
-
-      res.json({ id: session.id, url: session.url });
-    } catch (error: any) {
-      console.error("Stripe Error:", error);
-      res.status(500).json({ error: error.message });
-    }
-  });
-
   // Gemini API Proxy Routes
   app.post("/api/ai/analyze", async (req, res) => {
     try {
@@ -70,8 +25,8 @@ async function startServer() {
         return res.status(500).json({ error: "GEMINI_API_KEY not configured on server" });
       }
 
-      const ai = new GoogleGenAI({ apiKey });
-      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
       let modePrompt = "";
       if (mode === "Scalping") {
@@ -142,8 +97,8 @@ async function startServer() {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "API Key missing" });
 
-      const ai = new GoogleGenAI({ apiKey });
-      const model = ai.getGenerativeModel({ 
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ 
         model: "gemini-3-flash-preview",
         generationConfig: { responseMimeType: "application/json" }
       });
@@ -187,8 +142,8 @@ async function startServer() {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "API Key missing" });
 
-      const ai = new GoogleGenAI({ apiKey });
-      const model = ai.getGenerativeModel({ 
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ 
         model: "gemini-3-flash-preview",
         generationConfig: { responseMimeType: "application/json" }
       });
@@ -229,8 +184,8 @@ async function startServer() {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return res.status(500).json({ error: "API Key missing" });
 
-      const ai = new GoogleGenAI({ apiKey });
-      const model = ai.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
 
       const result = await model.generateContent("Analiza el sentimiento actual del mercado cripto global en una frase corta y profesional en ESPAÑOL. Incluye una estimación del índice Fear & Greed.");
       const response = await result.response;

@@ -4,7 +4,6 @@ import { auth, onAuthStateChanged, User, signInWithPopup, googleProvider, signOu
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  plan: "Free" | "Pro" | "Elite";
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -30,13 +29,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toJSON: () => ({})
   } as any);
   const [loading, setLoading] = useState(false);
-  const [plan, setPlan] = useState<"Free" | "Pro" | "Elite">("Elite");
 
   const login = async () => {};
   const logout = async () => {};
 
   return (
-    <AuthContext.Provider value={{ user, loading, plan, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

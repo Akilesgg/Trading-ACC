@@ -57,16 +57,10 @@ const LandingPage = () => {
           >
             <button 
               onClick={() => user ? navigate("/dashboard") : login()}
-              className="btn-primary px-12 py-5 text-sm group"
+              className="btn-primary px-16 py-6 text-sm group"
             >
               {user ? "Ir al Dashboard" : "Comenzar Ahora"}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" />
-            </button>
-            <button 
-              onClick={() => navigate("/pricing")}
-              className="px-12 py-5 bg-surface-container-high border border-outline-variant/10 rounded-3xl text-sm font-black uppercase tracking-widest hover:bg-surface-container-highest transition-all"
-            >
-              Ver Planes
             </button>
           </motion.div>
 

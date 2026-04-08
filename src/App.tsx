@@ -48,7 +48,6 @@ import Terminal from "./pages/Terminal";
 import CopyTrading from "./pages/CopyTrading";
 import News from "./pages/News";
 import BTCComparison from "./pages/BTCComparison";
-import Pricing from "./pages/Pricing";
 import SignalHistory from "./pages/SignalHistory";
 import Landing from "./pages/Landing";
 import Onboarding from "./components/onboarding/Onboarding";
@@ -307,7 +306,6 @@ export default function App() {
                 <Route path="/copy-trading" element={<CopyTrading />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/btc-comparison" element={<BTCComparison />} />
-                <Route path="/pricing" element={<Pricing />} />
                 <Route path="/signals-history" element={<SignalHistory />} />
                 <Route path="/top-100" element={<CryptoBubbles />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
