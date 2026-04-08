@@ -11,8 +11,12 @@ const TerminalSignals: React.FC = () => {
     switch (status) {
       case SignalStatus.CONFIRMED: return "text-primary bg-primary/10 border-primary/20";
       case SignalStatus.INVALIDATED: return "text-secondary bg-secondary/10 border-secondary/20";
-      case SignalStatus.TP_HIT: return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
+      case SignalStatus.TP1_HIT:
+      case SignalStatus.TP2_HIT:
+      case SignalStatus.TP3_HIT:
+        return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
       case SignalStatus.SL_HIT: return "text-red-500 bg-red-500/10 border-red-500/20";
+      case SignalStatus.OPEN: return "text-blue-500 bg-blue-500/10 border-blue-500/20";
       default: return "text-on-surface-variant bg-surface-container-high border-outline-variant/10";
     }
   };

@@ -8,6 +8,7 @@ interface TerminalState {
   signals: TradingSignal[];
   addSignal: (signal: TradingSignal) => void;
   updateSignal: (id: string, status: any) => void;
+  updateSignals: (updatedSignals: TradingSignal[]) => void;
   activeSymbol: string;
   setActiveSymbol: (symbol: string) => void;
   timeframe: string;
@@ -34,6 +35,7 @@ export const useTerminalStore = create<TerminalState>()(
       updateSignal: (id, status) => set((state) => ({
         signals: state.signals.map(s => s.id === id ? { ...s, status } : s)
       })),
+      updateSignals: (updatedSignals) => set({ signals: updatedSignals }),
       activeSymbol: "BTCUSDT",
       setActiveSymbol: (activeSymbol) => set({ activeSymbol }),
       timeframe: "1h",

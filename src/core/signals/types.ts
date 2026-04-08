@@ -2,8 +2,11 @@ export enum SignalStatus {
   PENDING = "PENDING",
   CONFIRMED = "CONFIRMED",
   INVALIDATED = "INVALIDATED",
-  TP_HIT = "TP_HIT",
+  TP1_HIT = "TP1_HIT",
+  TP2_HIT = "TP2_HIT",
+  TP3_HIT = "TP3_HIT",
   SL_HIT = "SL_HIT",
+  OPEN = "OPEN",
 }
 
 export interface TradingSignal {
@@ -16,6 +19,8 @@ export interface TradingSignal {
   riskReward: number;
   score: number;
   status: SignalStatus;
+  profit?: number;
+  lastPrice?: number;
   timestamp: number;
   explanation: string;
   indicators: {

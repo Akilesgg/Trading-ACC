@@ -158,8 +158,7 @@ const CryptoBubbles: React.FC = () => {
       .append("g")
       .attr("class", "bubble-node group cursor-pointer")
       .on("click", (event, d) => {
-        setActiveSymbol(d.symbol);
-        navigate("/analysis");
+        navigate(`/analysis?symbol=${d.symbol}USDT`);
       })
       .on("mouseover", (event, d) => {
         const tooltip = d3.select("#bubble-tooltip");

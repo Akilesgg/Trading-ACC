@@ -20,12 +20,14 @@ import {
   SUPPORTED_ASSETS, 
   estimateAssetMove, 
   getImpactLevel, 
-  CryptoAsset 
+  CryptoAsset,
+  calculateDynamicBeta
 } from "../core/correlationEngine";
 
 const BTCComparison: React.FC = () => {
   const [btcMove, setBtcMove] = useState<number>(2.5); // Default 2.5% move
   const [searchQuery, setSearchQuery] = useState("");
+  const [dynamicBetas, setDynamicBetas] = useState<Record<string, number>>({});
   const [selectedAssets, setSelectedAssets] = useState<string[]>(
     SUPPORTED_ASSETS.slice(0, 6).map(a => a.symbol)
   );
@@ -45,11 +47,28 @@ const BTCComparison: React.FC = () => {
     );
   };
 
+  React.useEffect(() => {
+    const updateBetas = async () => {
+      const newBetas: Record<string, number> = { ...dynamicBetas };
+      let changed = false;
+      for (const symbol of selectedAssets) {
+        if (!newBetas[symbol]) {
+          const beta = await calculateDynamicBeta(symbol);
+          newBetas[symbol] = beta;
+          changed = true;
+        }
+      }
+      if (changed) setDynamicBetas(newBetas);
+    };
+    updateBetas();
+  }, [selectedAssets]);
+
   const results = useMemo(() => {
     return SUPPORTED_ASSETS
       .filter(a => selectedAssets.includes(a.symbol))
       .map(asset => {
-        const estimatedMove = estimateAssetMove(btcMove, asset);
+        const beta = dynamicBetas[asset.symbol] || asset.beta;
+        const estimatedMove = btcMove * beta;
         const impact = getImpactLevel(asset);
         // New logic: Profit Potential = expectedMoveAsset - btcMove
         const profitPotential = Math.abs(estimatedMove) - Math.abs(btcMove);
@@ -61,6 +80,7 @@ const BTCComparison: React.FC = () => {
             
         return {
           ...asset,
+          beta,
           estimatedMove,
           impact,
           profitPotential,
@@ -68,7 +88,7 @@ const BTCComparison: React.FC = () => {
         };
       })
       .sort((a, b) => b.profitPotential - a.profitPotential);
-  }, [btcMove, selectedAssets]);
+  }, [btcMove, selectedAssets, dynamicBetas]);
 
   const topOpportunities = useMemo(() => {
     return results.filter(r => r.profitPotential > 0).slice(0, 3);
@@ -353,9 +373,9 @@ const BTCComparison: React.FC = () => {
                         </p>
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1 bg-surface-container-highest rounded-full overflow-hidden">
-                            <div className="h-full bg-secondary" style={{ width: `${(asset.relativeVolatility / 5) * 100}%` }} />
+                            <div className="h-full bg-secondary" style={{ width: `${(asset.beta / 5) * 100}%` }} />
                           </div>
-                          <span className="text-[10px] font-black text-on-surface">{asset.relativeVolatility.toFixed(2)}x</span>
+                          <span className="text-[10px] font-black text-on-surface">{asset.beta.toFixed(2)}x</span>
                         </div>
                       </div>
                     </div>

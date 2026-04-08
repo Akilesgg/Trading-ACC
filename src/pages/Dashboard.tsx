@@ -33,6 +33,8 @@ import WhaleFeed from "@/components/dashboard/WhaleFeed";
 import NewsFeed from "@/components/dashboard/NewsFeed";
 import SignalMatrix from "@/components/dashboard/SignalMatrix";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
+import LiveSignalFeed from "@/components/dashboard/LiveSignalFeed";
+import PriceAlerts from "@/components/dashboard/PriceAlerts";
 
 import { useSignalStore } from "@/store/useSignalStore";
 
@@ -290,6 +292,14 @@ const Dashboard = () => {
     { id: "neutral", label: "NEUTRAL / LATERAL", count: allTickers.filter(t => Math.abs(parseFloat(t.priceChangePercent)) <= 0.5).length, color: "text-tertiary" },
   ], [allTickers]);
 
+  const currentPricesMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    allTickers.forEach(t => {
+      map[t.symbol] = parseFloat(t.price);
+    });
+    return map;
+  }, [allTickers]);
+
   const strategies = [
     { tf: "1M", name: "Scalping", desc: "Ruptura de Micro-rango" },
     { tf: "5M", name: "Intradía", desc: "Confirmación de Tendencia" },
@@ -326,24 +336,31 @@ const Dashboard = () => {
       />
 
       <div className="trading-grid">
-        <div className="md:col-span-8">
+        <div className="md:col-span-9 space-y-8">
           <MarketPulse 
             sentiment={sentiment} 
             onShowSettings={() => setShowNotifSettings(true)} 
             marketRegime={marketRegime}
           />
+          <PriceAlerts currentPrices={currentPricesMap} />
         </div>
-        <div className="md:col-span-4">
-          <SignalSummary signals={signalStats} activeFilter={filter} onFilterClick={setFilter} />
+        <div className="md:col-span-3">
+          <LiveSignalFeed />
         </div>
       </div>
 
       <div className="trading-grid">
-        <div className="md:col-span-8">
-          <WhaleFeed whaleMovements={whaleMovements} topTraders={topTraders} largeTransactions={largeTransactions} />
-        </div>
         <div className="md:col-span-4">
+          <SignalSummary signals={signalStats} activeFilter={filter} onFilterClick={setFilter} />
+        </div>
+        <div className="md:col-span-8">
           <NewsFeed economicEvents={economicEvents} />
+        </div>
+      </div>
+
+      <div className="trading-grid">
+        <div className="md:col-span-12">
+          <WhaleFeed whaleMovements={whaleMovements} topTraders={topTraders} largeTransactions={largeTransactions} />
         </div>
       </div>
 

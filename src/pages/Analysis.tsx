@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, Reorder } from "motion/react";
 import { 
   Brain, 
@@ -65,7 +66,9 @@ const DEFAULT_LAYOUT = [
 ];
 
 const Analysis = () => {
-  const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
+  const [searchParams] = useSearchParams();
+  const urlSymbol = searchParams.get("symbol");
+  const [selectedSymbol, setSelectedSymbol] = useState(urlSymbol || "BTCUSDT");
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
   const [selectedMode, setSelectedMode] = useState<"Standard" | "Scalping" | "Swing">("Standard");
   const [ticker, setTicker] = useState<CryptoData | null>(null);
@@ -141,6 +144,12 @@ const Analysis = () => {
       console.error("Error loading market data:", error);
     }
   }, [selectedSymbol, selectedTimeframe]);
+
+  useEffect(() => {
+    if (urlSymbol && urlSymbol !== selectedSymbol) {
+      setSelectedSymbol(urlSymbol);
+    }
+  }, [urlSymbol]);
 
   useEffect(() => {
     loadMarketData();

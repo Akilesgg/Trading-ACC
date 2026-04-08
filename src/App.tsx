@@ -234,6 +234,7 @@ const BottomNavBar = () => {
 };
 
 import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
+import SignalMonitor from "./components/common/SignalMonitor";
 
 export default function App() {
   const { user, loading, login } = useAuth();
@@ -290,6 +291,7 @@ export default function App() {
       <Router>
         <Toaster position="top-right" theme="dark" richColors />
         <GlobalSignalOverlay />
+        <SignalMonitor />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary">
           {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
           <TopAppBar />
@@ -306,7 +308,6 @@ export default function App() {
                 <Route path="/copy-trading" element={<CopyTrading />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/btc-comparison" element={<BTCComparison />} />
-                <Route path="/signals-history" element={<SignalHistory />} />
                 <Route path="/top-100" element={<CryptoBubbles />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>

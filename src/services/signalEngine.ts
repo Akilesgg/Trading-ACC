@@ -53,12 +53,33 @@ export function calculateRSI(data: number[], period: number = 14): number {
   return 100 - 100 / (1 + rs);
 }
 
+export function calculateEMASeries(data: number[], period: number): number[] {
+  const k = 2 / (period + 1);
+  const emaSeries: number[] = [data[0]];
+  for (let i = 1; i < data.length; i++) {
+    emaSeries.push(data[i] * k + emaSeries[i - 1] * (1 - k));
+  }
+  return emaSeries;
+}
+
 export function calculateMACD(data: number[]) {
-  const ema12 = calculateEMA(data, 12);
-  const ema26 = calculateEMA(data, 26);
-  const macd = ema12 - ema26;
-  // Simplified signal line (usually EMA 9 of MACD values, but we'll use a simpler approach for now)
-  const signal = macd * 0.9; 
+  if (data.length < 26) {
+    return { macd: 0, signal: 0, histogram: 0 };
+  }
+
+  const ema12Series = calculateEMASeries(data, 12);
+  const ema26Series = calculateEMASeries(data, 26);
+  
+  const macdSeries: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    macdSeries.push(ema12Series[i] - ema26Series[i]);
+  }
+
+  const signalSeries = calculateEMASeries(macdSeries, 9);
+  
+  const macd = macdSeries[macdSeries.length - 1];
+  const signal = signalSeries[signalSeries.length - 1];
+  
   return {
     macd,
     signal,

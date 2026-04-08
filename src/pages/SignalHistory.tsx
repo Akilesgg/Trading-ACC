@@ -15,15 +15,28 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTerminalStore } from "../store/useTerminalStore";
+import { SignalStatus } from "../core/signals/types";
 
 const SignalHistory: React.FC = () => {
   const { signals } = useTerminalStore();
 
   const stats = useMemo(() => {
+    const closedSignals = signals.filter(s => 
+      s.status === SignalStatus.TP1_HIT || 
+      s.status === SignalStatus.TP2_HIT || 
+      s.status === SignalStatus.TP3_HIT || 
+      s.status === SignalStatus.SL_HIT
+    );
+    
+    const wins = closedSignals.filter(s => 
+      s.status === SignalStatus.TP1_HIT || 
+      s.status === SignalStatus.TP2_HIT || 
+      s.status === SignalStatus.TP3_HIT
+    ).length;
+
     const total = signals.length;
-    const wins = signals.filter(s => s.score > 85).length; // Mocking wins based on score for now
-    const winRate = total > 0 ? (wins / total) * 100 : 0;
-    const totalProfit = signals.reduce((acc, s) => acc + (s.type === "LONG" ? 2.5 : 1.8), 0); // Mock profit
+    const winRate = closedSignals.length > 0 ? (wins / closedSignals.length) * 100 : 0;
+    const totalProfit = signals.reduce((acc, s) => acc + (s.profit || 0), 0);
 
     return { total, wins, winRate, totalProfit };
   }, [signals]);
@@ -140,14 +153,27 @@ const SignalHistory: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_10px_rgba(0,255,163,0.5)]" />
-                      <span className="text-[10px] font-black uppercase tracking-widest text-primary">TP ALCANZADO</span>
+                      <div className={cn(
+                        "w-2 h-2 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]",
+                        signal.status.includes("TP") ? "bg-primary shadow-primary/50" : 
+                        signal.status === SignalStatus.SL_HIT ? "bg-secondary shadow-secondary/50" : "bg-on-surface-variant/30"
+                      )} />
+                      <span className={cn(
+                        "text-[10px] font-black uppercase tracking-widest",
+                        signal.status.includes("TP") ? "text-primary" : 
+                        signal.status === SignalStatus.SL_HIT ? "text-secondary" : "text-on-surface-variant"
+                      )}>
+                        {signal.status.replace("_", " ")}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1 text-primary font-black text-[11px]">
-                      <ArrowUpRight className="w-3 h-3" />
-                      +{(Math.random() * 5 + 1).toFixed(2)}%
+                    <div className={cn(
+                      "flex items-center gap-1 font-black text-[11px]",
+                      (signal.profit || 0) >= 0 ? "text-primary" : "text-secondary"
+                    )}>
+                      {(signal.profit || 0) >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                      {(signal.profit || 0) >= 0 ? "+" : ""}{(signal.profit || 0).toFixed(2)}%
                     </div>
                   </td>
                   <td className="px-6 py-4">
