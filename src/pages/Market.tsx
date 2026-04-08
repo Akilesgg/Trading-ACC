@@ -4,6 +4,8 @@ import { Search, TrendingUp, TrendingDown, Filter, LayoutGrid, List, ArrowUpRigh
 import { cn } from "@/lib/utils";
 import { fetchCryptoData } from "@/services/cryptoService";
 
+import BTCComparison from "@/components/market/BTCComparison";
+
 const MarketPage = () => {
   const [marketData, setMarketData] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -99,40 +101,43 @@ const MarketPage = () => {
           </div>
         </div>
 
-        <div className="lg:col-span-4 trading-card p-8 space-y-6">
-          <h3 className="section-title flex items-center gap-2 mb-0">
-            <Activity className="w-4 h-4 text-primary" /> SPOT VS FUTURES
-          </h3>
-          <div className="space-y-4">
-            <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Funding Rate</span>
-                <span className="text-[10px] font-black text-primary">0.0100%</span>
+        <div className="lg:col-span-4 space-y-8">
+          <div className="trading-card p-8 space-y-6">
+            <h3 className="section-title flex items-center gap-2 mb-0">
+              <Activity className="w-4 h-4 text-primary" /> SPOT VS FUTURES
+            </h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Funding Rate</span>
+                  <span className="text-[10px] font-black text-primary">0.0100%</span>
+                </div>
+                <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: "65%" }}></div>
+                </div>
               </div>
-              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: "65%" }}></div>
+              <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Open Interest</span>
+                  <span className="text-[10px] font-black text-on-surface">$12.4B</span>
+                </div>
+                <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                  <div className="h-full bg-primary" style={{ width: "45%" }}></div>
+                </div>
               </div>
-            </div>
-            <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Open Interest</span>
-                <span className="text-[10px] font-black text-on-surface">$12.4B</span>
-              </div>
-              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                <div className="h-full bg-primary" style={{ width: "45%" }}></div>
-              </div>
-            </div>
-            <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ratio Long/Short</span>
-                <span className="text-[10px] font-black text-secondary">0.85</span>
-              </div>
-              <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden flex">
-                <div className="h-full bg-primary" style={{ width: "45%" }}></div>
-                <div className="h-full bg-secondary" style={{ width: "55%" }}></div>
+              <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ratio Long/Short</span>
+                  <span className="text-[10px] font-black text-secondary">0.85</span>
+                </div>
+                <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden flex">
+                  <div className="h-full bg-primary" style={{ width: "45%" }}></div>
+                  <div className="h-full bg-secondary" style={{ width: "55%" }}></div>
+                </div>
               </div>
             </div>
           </div>
+          <BTCComparison />
         </div>
       </div>
 

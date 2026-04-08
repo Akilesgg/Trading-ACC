@@ -51,8 +51,8 @@ const Dashboard = () => {
   const [economicEvents, setEconomicEvents] = useState<any[]>([]);
 
   const [showNotifSettings, setShowNotifSettings] = useState(false);
-  const [telegramToken, setTelegramToken] = useState(localStorage.getItem("telegramToken") || "8287353475:AAE90JqwdWnwoJSrr9OaNIphmKtmuy0Qu0Q");
-  const [telegramChatId, setTelegramChatId] = useState(localStorage.getItem("telegramChatId") || "-1003045390811");
+  const [telegramToken, setTelegramToken] = useState(localStorage.getItem("telegramToken") || import.meta.env.VITE_TELEGRAM_BOT_TOKEN || "");
+  const [telegramChatId, setTelegramChatId] = useState(localStorage.getItem("telegramChatId") || import.meta.env.VITE_TELEGRAM_CHAT_ID || "");
   const [isSendingTest, setIsSendingTest] = useState(false);
 
   const [enabledAlerts, setEnabledAlerts] = useState<Set<string>>(new Set());

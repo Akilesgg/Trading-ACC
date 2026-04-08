@@ -72,44 +72,14 @@ TAKE PROFIT 3: ${tp3.toFixed(2)}
 }
 
 export async function findBestSetups(marketData: any[]) {
-  const apiKey = getApiKey();
-  if (!apiKey) return [];
-  
-  const ai = new GoogleGenAI({ apiKey });
-  
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Analiza los siguientes datos de mercado y encuentra los 3 mejores setups de trading actuales.
-      DATOS: ${JSON.stringify(marketData)}
-      
-      Para cada setup, proporciona:
-      1. Símbolo
-      2. Tipo (LONG/SHORT)
-      3. Precio de Entrada
-      4. Stop Loss
-      5. Take Profit (3 niveles)
-      6. Puntuación de confianza (0-100)
-      7. Justificación breve (BOS, RSI, Volumen, etc.)
-      
-      Responde estrictamente en formato JSON:
-      [
-        {
-          "symbol": "BTCUSDT",
-          "type": "LONG",
-          "entry": 64000,
-          "sl": 63000,
-          "tp": [65000, 66000, 68000],
-          "score": 85,
-          "reason": "BOS alcista + RSI en 40"
-        }
-      ]`,
-      config: {
-        responseMimeType: "application/json"
-      },
+    const response = await fetch("/api/ai/setups", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ marketData })
     });
-    
-    return JSON.parse(response.text || "[]");
+    if (!response.ok) throw new Error("Backend error");
+    return await response.json();
   } catch (error) {
     console.error("Error finding best setups:", error);
     return [];
@@ -117,114 +87,22 @@ export async function findBestSetups(marketData: any[]) {
 }
 
 export async function analyzeMarket(symbol: string, price: string, change: string, mode: "Standard" | "Scalping" | "Swing" = "Standard") {
-  const maxRetries = 3;
-  let retryCount = 0;
-
-  while (retryCount <= maxRetries) {
-    const apiKey = getApiKey(retryCount);
-    if (!apiKey) {
-      return generateTechnicalFallback(symbol, price, change, mode);
-    }
-    
-    const ai = new GoogleGenAI({ apiKey });
-    
-    try {
-      let modePrompt = "";
-      if (mode === "Scalping") {
-        modePrompt = "Enfoque en SCALPING: analiza temporalidades muy cortas (1M, 5M), identifica niveles de soporte/resistencia inmediatos y posibles micro-rupturas de segundos o minutos.";
-      } else if (mode === "Swing") {
-        modePrompt = "Enfoque en SWING TRADING: analiza temporalidades largas (1H, 4H, 1D), identifica la estructura de mercado mayor, tendencias de mediano plazo y niveles de retroceso de Fibonacci.";
-      } else {
-        modePrompt = "Enfoque ESTÁNDAR: análisis basado en la metodología Wyckoff, identificación de RUPTURAS (breakouts) inminentes y análisis de flujo de órdenes (Order Flow).";
-      }
-
-      console.log(`Iniciando análisis profundo para ${symbol} en modo ${mode} (Intento ${retryCount + 1})...`);
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Eres un analista experto en trading institucional y criptomonedas. 
-        Analiza la situación actual del mercado para el par ${symbol}. 
-        DATOS ACTUALES: Precio: ${price}, Cambio 24h: ${change}%. 
-        
-        ${modePrompt}
-        
-        INSTRUCCIONES CRÍTICAS:
-        1. Responde SIEMPRE en ESPAÑOL.
-        2. Mantén un tono profesional, analítico, directo y profundamente involucrado.
-        3. Involúcrate en los resultados: proporciona niveles de precios REALES y COHERENTES con el precio actual. La ENTRADA debe estar muy cerca del precio actual (máximo 1-2% de diferencia).
-        4. ES OBLIGATORIO usar EXACTAMENTE estos encabezados en negrita y mayúsculas para que el sistema pueda parsear tu respuesta:
-        
-        **CONTEXTO Y EXPLICACIÓN BREVE**: Resumen ejecutivo de la situación actual. Sé específico y técnico.
-        
-        **COMENTARIOS Y OBSERVACIONES**: Tus observaciones personales sobre anomalías, volumen y patrones ocultos.
-        
-        **PREDICCIONES DE MERCADO**: Predicciones fundamentadas a corto y mediano plazo con objetivos específicos.
-        
-        **RECOMENDACIÓN IA**: Recomendación final clara: ENTRAR AHORA, ESPERAR o MANTENERSE AL MARGEN.
-        
-        **ESTRATEGIA**: Indica claramente si la postura es ALCISTA o BAJISTA.
-        
-        **DOMINANCIA BTC**: Evaluación de la dominancia de BTC y su impacto en ${symbol}.
-        
-        **FASE WYCKOFF**: Identifica la fase (ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN) y explica la estructura.
-        
-        **INDICADORES TÉCNICOS (TOP 2026)**: Lista de 8-10 indicadores clave con su estado actual (ej: RSI: 65 - Sobrecompra leve).
-        
-        **JUSTIFICACIÓN TÉCNICA**: Explicación detallada de los niveles operativos basados en liquidez, FVG (Fair Value Gaps) y Order Blocks.
-        
-        **ANÁLISIS DE ESTRUCTURA**: Justificación de la estructura de mercado (BOS, CHoCH).
-        
-        **NIVELES OPERATIVOS**: 
-        ENTRADA: [precio numérico]
-        STOP LOSS: [precio numérico]
-        TAKE PROFIT 1: [precio numérico]
-        TAKE PROFIT 2: [precio numérico]
-        TAKE PROFIT 3: [precio numérico]
-        
-        **NIVEL DE CONFIANZA**: [Número del 1 al 100]
-        
-        **RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO**: Apalancamiento sugerido (ej: x10) y riesgo (BAJO, MODERADO, ALTO).
-        
-        **METÁFORA TÉCNICA**: Una breve comparación creativa de los indicadores con elementos químicos o biológicos que impulsan el precio.
-        
-        Asegúrate de que los niveles de ENTRADA, STOP LOSS y TAKE PROFITS sean lógicos respecto al precio actual de ${price} y que la señal sea ejecutable de inmediato o en breve.`,
-        config: {
-          tools: [{ googleSearch: {} }],
-          temperature: 0.7,
-        },
-      });
-
-      if (!response.text) {
-        throw new Error("La respuesta de Gemini no contiene texto.");
-      }
-
-      console.log(`Análisis de ${symbol} completado con éxito.`);
-      return response.text;
-    } catch (error: any) {
-      console.error(`Error en intento ${retryCount + 1}:`, error);
-      
-      const isQuotaError = error.message?.toLowerCase().includes("quota") || 
-                           error.status === 429 || 
-                           error.message?.includes("429");
-
-      if (isQuotaError && retryCount < maxRetries) {
-        retryCount++;
-        const delay = Math.pow(2, retryCount) * 1000; 
-        console.log(`Error de cuota. Reintentando en ${delay}ms...`);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
-      }
-
-      return generateTechnicalFallback(symbol, price, change, mode);
-    }
+  try {
+    const response = await fetch("/api/ai/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol, price, change, mode })
+    });
+    if (!response.ok) throw new Error("Backend error");
+    const data = await response.json();
+    return data.text;
+  } catch (error) {
+    console.error("Error analyzing market:", error);
+    return generateTechnicalFallback(symbol, price, change, mode);
   }
-  return generateTechnicalFallback(symbol, price, change, mode);
 }
 
 export async function fetchRealTimeNews() {
-  const maxRetries = 2;
-  let retryCount = 0;
-
   const fallbackNews = [
     {
       "event": "Volatilidad en el mercado de Criptomonedas",
@@ -246,96 +124,24 @@ export async function fetchRealTimeNews() {
     }
   ];
 
-  while (retryCount <= maxRetries) {
-    const apiKey = getApiKey(retryCount);
-    if (!apiKey) return fallbackNews;
-
-    const ai = new GoogleGenAI({ apiKey });
-
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas hoy ${new Date().toLocaleDateString()}.
-        Para cada noticia, proporciona:
-        1. Título de la noticia.
-        2. Un breve resumen (2 frases).
-        3. El impacto estimado en el mercado (CRITICAL, HIGH, MEDIUM, LOW).
-        4. Una puntuación de impacto de la IA (0-100).
-        5. El efecto esperado (ej: Volatilidad, Tendencia Alcista, etc.).
-        6. Una URL de fuente real y válida (Reuters, Bloomberg, CNBC, etc.).
-        
-        Responde estrictamente en formato JSON con esta estructura:
-        [
-          {
-            "event": "Título",
-            "description": "Resumen",
-            "impact": "HIGH",
-            "aiScore": 85,
-            "effect": "Efecto",
-            "time": "Hace X min",
-            "sourceUrl": "URL"
-          }
-        ]`,
-        config: {
-          tools: [{ googleSearch: {} }],
-          responseMimeType: "application/json"
-        },
-      });
-
-      const text = response.text;
-      if (text) {
-        return JSON.parse(text);
-      }
-      return fallbackNews;
-    } catch (error: any) {
-      const isQuotaError = error.message?.toLowerCase().includes("quota") || 
-                           error.status === 429 || 
-                           error.message?.includes("429");
-
-      if (isQuotaError && retryCount < maxRetries) {
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-      console.error("Error fetching real-time news:", error);
-      return fallbackNews;
-    }
+  try {
+    const response = await fetch("/api/ai/news");
+    if (!response.ok) throw new Error("Backend error");
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching real-time news:", error);
+    return fallbackNews;
   }
-  return fallbackNews;
 }
 
 export async function getMarketSentiment() {
-  const maxRetries = 2;
-  let retryCount = 0;
-
-  while (retryCount <= maxRetries) {
-    const apiKey = getApiKey(retryCount);
-    if (!apiKey) return "Sentimiento neutral basado en la acción del precio actual.";
-    
-    const ai = new GoogleGenAI({ apiKey });
-    
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: "Analiza el sentimiento actual del mercado cripto global en una frase corta y profesional en ESPAÑOL. Incluye una estimación del índice Fear & Greed.",
-        config: {
-          tools: [{ googleSearch: {} }],
-        },
-      });
-      return response.text || "Sentimiento neutral basado en tendencias recientes.";
-    } catch (error: any) {
-      const isQuotaError = error.message?.toLowerCase().includes("quota") || 
-                           error.status === 429 || 
-                           error.message?.includes("429");
-
-      if (isQuotaError && retryCount < maxRetries) {
-        retryCount++;
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-      console.error("Gemini sentiment error:", error);
-      return "Sentimiento neutral basado en tendencias recientes.";
-    }
+  try {
+    const response = await fetch("/api/ai/sentiment");
+    if (!response.ok) throw new Error("Backend error");
+    const data = await response.json();
+    return data.text;
+  } catch (error) {
+    console.error("Gemini sentiment error:", error);
+    return "Sentimiento neutral basado en tendencias recientes.";
   }
-  return "Sentimiento neutral basado en tendencias recientes.";
 }

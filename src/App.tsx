@@ -48,6 +48,10 @@ import Terminal from "./pages/Terminal";
 import CopyTrading from "./pages/CopyTrading";
 import News from "./pages/News";
 import BTCComparison from "./pages/BTCComparison";
+import Pricing from "./pages/Pricing";
+import SignalHistory from "./pages/SignalHistory";
+import Landing from "./pages/Landing";
+import Onboarding from "./components/onboarding/Onboarding";
 import CryptoBubbles from "./pages/CryptoBubbles";
 
 import ErrorBoundary from "./components/common/ErrorBoundary";
@@ -233,7 +237,24 @@ const BottomNavBar = () => {
 import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
 
 export default function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, login } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const hasSeenOnboarding = localStorage.getItem(`onboarding_${user.uid}`);
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [user]);
+
+  const handleOnboardingComplete = () => {
+    if (user) {
+      localStorage.setItem(`onboarding_${user.uid}`, "true");
+    }
+    setShowOnboarding(false);
+  };
 
   if (loading) {
     return (
@@ -265,38 +286,64 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return <LoginScreen />;
-  }
-
   return (
     <ErrorBoundary>
       <Router>
         <Toaster position="top-right" theme="dark" richColors />
         <GlobalSignalOverlay />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary">
-          <TopAppBar />
-          <main className="flex-1 pt-20 pb-24">
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/market" element={<Market />} />
-                <Route path="/analysis" element={<Analysis />} />
-                <Route path="/signal/:symbol" element={<SignalDetail />} />
-                <Route path="/terminal" element={<Terminal />} />
-                <Route path="/copy-trading" element={<CopyTrading />} />
-                <Route path="/news" element={<News />} />
-                <Route path="/btc-comparison" element={<BTCComparison />} />
-                <Route path="/top-100" element={<CryptoBubbles />} />
-                {/* Fallbacks */}
-                <Route path="/signals" element={<Dashboard />} />
-              </Routes>
-            </AnimatePresence>
-          </main>
-          <BottomNavBar />
+          {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/pricing" element={<Pricing />} />
+
+            {/* Protected Routes */}
+            <Route path="/*" element={
+              user ? (
+                <>
+                  <TopAppBar />
+                  <main className="flex-1 pt-20 pb-24">
+                    <AnimatePresence mode="wait">
+                      <Routes>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/market" element={<Market />} />
+                        <Route path="/analysis" element={<Analysis />} />
+                        <Route path="/signal/:symbol" element={<SignalDetail />} />
+                        <Route path="/terminal" element={<Terminal />} />
+                        <Route path="/copy-trading" element={<CopyTrading />} />
+                        <Route path="/news" element={<News />} />
+                        <Route path="/btc-comparison" element={<BTCComparison />} />
+                        <Route path="/signals-history" element={<SignalHistory />} />
+                        <Route path="/top-100" element={<CryptoBubbles />} />
+                        <Route path="*" element={<Dashboard />} />
+                      </Routes>
+                    </AnimatePresence>
+                  </main>
+                  <BottomNavBar />
+                </>
+              ) : (
+                <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center space-y-8">
+                  <div className="w-24 h-24 bg-primary/10 rounded-[2.5rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10">
+                    <Lock className="w-12 h-12 text-primary" />
+                  </div>
+                  <div className="space-y-4">
+                    <h2 className="text-4xl font-black uppercase tracking-tighter text-on-surface">Acceso Restringido</h2>
+                    <p className="text-on-surface-variant max-w-md mx-auto">Debes iniciar sesión para acceder a las herramientas avanzadas de Trading ACC.</p>
+                  </div>
+                  <button 
+                    onClick={login}
+                    className="btn-primary px-12 py-5 text-sm"
+                  >
+                    Iniciar Sesión con Google
+                  </button>
+                  <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors">Volver al Inicio</Link>
+                </div>
+              )
+            } />
+          </Routes>
         </div>
       </Router>
     </ErrorBoundary>
   );
-}
+};

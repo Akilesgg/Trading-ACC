@@ -15,8 +15,8 @@ export interface TelegramAlert {
 }
 
 export const sendTelegramAlert = async (alert: TelegramAlert) => {
-  const token = localStorage.getItem("telegramToken") || "8287353475:AAE90JqwdWnwoJSrr9OaNIphmKtmuy0Qu0Q";
-  const chatId = localStorage.getItem("telegramChatId") || "-1003045390811";
+  const token = localStorage.getItem("telegramToken") || import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+  const chatId = localStorage.getItem("telegramChatId") || import.meta.env.VITE_TELEGRAM_CHAT_ID;
 
   if (!token || !chatId) return;
 

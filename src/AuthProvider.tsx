@@ -4,6 +4,7 @@ import { auth, onAuthStateChanged, User, signInWithPopup, googleProvider, signOu
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  plan: "Free" | "Pro" | "Elite";
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [plan, setPlan] = useState<"Free" | "Pro" | "Elite">("Free");
 
   useEffect(() => {
     const testConnection = async () => {
@@ -31,19 +33,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Sync user profile to Firestore
         const userRef = doc(db, 'users', user.uid);
         try {
-          await setDoc(userRef, {
-            uid: user.uid,
-            displayName: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL,
-            lastLogin: Timestamp.now(),
-            role: 'user' // Default role
-          }, { merge: true });
-          
-          // Check if it's a new user to set createdAt
           const userDoc = await getDocFromServer(userRef);
-          if (!userDoc.exists() || !userDoc.data()?.createdAt) {
-            await setDoc(userRef, { createdAt: Timestamp.now() }, { merge: true });
+          
+          if (userDoc.exists()) {
+            setPlan(userDoc.data().plan || "Free");
+          } else {
+            await setDoc(userRef, {
+              uid: user.uid,
+              displayName: user.displayName,
+              email: user.email,
+              photoURL: user.photoURL,
+              lastLogin: Timestamp.now(),
+              role: 'user',
+              plan: 'Free',
+              createdAt: Timestamp.now()
+            }, { merge: true });
+            setPlan("Free");
           }
         } catch (error) {
           console.error("Error syncing user profile:", error);
@@ -65,41 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async () => {
-    // Local bypass: No Google login required
-    const localUser = {
-      uid: 'local-admin-acc',
-      displayName: 'ADMIN_ACC',
-      email: 'acc08101970@gmail.com',
-      photoURL: 'https://lh3.googleusercontent.com/a/default-user',
-      emailVerified: true,
-      isAnonymous: false,
-      metadata: {},
-      providerData: [],
-      refreshToken: '',
-      tenantId: null,
-      delete: async () => {},
-      getIdToken: async () => '',
-      getIdTokenResult: async () => ({} as any),
-      reload: async () => {},
-      toJSON: () => ({})
-    } as any;
-    
-    setUser(localUser);
-    setLoading(false);
-    
-    // Sync to Firestore if possible (will fail if rules require real auth, but we'll update rules)
-    const userRef = doc(db, 'users', localUser.uid);
     try {
-      await setDoc(userRef, {
-        uid: localUser.uid,
-        displayName: localUser.displayName,
-        email: localUser.email,
-        photoURL: localUser.photoURL,
-        lastLogin: Timestamp.now(),
-        role: 'admin'
-      }, { merge: true });
-    } catch (e) {
-      console.warn("Firestore sync skipped (local mode):", e);
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     }
   };
 
@@ -112,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, plan, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

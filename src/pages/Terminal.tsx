@@ -12,6 +12,8 @@ import { Search, Activity, Shield, History, Zap, TrendingUp, Info, X } from "luc
 import { cn } from "@/lib/utils";
 import { fetchAssetFundamentals, AssetFundamental } from "@/services/cryptoService";
 import FundamentalModal from "@/components/common/FundamentalModal";
+import { generateSignal } from "../services/signalEngine";
+import { useBinanceTicker } from "../hooks/useBinanceTicker";
 
 const Terminal: React.FC = () => {
   const { 
@@ -23,7 +25,23 @@ const Terminal: React.FC = () => {
     setTimeframe 
   } = useTerminalStore();
 
+  const ticker = useBinanceTicker(activeSymbol);
   const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+
+  useEffect(() => {
+    const checkSignals = async () => {
+      const signal = await generateSignal(activeSymbol, timeframe);
+      if (signal) {
+        addSignal(signal);
+        addLog(`SIGNAL: New ${signal.type} setup detected for ${activeSymbol} (Score: ${signal.score}%)`);
+      }
+    };
+
+    const interval = setInterval(checkSignals, 30000); // Check every 30s
+    checkSignals(); // Initial check
+
+    return () => clearInterval(interval);
+  }, [activeSymbol, timeframe]);
 
   const showFundamentals = async (symbol: string) => {
     const data = await fetchAssetFundamentals(symbol);
@@ -31,30 +49,7 @@ const Terminal: React.FC = () => {
   };
 
   useEffect(() => {
-    // Initial mock signal to show functionality
-    const initialSignal = {
-      id: "1",
-      symbol: "BTCUSDT",
-      type: "LONG" as const,
-      entry: 64231.42,
-      stopLoss: 63800.00,
-      takeProfit: [65000, 66000, 68000],
-      riskReward: 3.5,
-      score: 85,
-      status: SignalStatus.CONFIRMED,
-      timestamp: Date.now(),
-      explanation: "BOS alcista detectado en 1h con confirmación de volumen alto y RSI rebotando en 40.",
-      indicators: {
-        rsi: 42,
-        macd: "BULLISH",
-        emaTrend: "BULLISH" as const,
-        volume: "HIGH" as const,
-        smc: "BOS"
-      }
-    };
-    addSignal(initialSignal);
     addLog("SUCCESS: Terminal engine started. Monitoring 100+ pairs.");
-    addLog("SIGNAL: New LONG setup detected for BTCUSDT (Score: 85%)");
   }, []);
 
   return (
@@ -97,12 +92,18 @@ const Terminal: React.FC = () => {
           <div className="flex items-center gap-10">
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-2 opacity-50">Precio Actual</span>
-              <span className="text-2xl font-black text-primary leading-none tracking-tighter shadow-primary/10 drop-shadow-lg">$64,231.42</span>
+              <span className="text-2xl font-black text-primary leading-none tracking-tighter shadow-primary/10 drop-shadow-lg">
+                ${ticker ? parseFloat(ticker.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "---"}
+              </span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-2 opacity-50">Cambio 24h</span>
-              <span className="text-2xl font-black text-primary leading-none flex items-center gap-2 tracking-tighter drop-shadow-lg">
-                <TrendingUp className="w-5 h-5" /> +2.45%
+              <span className={cn(
+                "text-2xl font-black leading-none flex items-center gap-2 tracking-tighter drop-shadow-lg",
+                ticker && parseFloat(ticker.priceChangePercent) >= 0 ? "text-primary" : "text-secondary"
+              )}>
+                {ticker && parseFloat(ticker.priceChangePercent) >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+                {ticker ? `${ticker.priceChangePercent}%` : "---"}
               </span>
             </div>
           </div>
