@@ -225,7 +225,7 @@ export async function fetchEconomicEvents() {
   return [
     { 
       event: "Reunión de Emergencia de la OTAN", 
-      impact: "CRITICAL", 
+      impact: "CRÍTICO", 
       time: "14:30", 
       date: "Hoy", 
       description: "Discusión sobre nuevas sanciones comerciales y tensiones en fronteras orientales. Alta probabilidad de impacto en el precio del petróleo y activos de refugio.",
@@ -237,7 +237,7 @@ export async function fetchEconomicEvents() {
     },
     { 
       event: "Decisión de Tasas (FED)", 
-      impact: "CRITICAL", 
+      impact: "CRÍTICO", 
       time: "20:00", 
       date: "Mañana", 
       description: "El mercado espera una pausa en las tasas. Cualquier sorpresa podría causar liquidaciones masivas en el mercado cripto.",
@@ -249,7 +249,7 @@ export async function fetchEconomicEvents() {
     },
     { 
       event: "Cumbre G7 sobre Activos Digitales", 
-      impact: "HIGH", 
+      impact: "ALTO", 
       time: "09:00", 
       date: "2 Abr", 
       description: "Propuesta de marco regulatorio global para stablecoins y exchanges. Posible presión regulatoria a corto plazo.",
@@ -261,7 +261,7 @@ export async function fetchEconomicEvents() {
     },
     { 
       event: "Conflicto en Oriente Medio", 
-      impact: "CRITICAL", 
+      impact: "CRÍTICO", 
       time: "En curso", 
       date: "Hoy", 
       description: "Escalada de tensiones afecta las rutas de suministro globales. Impacto directo en el sentimiento de riesgo (Risk-Off).",

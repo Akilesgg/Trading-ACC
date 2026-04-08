@@ -20,7 +20,7 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings, ma
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_15px_rgba(0,255,163,0.8)]"></div>
-            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface opacity-80">Fear & Greed Index</span>
+            <span className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface opacity-80">Índice de Miedo y Codicia</span>
           </div>
           {marketRegime && (
             <div className="px-4 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/10 flex items-center gap-2">
@@ -29,7 +29,7 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings, ma
                 marketRegime.includes("TRENDING_UP") ? "bg-primary" : marketRegime.includes("TRENDING_DOWN") ? "bg-secondary" : "bg-tertiary"
               )} />
               <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
-                REGIME: <span className="text-on-surface">{marketRegime.replace("_", " ")}</span>
+                RÉGIMEN: <span className="text-on-surface">{marketRegime.replace("_", " ")}</span>
               </span>
             </div>
           )}
@@ -45,8 +45,8 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings, ma
         <div className="flex-1 flex flex-col justify-center py-6 space-y-6">
           <div className="space-y-2">
             <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter leading-[0.85] uppercase flex flex-col">
-              <span className="text-primary drop-shadow-[0_0_30px_rgba(0,255,163,0.4)] filter brightness-110">EXTREME</span>
-              <span className="text-on-surface">GREED</span>
+              <span className="text-primary drop-shadow-[0_0_30px_rgba(0,255,163,0.4)] filter brightness-110">CODICIA</span>
+              <span className="text-on-surface">EXTREMA</span>
             </h2>
             <p className="text-on-surface-variant text-[12px] font-medium uppercase tracking-widest max-w-md leading-relaxed opacity-60 border-l-2 border-primary/20 pl-4">
               {sentiment}

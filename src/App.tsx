@@ -99,16 +99,16 @@ const TopAppBar = () => {
   const { user, logout } = useAuth();
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Panel", path: "/dashboard" },
-    { icon: BarChart3, label: "Mercados", path: "/market" },
-    { icon: Target, label: "Analizador", path: "/terminal" },
-    { icon: TrendingUp, label: "Análisis IA", path: "/analysis" },
-    { icon: Users, label: "Copy", path: "/copy-trading" },
-    { icon: Newspaper, label: "Noticias", path: "/news" },
+    { icon: LayoutDashboard, label: "PANEL", path: "/dashboard" },
+    { icon: BarChart3, label: "MERCADOS", path: "/market" },
+    { icon: Target, label: "ANALIZADOR", path: "/terminal" },
+    { icon: TrendingUp, label: "ANÁLISIS IA", path: "/analysis" },
+    { icon: Users, label: "COPIA", path: "/copy-trading" },
+    { icon: Newspaper, label: "NOTICIAS", path: "/news" },
     { icon: Activity, label: "BTC", path: "/btc-comparison" },
-    { icon: Zap, label: "Top 100", path: "/top-100" },
-    { icon: Shield, label: "Seguridad", path: "/dashboard" },
-    { icon: HelpCircle, label: "Soporte", path: "/dashboard" },
+    { icon: Zap, label: "TOP 100", path: "/top-100" },
+    { icon: Shield, label: "SEGURIDAD", path: "/dashboard" },
+    { icon: HelpCircle, label: "SOPORTE", path: "/dashboard" },
   ];
 
   return (
@@ -156,7 +156,7 @@ const TopAppBar = () => {
                   </div>
                   <div>
                     <p className="text-[11px] font-black uppercase tracking-widest text-on-surface">{item.label}</p>
-                    <p className="text-[9px] text-on-surface-variant font-medium opacity-50">Acceder a {item.label}</p>
+            <p className="text-[9px] text-on-surface-variant font-medium opacity-50">Acceder a {item.label.toLowerCase()}</p>
                   </div>
                 </Link>
               ))}
@@ -198,11 +198,11 @@ const BottomNavBar = () => {
   const location = useLocation();
 
   const navItems = [
-    { icon: LayoutDashboard, label: "Panel", path: "/dashboard" },
-    { icon: BarChart3, label: "Mercado", path: "/market" },
-    { icon: Target, label: "Analizador", path: "/terminal" },
-    { icon: Users, label: "Copy", path: "/copy-trading" },
-    { icon: Newspaper, label: "Noticias", path: "/news" },
+    { icon: LayoutDashboard, label: "PANEL", path: "/dashboard" },
+    { icon: BarChart3, label: "MERCADO", path: "/market" },
+    { icon: Target, label: "ANALIZADOR", path: "/terminal" },
+    { icon: Users, label: "COPIA", path: "/copy-trading" },
+    { icon: Newspaper, label: "NOTICIAS", path: "/news" },
   ];
 
   return (

@@ -25,7 +25,7 @@ const WhaleFeed: React.FC<WhaleFeedProps> = ({ whaleMovements, topTraders, large
           </div>
           <div>
             <h3 className="text-lg font-black uppercase tracking-widest text-orange-500 leading-none mb-2">
-              COPY TRADING | WHALES & TOP TRADERS
+              COPIA DE TRADING | BALLENAS Y MEJORES TRADERS
             </h3>
             <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Monitoreo en tiempo real de flujos institucionales</p>
           </div>

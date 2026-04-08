@@ -123,6 +123,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Entrada</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Objetivos</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">RSI / Vol</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Volatilidad</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Confianza</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Acción</th>
                   </tr>
@@ -205,6 +206,19 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                             <div className="flex items-center gap-2">
                               <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-50">VOL:</span>
                               <span className="text-[10px] font-black text-on-surface">{ticker.volume ? (parseFloat(ticker.volume) / 1000000).toFixed(1) + "M" : "---"}</span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-black text-on-surface uppercase tracking-tighter">
+                              {ticker.riskLevel === "Alto" ? "ALTA" : ticker.riskLevel === "Moderado" ? "MEDIA" : "BAJA"}
+                            </p>
+                            <div className="w-16 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                              <div 
+                                className={cn("h-full transition-all", ticker.riskLevel === "Alto" ? "bg-secondary" : ticker.riskLevel === "Moderado" ? "bg-yellow-500" : "bg-primary")} 
+                                style={{ width: ticker.riskLevel === "Alto" ? "100%" : ticker.riskLevel === "Moderado" ? "60%" : "30%" }}
+                              />
                             </div>
                           </div>
                         </td>
