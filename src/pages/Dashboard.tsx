@@ -32,7 +32,10 @@ import NewsFeed from "@/components/dashboard/NewsFeed";
 import SignalMatrix from "@/components/dashboard/SignalMatrix";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
 
+import { useSignalStore } from "@/store/useSignalStore";
+
 const Dashboard = () => {
+  const { addSignal } = useSignalStore();
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allTickers, setAllTickers] = useState<CryptoData[]>([]);
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
@@ -75,10 +78,9 @@ const Dashboard = () => {
       const data = await fetchTickers(symbols);
       
       setAllTickers(prev => {
-        return data.map(t => {
+        const updated = data.map(t => {
           const existing = prev.find(p => p.symbol === t.symbol);
           if (existing) {
-            // Preserve stable fields
             return {
               ...t,
               timeframe: existing.timeframe,
@@ -92,8 +94,44 @@ const Dashboard = () => {
               proximity: Math.abs((parseFloat(t.price) - existing.entry) / existing.entry) * 100
             };
           }
-          return t; // New ticker will have its own generated fields from fetchTicker
+          return t;
         });
+
+        // Signal Detection Logic
+        updated.forEach(ticker => {
+          const proximity = ticker.proximity || 0;
+          // If price is very close to entry (within 0.5%) and not already triggered
+          if (proximity <= 0.5 && !triggeredAlerts.has(ticker.symbol)) {
+            // Trigger Global Signal Store
+            addSignal(ticker);
+            
+            // Trigger Telegram Alert
+            if (telegramToken && telegramChatId) {
+              const isBullish = parseFloat(ticker.priceChangePercent) > 0;
+              sendTelegramAlert({
+                symbol: ticker.symbol,
+                price: ticker.price,
+                change: ticker.priceChangePercent,
+                type: "SIGNAL",
+                confidence: ticker.consensus || 85,
+                entry: ticker.entry?.toFixed(4),
+                sl: ticker.stopLoss?.toFixed(4),
+                tp1: ticker.takeProfits?.[0]?.toFixed(4),
+                tp2: ticker.takeProfits?.[1]?.toFixed(4),
+                tp3: ticker.takeProfits?.[2]?.toFixed(4),
+                leverage: `${ticker.leverage}x`
+              });
+            }
+
+            setTriggeredAlerts(prev => new Set(prev).add(ticker.symbol));
+            toast.info(`¡Nueva señal activa para ${ticker.symbol}!`, {
+              description: `Precio cerca de zona de entrada: $${ticker.entry?.toFixed(4)}`,
+              duration: 10000,
+            });
+          }
+        });
+
+        return updated;
       });
 
       const [whales, traders, txs, events] = await Promise.all([

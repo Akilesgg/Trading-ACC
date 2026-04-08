@@ -39,14 +39,14 @@ const MarketPage = () => {
     const dominance = bullishCount / (marketData.length || 1);
     
     return {
-      trend: avgChange > 1 ? "BULLISH" : avgChange < -1 ? "BEARISH" : "NEUTRAL",
+      trend: avgChange > 1 ? "ALCISTA" : avgChange < -1 ? "BAJISTA" : "NEUTRAL",
       avgChange,
       dominance: (dominance * 100).toFixed(1),
       conclusion: avgChange > 1 
-        ? "Mercado dominado por presión compradora. Alta probabilidad de continuidad alcista en altcoins." 
+        ? "Fuerte presión compradora detectada. El mercado muestra una estructura alcista sólida con alta probabilidad de continuación." 
         : avgChange < -1 
-          ? "Mercado dominado por presión bajista en futuros. Alta probabilidad de continuidad bajista a corto plazo." 
-          : "Mercado en fase de consolidación lateral. Se recomienda esperar confirmación de ruptura."
+          ? "Presión vendedora dominante en el mercado spot y futuros. Se observa una distribución institucional agresiva." 
+          : "El mercado se encuentra en una fase de consolidación lateral. La dominancia de compradores y vendedores está equilibrada."
     };
   }, [marketData]);
 
@@ -68,14 +68,14 @@ const MarketPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 trading-card p-10 flex flex-col md:flex-row items-center gap-10 bg-primary/5 border-primary/20">
           <div className="w-32 h-32 bg-primary/10 rounded-[2.5rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10 flex-shrink-0">
-            <TrendingUp className={cn("w-16 h-16", marketSummary.trend === "BEARISH" ? "text-secondary rotate-180" : "text-primary")} />
+            <TrendingUp className={cn("w-16 h-16", marketSummary.trend === "BAJISTA" ? "text-secondary rotate-180" : "text-primary")} />
           </div>
           <div className="space-y-4 flex-1">
             <div className="flex items-center gap-4">
               <span className={cn(
                 "px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg",
-                marketSummary.trend === "BULLISH" ? "bg-primary/20 text-primary shadow-primary/10" : 
-                marketSummary.trend === "BEARISH" ? "bg-secondary/20 text-secondary shadow-secondary/10" : "bg-on-surface/10 text-on-surface"
+                marketSummary.trend === "ALCISTA" ? "bg-primary/20 text-primary shadow-primary/10" : 
+                marketSummary.trend === "BAJISTA" ? "bg-secondary/20 text-secondary shadow-secondary/10" : "bg-on-surface/10 text-on-surface"
               )}>
                 TENDENCIA: {marketSummary.trend}
               </span>
@@ -124,7 +124,7 @@ const MarketPage = () => {
             </div>
             <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Long/Short Ratio</span>
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ratio Long/Short</span>
                 <span className="text-[10px] font-black text-secondary">0.85</span>
               </div>
               <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden flex">

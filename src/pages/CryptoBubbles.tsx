@@ -213,14 +213,14 @@ const CryptoBubbles: React.FC = () => {
     const bullishCount = data.filter(d => d.priceChange > 0).length;
     const percentBullish = (bullishCount / data.length) * 100;
 
-    let status = "Neutral";
+    let status = "NEUTRAL";
     let recommendation = "El mercado muestra una fase de consolidación lateral. Se recomienda esperar confirmación de ruptura en niveles clave de BTC.";
 
     if (avgChange > 1.5 && percentBullish > 60) {
-      status = "Bullish";
+      status = "ALCISTA";
       recommendation = "Fuerte impulso alcista detectado en el Top 500. El capital está rotando hacia altcoins de mediana capitalización. Oportunidad en breakouts confirmados.";
     } else if (avgChange < -1.5 && percentBullish < 40) {
-      status = "Bearish";
+      status = "BAJISTA";
       recommendation = "Presión vendedora dominante. Alta correlación con la debilidad de BTC. Se recomienda cautela, priorizar la liquidez y buscar coberturas.";
     }
 
@@ -592,8 +592,8 @@ const CryptoBubbles: React.FC = () => {
                 <span className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest">Estado General:</span>
                 <span className={cn(
                   "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg",
-                  marketConclusion.status === "Bullish" ? "bg-primary/20 text-primary shadow-primary/10" : 
-                  marketConclusion.status === "Bearish" ? "bg-secondary/20 text-secondary shadow-secondary/10" : 
+                  marketConclusion.status === "ALCISTA" ? "bg-primary/20 text-primary shadow-primary/10" : 
+                  marketConclusion.status === "BAJISTA" ? "bg-secondary/20 text-secondary shadow-secondary/10" : 
                   "bg-on-surface/10 text-on-surface"
                 )}>
                   {marketConclusion.status}

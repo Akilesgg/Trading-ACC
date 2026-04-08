@@ -22,7 +22,8 @@ import {
   Copy, 
   Check, 
   AlertTriangle, 
-  RefreshCw 
+  RefreshCw,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -231,7 +232,7 @@ const Analysis = () => {
               <Brain className="w-7 h-7 text-primary" />
             </div>
             <h1 className="text-5xl font-black tracking-tighter uppercase text-on-surface">
-              Deep <span className="text-primary">Analysis</span>
+              Análisis <span className="text-primary">Profundo</span>
             </h1>
           </div>
           <p className="text-on-surface-variant font-black uppercase tracking-[0.3em] text-[10px] ml-1 opacity-70">
@@ -258,6 +259,23 @@ const Analysis = () => {
                 <RotateCcw className="w-4 h-4" /> Restablecer
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Initial Explanation Block */}
+      <div className="bg-surface-container-low/40 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
+          <div className="w-20 h-20 bg-primary/20 rounded-3xl flex items-center justify-center border border-primary/30 shadow-2xl shadow-primary/20 flex-shrink-0">
+            <Info className="w-10 h-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-on-surface uppercase tracking-tight">¿Cómo funciona nuestro Analizador IA?</h3>
+            <p className="text-sm text-on-surface-variant font-medium leading-relaxed">
+              Nuestro sistema utiliza modelos avanzados de procesamiento de lenguaje natural y análisis cuantitativo para interpretar datos de múltiples fuentes: movimientos de ballenas, eventos macroeconómicos, sentimiento en redes sociales y estructuras técnicas (Wyckoff, Elliot, etc.). 
+              <span className="text-primary font-bold"> El objetivo es transformar datos complejos en señales de trading accionables con niveles precisos de entrada y salida.</span>
+            </p>
           </div>
         </div>
       </div>

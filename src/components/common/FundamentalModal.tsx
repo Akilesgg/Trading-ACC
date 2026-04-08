@@ -56,10 +56,39 @@ const FundamentalModal: React.FC<FundamentalModalProps> = ({ data, onClose }) =>
                   <p className="text-sm text-on-surface-variant font-medium leading-relaxed opacity-80">{data.summary}</p>
                 </div>
 
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-surface-container-high/50 p-4 rounded-2xl border border-outline-variant/10 text-center">
+                    <p className="text-[8px] font-black text-on-surface-variant uppercase mb-1">Suministro</p>
+                    <p className="text-xs font-black text-on-surface">{data.marketData.supply}</p>
+                  </div>
+                  <div className="bg-surface-container-high/50 p-4 rounded-2xl border border-outline-variant/10 text-center">
+                    <p className="text-[8px] font-black text-on-surface-variant uppercase mb-1">Máximo Histórico</p>
+                    <p className="text-xs font-black text-on-surface">{data.marketData.allTimeHigh}</p>
+                  </div>
+                  <div className="bg-surface-container-high/50 p-4 rounded-2xl border border-outline-variant/10 text-center">
+                    <p className="text-[8px] font-black text-on-surface-variant uppercase mb-1">Ranking MC</p>
+                    <p className="text-xs font-black text-on-surface">#{data.marketData.marketCapRank}</p>
+                  </div>
+                </div>
+
                 <div className="p-8 bg-primary/5 rounded-[2rem] border border-primary/20 shadow-xl shadow-primary/5 relative overflow-hidden group">
                   <div className="absolute inset-0 bg-primary/5 blur-3xl -mr-32 -mt-32 group-hover:bg-primary/10 transition-all duration-1000"></div>
                   <h3 className="text-[11px] font-black uppercase tracking-widest text-primary mb-4 relative z-10">Potencial de Inversión</h3>
                   <p className="text-sm text-on-surface font-black leading-relaxed tracking-tight relative z-10">{data.potential}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {data.links.map((link, i) => (
+                    <a 
+                      key={i}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-surface-container-high hover:bg-primary/10 border border-outline-variant/10 hover:border-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-on-surface-variant hover:text-primary"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
                 </div>
               </div>
             </div>

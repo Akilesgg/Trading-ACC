@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Brain, ChevronDown, Search, X, Info } from "lucide-react";
+import { Brain, ChevronDown, Search, X, Info, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+import { useSignalStore } from "@/store/useSignalStore";
 
 interface AnalysisToolProps {
   selectedSymbol: string;
@@ -35,6 +37,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
   onLoadLayout,
   onShowFundamentals
 }) => {
+  const { activeSignals } = useSignalStore();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -79,6 +82,37 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
       </div>
 
       <div className="trading-card p-8 space-y-8">
+        {/* Signal Generator Section */}
+        {activeSignals.length > 0 && (
+          <div className="space-y-6 pb-8 border-b border-outline-variant/10">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
+                <Zap className="w-4 h-4 text-primary" />
+              </div>
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-on-surface">Generador de Señales Activas</h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {activeSignals.map((signal) => (
+                <div key={signal.symbol} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 flex justify-between items-center group hover:border-primary/30 transition-all">
+                  <div className="flex items-center gap-3">
+                    <img src={signal.image} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+                    <div>
+                      <p className="text-[10px] font-black text-on-surface uppercase leading-none mb-1">{signal.symbol.replace("USDT", "")}</p>
+                      <p className="text-[8px] font-black text-primary uppercase tracking-widest">Probabilidad: {signal.consensus}%</p>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest",
+                    parseFloat(signal.priceChangePercent) > 0 ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                  )}>
+                    {parseFloat(signal.priceChangePercent) > 0 ? "LONG" : "SHORT"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
         <div className="flex flex-wrap items-center gap-6 w-full lg:w-auto">
           <div className="space-y-2 w-full md:w-72" ref={dropdownRef}>

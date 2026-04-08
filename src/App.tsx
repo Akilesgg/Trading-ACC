@@ -230,6 +230,8 @@ const BottomNavBar = () => {
   );
 };
 
+import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
+
 export default function App() {
   const { user, loading } = useAuth();
 
@@ -271,6 +273,7 @@ export default function App() {
     <ErrorBoundary>
       <Router>
         <Toaster position="top-right" theme="dark" richColors />
+        <GlobalSignalOverlay />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary">
           <TopAppBar />
           <main className="flex-1 pt-20 pb-24">
