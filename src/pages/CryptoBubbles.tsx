@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { fetchAssetFundamentals, AssetFundamental } from "@/services/cryptoService";
 import FundamentalModal from "@/components/common/FundamentalModal";
 
+import { useTerminalStore } from "../store/useTerminalStore";
+
 interface CryptoBubbleData extends d3.SimulationNodeDatum {
   id: string;
   symbol: string;
@@ -40,6 +42,7 @@ interface CryptoBubbleData extends d3.SimulationNodeDatum {
 
 const CryptoBubbles: React.FC = () => {
   const navigate = useNavigate();
+  const { setActiveSymbol } = useTerminalStore();
   const svgRef = useRef<SVGSVGElement>(null);
   const [data, setData] = useState<CryptoBubbleData[]>([]);
   const [timeframe, setTimeframe] = useState("15m");
@@ -153,8 +156,41 @@ const CryptoBubbles: React.FC = () => {
       .data(filteredData)
       .enter()
       .append("g")
-      .attr("class", "bubble-node")
-      .on("click", (event, d) => setSelectedToken(d))
+      .attr("class", "bubble-node group cursor-pointer")
+      .on("click", (event, d) => {
+        setActiveSymbol(d.symbol);
+        navigate("/analysis");
+      })
+      .on("mouseover", (event, d) => {
+        const tooltip = d3.select("#bubble-tooltip");
+        tooltip.transition().duration(200).style("opacity", .9);
+        tooltip.html(`
+          <div class="p-3 bg-surface-container-high border border-outline-variant/20 rounded-xl shadow-2xl backdrop-blur-xl">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-6 h-6 bg-primary/20 rounded flex items-center justify-center font-black text-[10px] text-primary">${d.symbol[0]}</div>
+              <span class="text-[12px] font-black uppercase tracking-tighter">${d.symbol}</span>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between gap-4">
+                <span class="text-[9px] font-bold text-on-surface-variant uppercase">Beta BTC:</span>
+                <span class="text-[9px] font-black text-primary">${d.btcCorrelation.toFixed(2)}</span>
+              </div>
+              <div class="flex justify-between gap-4">
+                <span class="text-[9px] font-bold text-on-surface-variant uppercase">RSI:</span>
+                <span class="text-[9px] font-black ${d.rsi > 70 ? "text-secondary" : d.rsi < 30 ? "text-primary" : "text-on-surface"}">${d.rsi.toFixed(1)}</span>
+              </div>
+              <div class="mt-2 pt-2 border-t border-outline-variant/10">
+                <span class="text-[8px] font-black text-primary uppercase tracking-widest">CLICK PARA ANALIZAR</span>
+              </div>
+            </div>
+          </div>
+        `)
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 28) + "px");
+      })
+      .on("mouseout", () => {
+        d3.select("#bubble-tooltip").transition().duration(500).style("opacity", 0);
+      })
       .call(d3.drag<SVGGElement, CryptoBubbleData>()
         .on("start", (event, d) => {
           if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -422,6 +458,8 @@ const CryptoBubbles: React.FC = () => {
           
           <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
           
+          <div id="bubble-tooltip" className="fixed pointer-events-none opacity-0 z-[100]" />
+
           {/* Chart Controls Overlay */}
           <div className="absolute top-6 right-6 flex flex-col gap-2">
             <button className="p-3 bg-surface-container-low/40 backdrop-blur-xl rounded-xl border border-outline-variant/10 hover:bg-primary/10 transition-all text-on-surface-variant hover:text-primary">

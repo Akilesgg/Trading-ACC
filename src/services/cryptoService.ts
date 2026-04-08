@@ -266,15 +266,15 @@ export async function fetchWhaleMovements() {
     const allWhaleTrades: any[] = [];
 
     for (const symbol of symbols) {
-      const response = await fetch(`https://api.binance.com/api/v3/trades?symbol=${symbol}&limit=500`);
+      const response = await fetch(`https://api.binance.com/api/v3/trades?symbol=${symbol}&limit=1000`);
       if (!response.ok) continue;
       const trades = await response.json();
       
-      // Filter trades > $100k (simplified)
+      // Filter trades > $500k
       const whaleTrades = trades.filter((t: any) => {
         const price = parseFloat(t.p);
         const qty = parseFloat(t.q);
-        return (price * qty) > 100000;
+        return (price * qty) > 500000;
       }).map((t: any) => {
         const price = parseFloat(t.p);
         const qty = parseFloat(t.q);
@@ -282,25 +282,23 @@ export async function fetchWhaleMovements() {
         return {
           symbol,
           type: t.m ? "VENTA" : "COMPRA",
-          amount: `$${(amount / 1000).toFixed(0)}K`,
-          impact: amount > 500000 ? "Alta" : "Media",
+          amount: `$${(amount / 1000000).toFixed(2)}M`,
+          impact: amount > 1000000 ? "CRÍTICA" : "ALTA",
           exchange: "Binance",
-          time: "hace poco",
+          time: new Date(t.T).toLocaleTimeString(),
           sourceUrl: `https://www.binance.com/en/trade/${symbol}`,
           recommendation: t.m ? "VENTA" : "COMPRA",
-          details: `Gran trade detectado en el mercado spot. Volumen: ${qty.toFixed(2)} ${symbol.replace("USDT", "")}.`
+          details: `Institución detectada en ${symbol}. Volumen: ${qty.toFixed(2)} ${symbol.replace("USDT", "")}.`
         };
       });
       
       allWhaleTrades.push(...whaleTrades);
     }
 
-    return allWhaleTrades.sort((a, b) => b.amount.localeCompare(a.amount)).slice(0, 10);
+    return allWhaleTrades.sort((a, b) => b.amount.localeCompare(a.amount)).slice(0, 15);
   } catch (error) {
     console.error("Error fetching whale movements:", error);
-    return [
-      { symbol: "BTCUSDT", type: "COMPRA", amount: "$2450K", impact: "Alta", exchange: "Binance", time: "hace 2 min", sourceUrl: "https://whale-alert.io/", recommendation: "COMPRA", details: "Acumulación masiva detectada en billeteras frías de Binance." },
-    ];
+    return [];
   }
 }
 
@@ -394,33 +392,44 @@ export async function fetchCryptoData() {
 }
 
 export async function calculateBTCCorrelation(symbol: string) {
+  const cacheKey = `beta_${symbol}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    const { value, timestamp } = JSON.parse(cached);
+    if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+      return value;
+    }
+  }
+
   try {
-    const btcKlines = await fetchKlines("BTCUSDT", "1d", 30);
-    const assetKlines = await fetchKlines(symbol, "1d", 30);
+    const btcKlines = await fetchKlines("BTCUSDT", "1d", 31);
+    const assetKlines = await fetchKlines(symbol, "1d", 31);
     
+    if (btcKlines.length < 31 || assetKlines.length < 31) return 1.0;
+
     const btcReturns = btcKlines.slice(1).map((k: any, i: number) => (k.close - btcKlines[i].close) / btcKlines[i].close);
     const assetReturns = assetKlines.slice(1).map((k: any, i: number) => (k.close - assetKlines[i].close) / assetKlines[i].close);
     
-    // Simple correlation calculation
+    // Beta = cov(asset, btc) / var(btc)
     const meanBtc = btcReturns.reduce((a: number, b: number) => a + b, 0) / btcReturns.length;
     const meanAsset = assetReturns.reduce((a: number, b: number) => a + b, 0) / assetReturns.length;
     
-    let num = 0;
-    let denBtc = 0;
-    let denAsset = 0;
+    let covariance = 0;
+    let varianceBtc = 0;
     
     for (let i = 0; i < btcReturns.length; i++) {
-      const db = btcReturns[i] - meanBtc;
-      const da = assetReturns[i] - meanAsset;
-      num += db * da;
-      denBtc += db * db;
-      denAsset += da * da;
+      const diffBtc = btcReturns[i] - meanBtc;
+      const diffAsset = assetReturns[i] - meanAsset;
+      covariance += diffBtc * diffAsset;
+      varianceBtc += diffBtc * diffBtc;
     }
     
-    const correlation = num / Math.sqrt(denBtc * denAsset);
-    return correlation;
+    const beta = covariance / varianceBtc;
+    
+    localStorage.setItem(cacheKey, JSON.stringify({ value: beta, timestamp: Date.now() }));
+    return beta;
   } catch (error) {
-    console.error("Error calculating correlation:", error);
-    return Math.random() * 0.4 + 0.5; // Fallback
+    console.error("Error calculating beta:", error);
+    return 1.0;
   }
 }

@@ -20,6 +20,8 @@ import {
 import { getMarketSentiment } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { sendTelegramAlert } from "@/services/telegramService";
+import { detectMarketRegime } from "@/services/signalEngine";
+import { fetchKlines } from "@/services/cryptoService";
 import { toast } from "sonner";
 import JSZip from "jszip";
 import FundamentalModal from "@/components/common/FundamentalModal";
@@ -51,7 +53,7 @@ const Dashboard = () => {
   const [economicEvents, setEconomicEvents] = useState<any[]>([]);
 
   const [showNotifSettings, setShowNotifSettings] = useState(false);
-  const [telegramToken, setTelegramToken] = useState(localStorage.getItem("telegramToken") || import.meta.env.VITE_TELEGRAM_BOT_TOKEN || "");
+  const [telegramToken, setTelegramToken] = useState(localStorage.getItem("telegramToken") || import.meta.env.VITE_TELEGRAM_TOKEN || "");
   const [telegramChatId, setTelegramChatId] = useState(localStorage.getItem("telegramChatId") || import.meta.env.VITE_TELEGRAM_CHAT_ID || "");
   const [isSendingTest, setIsSendingTest] = useState(false);
 
@@ -60,6 +62,20 @@ const Dashboard = () => {
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+  const [marketRegime, setMarketRegime] = useState<string>("CARGANDO...");
+
+  useEffect(() => {
+    const getRegime = async () => {
+      try {
+        const klines = await fetchKlines("BTCUSDT", "1h", 100);
+        const regime = detectMarketRegime(klines);
+        setMarketRegime(regime);
+      } catch (error) {
+        console.error("Error detecting market regime:", error);
+      }
+    };
+    getRegime();
+  }, []);
 
   const showFundamentals = async (symbol: string) => {
     const data = await fetchAssetFundamentals(symbol);
@@ -311,7 +327,11 @@ const Dashboard = () => {
 
       <div className="trading-grid">
         <div className="md:col-span-8">
-          <MarketPulse sentiment={sentiment} onShowSettings={() => setShowNotifSettings(true)} />
+          <MarketPulse 
+            sentiment={sentiment} 
+            onShowSettings={() => setShowNotifSettings(true)} 
+            marketRegime={marketRegime}
+          />
         </div>
         <div className="md:col-span-4">
           <SignalSummary signals={signalStats} activeFilter={filter} onFilterClick={setFilter} />

@@ -1,14 +1,16 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Bell, Zap } from "lucide-react";
+import { Bell, Zap, TrendingUp, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface MarketPulseProps {
   sentiment: string;
   onShowSettings: () => void;
+  marketRegime?: string;
 }
 
-const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) => {
+const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings, marketRegime }) => {
   return (
     <div className="trading-card border-l-4 border-primary relative overflow-visible group min-h-[420px] flex flex-col p-8 h-full">
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] -mr-48 -mt-48 group-hover:bg-primary/10 transition-all duration-1000 pointer-events-none"></div>
@@ -20,6 +22,17 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings }) 
             <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_15px_rgba(0,255,163,0.8)]"></div>
             <span className="text-[11px] font-black uppercase tracking-[0.3em] text-on-surface opacity-80">Fear & Greed Index</span>
           </div>
+          {marketRegime && (
+            <div className="px-4 py-1.5 bg-surface-container-high rounded-full border border-outline-variant/10 flex items-center gap-2">
+              <div className={cn(
+                "w-1.5 h-1.5 rounded-full",
+                marketRegime.includes("TRENDING_UP") ? "bg-primary" : marketRegime.includes("TRENDING_DOWN") ? "bg-secondary" : "bg-tertiary"
+              )} />
+              <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">
+                REGIME: <span className="text-on-surface">{marketRegime.replace("_", " ")}</span>
+              </span>
+            </div>
+          )}
           <button 
             onClick={onShowSettings}
             className="p-3 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all group/btn shadow-xl active:scale-90"

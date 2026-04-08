@@ -67,19 +67,58 @@ export function calculateMACD(data: number[]) {
 }
 
 export function detectSMC(klines: any[]) {
-  if (klines.length < 10) return "NONE";
+  if (klines.length < 50) return "NONE";
 
   const last = klines[klines.length - 1];
-  const prev = klines[klines.length - 2];
-  const high3 = Math.max(...klines.slice(-5, -1).map(k => k.high));
-  const low3 = Math.min(...klines.slice(-5, -1).map(k => k.low));
-
-  if (last.close > high3) return "BOS";
-  if (last.close < low3) return "BOS";
   
-  // CHoCH detection (Change of Character)
-  // Simplified: if price breaks a major swing high/low after a trend
+  // Find recent swing highs and lows
+  const lookback = 20;
+  const recentKlines = klines.slice(-lookback);
+  const highest = Math.max(...klines.slice(-50, -1).map(k => k.high));
+  const lowest = Math.min(...klines.slice(-50, -1).map(k => k.low));
+
+  // BOS: Break of Structure (Continuation)
+  if (last.close > highest) return "BOS_BULLISH";
+  if (last.close < lowest) return "BOS_BEARISH";
+  
+  // CHoCH: Change of Character (Reversal)
+  // Simplified: break of the opposite swing after a strong move
+  const prevHigh = Math.max(...klines.slice(-40, -20).map(k => k.high));
+  const prevLow = Math.min(...klines.slice(-40, -20).map(k => k.low));
+  
+  if (last.close > prevHigh && klines[klines.length - 10].close < prevLow) return "CHoCH_BULLISH";
+  if (last.close < prevLow && klines[klines.length - 10].close > prevHigh) return "CHoCH_BEARISH";
+
   return "NONE";
+}
+
+export function detectMarketRegime(klines: any[]) {
+  if (klines.length < 50) return "UNKNOWN";
+  
+  const closes = klines.map(k => k.close);
+  const ema200 = calculateEMA(closes, 200);
+  const lastPrice = closes[closes.length - 1];
+  
+  // ADX-like logic for trending vs ranging
+  const high = klines.map(k => k.high);
+  const low = klines.map(k => k.low);
+  
+  let trSum = 0;
+  for (let i = 1; i < 14; i++) {
+    const tr = Math.max(
+      high[high.length - i] - low[low.length - i],
+      Math.abs(high[high.length - i] - closes[closes.length - i - 1]),
+      Math.abs(low[low.length - i] - closes[closes.length - i - 1])
+    );
+    trSum += tr;
+  }
+  const atr = trSum / 14;
+  
+  const range = Math.max(...closes.slice(-20)) - Math.min(...closes.slice(-20));
+  
+  if (range < atr * 3) return "RANGING";
+  if (lastPrice > ema200) return "TRENDING_UP";
+  return "TRENDING_DOWN";
 }
 
 export async function generateSignal(symbol: string, timeframe: string = "1h"): Promise<TradingSignal | null> {
@@ -91,29 +130,44 @@ export async function generateSignal(symbol: string, timeframe: string = "1h"): 
     const macd = calculateMACD(closes);
     const ema20 = calculateEMA(closes, 20);
     const ema50 = calculateEMA(closes, 50);
+    const ema200 = calculateEMA(closes, 200);
     const smc = detectSMC(klines);
     
     const price = closes[closes.length - 1];
     let score = 50;
     let type: "LONG" | "SHORT" = "LONG";
     
-    // Scoring logic
-    if (rsi < 35) score += 15;
-    if (rsi > 65) { score += 15; type = "SHORT"; }
+    // Scoring logic (More strict)
+    if (rsi < 30) score += 20;
+    if (rsi > 70) { score += 20; type = "SHORT"; }
+    
     if (macd.histogram > 0) score += 10;
     if (macd.histogram < 0 && type === "SHORT") score += 10;
-    if (smc === "BOS") score += 20;
+    
+    if (smc.includes("BOS")) score += 25;
+    if (smc.includes("CHoCH")) score += 30;
+    
     if (price > ema50) score += 10;
     if (price < ema50 && type === "SHORT") score += 10;
+    
+    // Trend alignment
+    if (price > ema200 && type === "LONG") score += 15;
+    if (price < ema200 && type === "SHORT") score += 15;
 
     if (score < 70) return null;
 
     const isLong = type === "LONG";
     const entry = price;
-    const sl = isLong ? price * 0.985 : price * 1.015;
+    
+    // Dynamic SL/TP based on ATR (simplified)
+    const high = Math.max(...klines.slice(-10).map(k => k.high));
+    const low = Math.min(...klines.slice(-10).map(k => k.low));
+    const range = high - low;
+    
+    const sl = isLong ? price - (range * 1.5) : price + (range * 1.5);
     const tp = isLong 
-      ? [price * 1.01, price * 1.03, price * 1.06]
-      : [price * 0.99, price * 0.97, price * 0.94];
+      ? [price + range, price + range * 2, price + range * 4]
+      : [price - range, price - range * 2, price - range * 4];
 
     return {
       id: `${symbol}-${Date.now()}`,
@@ -123,15 +177,15 @@ export async function generateSignal(symbol: string, timeframe: string = "1h"): 
       stopLoss: sl,
       takeProfit: tp,
       riskReward: Math.abs(tp[1] - entry) / Math.abs(entry - sl),
-      score,
+      score: Math.min(score, 99),
       status: SignalStatus.CONFIRMED,
       timestamp: Date.now(),
-      explanation: `Señal generada por confluencia de ${smc === "BOS" ? "BOS" : ""} + RSI ${rsi.toFixed(0)} + MACD.`,
+      explanation: `Señal detectada por confluencia de ${smc} + RSI ${rsi.toFixed(0)} + Alineación EMA.`,
       indicators: {
         rsi: Math.round(rsi),
         macd: macd.histogram > 0 ? "BULLISH" : "BEARISH",
-        emaTrend: price > ema50 ? "BULLISH" : "BEARISH",
-        volume: klines[klines.length - 1].volume > klines[klines.length - 2].volume ? "HIGH" : "NORMAL",
+        emaTrend: price > ema200 ? "BULLISH" : "BEARISH",
+        volume: klines[klines.length - 1].volume > klines[klines.length - 5].volume ? "HIGH" : "NORMAL",
         smc
       }
     };
