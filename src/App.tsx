@@ -286,6 +286,14 @@ export default function App() {
     );
   }
 
+  if (!user) {
+    return (
+      <ErrorBoundary>
+        <LoginScreen />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <Router>
@@ -304,7 +312,7 @@ export default function App() {
                 <Route path="/analysis" element={<Analysis />} />
                 <Route path="/signal/:symbol" element={<SignalDetail />} />
                 <Route path="/signals-history" element={<SignalHistory />} />
-            <Route path="/terminal" element={<Terminal />} />
+                <Route path="/terminal" element={<Terminal />} />
                 <Route path="/copy-trading" element={<CopyTrading />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/btc-comparison" element={<BTCComparison />} />

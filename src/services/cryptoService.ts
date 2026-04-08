@@ -27,57 +27,71 @@ export interface CryptoData {
 }
 
 export async function fetchTicker(symbol: string): Promise<CryptoData> {
-  const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
-  if (!response.ok) throw new Error("Failed to fetch ticker");
-  const data = await response.json();
-  
-  // Mocking/Calculating additional fields
-  const price = parseFloat(data.lastPrice);
-  const change = parseFloat(data.priceChangePercent);
-  const isBullish = change > 0;
-  const volatility = Math.abs(parseFloat(data.highPrice) - parseFloat(data.lowPrice)) / price;
-  
-  // Leverage calculation based on volatility (ATR-like)
-  let leverage = 10;
-  let riskLevel: "Bajo" | "Moderado" | "Alto" = "Moderado";
-  if (volatility > 0.05) {
-    leverage = 3;
-    riskLevel = "Alto";
-  } else if (volatility < 0.02) {
-    leverage = 20;
-    riskLevel = "Bajo";
-  }
+  try {
+    const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
+    if (!response.ok) throw new Error("Failed to fetch ticker");
+    const data = await response.json();
+    
+    const price = parseFloat(data.lastPrice);
+    const change = parseFloat(data.priceChangePercent);
+    const isBullish = change > 0;
+    const volatility = Math.abs(parseFloat(data.highPrice) - parseFloat(data.lowPrice)) / price;
+    
+    let leverage = 10;
+    let riskLevel: "Bajo" | "Moderado" | "Alto" = "Moderado";
+    if (volatility > 0.05) {
+      leverage = 3;
+      riskLevel = "Alto";
+    } else if (volatility < 0.02) {
+      leverage = 20;
+      riskLevel = "Bajo";
+    }
 
-  return {
-    symbol: data.symbol,
-    price: data.lastPrice,
-    priceChangePercent: data.priceChangePercent,
-    highPrice: data.highPrice,
-    lowPrice: data.lowPrice,
-    volume: data.volume,
-    market: "FUTUROS",
-    entry: price * (isBullish ? 0.995 : 1.005),
-    timeframe: "1h",
-    winRate: Math.floor(Math.random() * 20) + 65,
-    proximity: Math.random() * 0.5,
-    direction: isBullish ? "LONG" : "SHORT",
-    stopLoss: isBullish ? price * 0.98 : price * 1.02,
-    takeProfits: isBullish ? [price * 1.02, price * 1.05, price * 1.1] : [price * 0.98, price * 0.95, price * 0.9],
-    consensus: Math.floor(Math.random() * 30) + 60,
-    funding: (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
-    oi: (parseFloat(data.volume) * 0.1).toFixed(2) + "M",
-    rsi: Math.floor(Math.random() * 40) + 30,
-    recommendation: isBullish ? "COMPRA FUERTE" : "VENTA FUERTE",
-    liquidity: (parseFloat(data.volume) * 0.05).toFixed(2) + "M",
-    alert: Math.random() > 0.7,
-    leverage,
-    riskLevel,
-    image: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${data.symbol.replace("USDT", "").toLowerCase()}.png`
-  };
+    return {
+      symbol: data.symbol,
+      price: data.lastPrice,
+      priceChangePercent: data.priceChangePercent,
+      highPrice: data.highPrice,
+      lowPrice: data.lowPrice,
+      volume: data.volume,
+      market: "FUTUROS",
+      entry: price * (isBullish ? 0.995 : 1.005),
+      timeframe: "1h",
+      winRate: Math.floor(Math.random() * 20) + 65,
+      proximity: Math.random() * 0.5,
+      direction: isBullish ? "LONG" : "SHORT",
+      stopLoss: isBullish ? price * 0.98 : price * 1.02,
+      takeProfits: isBullish ? [price * 1.02, price * 1.05, price * 1.1] : [price * 0.98, price * 0.95, price * 0.9],
+      consensus: Math.floor(Math.random() * 30) + 60,
+      funding: (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
+      oi: (parseFloat(data.volume) * 0.1).toFixed(2) + "M",
+      rsi: Math.floor(Math.random() * 40) + 30,
+      recommendation: isBullish ? "COMPRA FUERTE" : "VENTA FUERTE",
+      liquidity: (parseFloat(data.volume) * 0.05).toFixed(2) + "M",
+      alert: Math.random() > 0.7,
+      leverage,
+      riskLevel,
+      image: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${data.symbol.replace("USDT", "").toLowerCase()}.png`
+    };
+  } catch (error) {
+    console.error(`Error fetching ticker for ${symbol}:`, error);
+    // Fallback data if API fails but we need to show something
+    return {
+      symbol,
+      price: "0.00",
+      priceChangePercent: "0.00",
+      highPrice: "0.00",
+      lowPrice: "0.00",
+      volume: "0.00",
+      market: "N/A",
+      image: `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/128/color/${symbol.replace("USDT", "").toLowerCase()}.png`
+    };
+  }
 }
 
 export async function fetchTickers(symbols: string[]): Promise<CryptoData[]> {
-  return Promise.all(symbols.map(fetchTicker));
+  const results = await Promise.all(symbols.map(s => fetchTicker(s)));
+  return results.filter(t => t.price !== "0.00");
 }
 
 export async function fetchKlines(symbol: string, interval: string = "1h", limit: number = 50) {

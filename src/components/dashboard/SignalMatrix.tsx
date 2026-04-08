@@ -122,6 +122,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('priceChangePercent')}>24h %</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Entrada</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Objetivos</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">RSI / Vol</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Confianza</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Acción</th>
                   </tr>
@@ -183,12 +184,28 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                           </div>
                         </td>
                         <td className="p-6">
-                          <div className="flex gap-2">
+                          <div className="flex flex-col gap-1.5">
                             {ticker.takeProfits?.slice(0, 3).map((tp, i) => (
-                              <div key={i} className="px-2 py-1 bg-surface-container-high rounded-lg text-[9px] font-black border border-outline-variant/10 shadow-sm text-on-surface-variant uppercase">
-                                T{i+1}: ${tp.toFixed(2)}
+                              <div key={i} className="px-2 py-1 bg-surface-container-high rounded-lg text-[9px] font-black border border-outline-variant/10 shadow-sm text-on-surface-variant uppercase flex justify-between gap-2">
+                                <span>TP{i+1}:</span>
+                                <span className="text-on-surface">${tp.toFixed(2)}</span>
                               </div>
                             ))}
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-50">RSI:</span>
+                              <span className={cn(
+                                "text-[10px] font-black",
+                                (ticker.rsi || 50) > 70 ? "text-secondary" : (ticker.rsi || 50) < 30 ? "text-primary" : "text-on-surface"
+                              )}>{ticker.rsi || 50}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-50">VOL:</span>
+                              <span className="text-[10px] font-black text-on-surface">{ticker.volume ? (parseFloat(ticker.volume) / 1000000).toFixed(1) + "M" : "---"}</span>
+                            </div>
                           </div>
                         </td>
                         <td className="p-6">

@@ -4,7 +4,8 @@ import {
   Brain,
   Info,
   Download,
-  X
+  X,
+  Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -35,6 +36,7 @@ import SignalMatrix from "@/components/dashboard/SignalMatrix";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
 import LiveSignalFeed from "@/components/dashboard/LiveSignalFeed";
 import PriceAlerts from "@/components/dashboard/PriceAlerts";
+import MarketConclusion from "@/components/dashboard/MarketConclusion";
 
 import { useSignalStore } from "@/store/useSignalStore";
 
@@ -82,6 +84,40 @@ const Dashboard = () => {
   const showFundamentals = async (symbol: string) => {
     const data = await fetchAssetFundamentals(symbol);
     setSelectedFundamental(data);
+  };
+
+  const sendBestSignalToTelegram = async () => {
+    if (allTickers.length === 0) return;
+    
+    // Find ticker with highest consensus
+    const bestSignal = [...allTickers].sort((a, b) => (b.consensus || 0) - (a.consensus || 0))[0];
+    
+    if (bestSignal && telegramToken && telegramChatId) {
+      setIsSendingTest(true);
+      try {
+        await sendTelegramAlert({
+          symbol: bestSignal.symbol,
+          price: bestSignal.price,
+          change: bestSignal.priceChangePercent,
+          type: "SIGNAL",
+          confidence: bestSignal.consensus || 90,
+          entry: bestSignal.entry?.toFixed(4),
+          sl: bestSignal.stopLoss?.toFixed(4),
+          tp1: bestSignal.takeProfits?.[0]?.toFixed(4),
+          tp2: bestSignal.takeProfits?.[1]?.toFixed(4),
+          tp3: bestSignal.takeProfits?.[2]?.toFixed(4),
+          leverage: `${bestSignal.leverage}x`,
+          analysis: `Señal de alta confianza detectada por el motor IA para ${bestSignal.symbol}.`
+        });
+        toast.success(`Señal de ${bestSignal.symbol} enviada a Telegram`);
+      } catch (e) {
+        toast.error("Error al enviar la señal");
+      } finally {
+        setIsSendingTest(false);
+      }
+    } else {
+      toast.error("Configura Telegram primero en los ajustes");
+    }
   };
 
   const loadData = useCallback(async () => {
@@ -342,6 +378,16 @@ const Dashboard = () => {
             onShowSettings={() => setShowNotifSettings(true)} 
             marketRegime={marketRegime}
           />
+          <div className="flex justify-end -mt-4 mb-4">
+            <button 
+              onClick={sendBestSignalToTelegram}
+              disabled={isSendingTest}
+              className="px-6 py-3 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <Zap className={cn("w-4 h-4", isSendingTest && "animate-spin")} />
+              Enviar Mejor Señal
+            </button>
+          </div>
           <PriceAlerts currentPrices={currentPricesMap} />
         </div>
         <div className="md:col-span-3">
@@ -413,6 +459,8 @@ const Dashboard = () => {
           onShowFundamentals={showFundamentals}
         />
       </section>
+
+      <MarketConclusion sentiment={sentiment} regime={marketRegime} />
 
       {/* Fundamental Modal */}
       <FundamentalModal 
