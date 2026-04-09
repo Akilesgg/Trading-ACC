@@ -1,6 +1,8 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Activity } from "lucide-react";
+import { sendTelegramAlert } from "@/services/telegramService";
+import { toast } from "sonner";
 
 interface NotificationSettingsProps {
   isOpen: boolean;
@@ -97,15 +99,31 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-2">
-                  <button 
-                    onClick={onSendTest}
-                    disabled={isSendingTest}
-                    className="flex-1 py-3 bg-primary/10 text-primary border border-primary/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all disabled:opacity-50 shadow-lg"
+                <div className="grid grid-cols-1 gap-3 pt-2">
+                  <button
+                    onClick={async () => {
+                      await sendTelegramAlert({
+                        symbol: "BTCUSDT",
+                        price: "84000",
+                        change: "+3.5",
+                        type: "BULLISH",
+                        confidence: 92,
+                        entry: "83500",
+                        sl: "81000",
+                        tp1: "86000",
+                        tp2: "89000",
+                        tp3: "93000",
+                        leverage: "10x"
+                      });
+                      toast.success("✅ Mensaje de prueba enviado a Telegram");
+                    }}
+                    className="w-full py-4 bg-primary text-on-primary rounded-2xl
+                      font-black uppercase tracking-widest text-xs flex items-center
+                      justify-center gap-3 hover:opacity-90 active:scale-95 transition-all"
                   >
-                    {isSendingTest ? "Enviando..." : "Enviar Prueba"}
+                    📤 ENVIAR PRUEBA A TELEGRAM AHORA
                   </button>
-                  <button className="flex-1 py-3 bg-surface-container-highest rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 transition-all border border-outline-variant/10 shadow-lg">Vincular Discord</button>
+                  <button className="w-full py-3 bg-surface-container-highest rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 transition-all border border-outline-variant/10 shadow-lg">Vincular Discord</button>
                 </div>
               </div>
 

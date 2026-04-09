@@ -92,7 +92,7 @@ const Dashboard = () => {
     // Find ticker with highest consensus
     const bestSignal = [...allTickers].sort((a, b) => (b.consensus || 0) - (a.consensus || 0))[0];
     
-    if (bestSignal && telegramToken && telegramChatId) {
+    if (bestSignal) {
       setIsSendingTest(true);
       try {
         await sendTelegramAlert({
@@ -101,12 +101,12 @@ const Dashboard = () => {
           change: bestSignal.priceChangePercent,
           type: "SIGNAL",
           confidence: bestSignal.consensus || 90,
-          entry: bestSignal.entry?.toFixed(4),
-          sl: bestSignal.stopLoss?.toFixed(4),
-          tp1: bestSignal.takeProfits?.[0]?.toFixed(4),
-          tp2: bestSignal.takeProfits?.[1]?.toFixed(4),
-          tp3: bestSignal.takeProfits?.[2]?.toFixed(4),
-          leverage: `${bestSignal.leverage}x`,
+          entry: bestSignal.entry?.toFixed(2),
+          sl: bestSignal.stopLoss?.toFixed(2),
+          tp1: bestSignal.takeProfits?.[0]?.toFixed(2),
+          tp2: bestSignal.takeProfits?.[1]?.toFixed(2),
+          tp3: bestSignal.takeProfits?.[2]?.toFixed(2),
+          leverage: `${bestSignal.leverage || 10}x`,
           analysis: `Señal de alta confianza detectada por el motor IA para ${bestSignal.symbol}.`
         });
         toast.success(`Señal de ${bestSignal.symbol} enviada a Telegram`);
@@ -115,8 +115,6 @@ const Dashboard = () => {
       } finally {
         setIsSendingTest(false);
       }
-    } else {
-      toast.error("Configura Telegram primero en los ajustes");
     }
   };
 

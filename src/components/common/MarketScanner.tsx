@@ -26,8 +26,8 @@ const MarketScanner: React.FC = () => {
           const proximity = ticker.proximity || 0;
           const consensus = ticker.consensus || 0;
           
-          // Condition for automatic signal: Proximity < 0.5% OR Consensus > 90%
-          const isSignal = proximity <= 0.5 || consensus >= 90;
+          // Condition for automatic signal: Proximity < 2.0% OR Consensus > 90%
+          const isSignal = proximity <= 2.0 || consensus >= 90;
           
           // Check if we already have an active signal for this asset to avoid duplicates
           const alreadyActive = activeSignals.some(s => s.activo === ticker.symbol && s.estado === 'activa');
