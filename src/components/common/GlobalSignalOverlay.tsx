@@ -26,7 +26,7 @@ const GlobalSignalOverlay: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-32 right-8 z-[200] flex flex-col gap-4 pointer-events-none">
+    <div className="fixed bottom-32 right-8 z-[200] flex flex-col-reverse gap-4 pointer-events-none max-h-[calc(100vh-160px)] overflow-y-auto no-scrollbar pr-2 pt-4">
       <AnimatePresence>
         {visibleSignals.map((signal) => (
           <motion.div

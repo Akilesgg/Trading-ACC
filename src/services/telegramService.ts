@@ -26,6 +26,17 @@ export const sendTelegramAlert = async (alert: TelegramAlert) => {
   const emoji = alert.type === "BULLISH" ? "🚀" : alert.type === "BEARISH" ? "📉" : alert.type === "BREAKOUT" ? "🔥" : "🎯";
   const typeText = alert.type === "BREAKOUT" ? "RUPTURA DETECTADA" : alert.type === "BULLISH" ? "SEÑAL ALCISTA" : alert.type === "BEARISH" ? "SEÑAL BAJISTA" : "NUEVA SEÑAL";
 
+  const escapeHtml = (text: string) => {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  const escapedAnalysis = alert.analysis ? escapeHtml(alert.analysis) : "";
+
   const message = `
 ${emoji} <b>${typeText}</b>
 
@@ -40,7 +51,7 @@ ${emoji} <b>${typeText}</b>
 <b>Apalancamiento:</b> ${alert.leverage || "20x"}
 <b>Confianza:</b> ${alert.confidence}%
 
-${alert.analysis ? `<b>Análisis IA:</b> \n<i>${alert.analysis.substring(0, 500)}${alert.analysis.length > 500 ? '...' : ''}</i>` : ""}
+${escapedAnalysis ? `<b>Análisis IA:</b> \n<i>${escapedAnalysis.substring(0, 500)}${escapedAnalysis.length > 500 ? '...' : ''}</i>` : ""}
 
 🔗 <a href="https://ais-dev-xr2uffhntgzke4a4vhmo6r-205890891792.europe-west2.run.app/terminal?symbol=${alert.symbol}">EJECUTAR EN TERMINAL</a>
   `;
