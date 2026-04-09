@@ -244,23 +244,23 @@ const CryptoBubbles: React.FC = () => {
   }, [filteredData]);
 
   const marketConclusion = useMemo(() => {
-    const avgChange = data.reduce((acc, d) => acc + d.priceChange, 0) / data.length;
+    const avgChange = data.reduce((acc, d) => acc + d.priceChange, 0) / (data.length || 1);
     const bullishCount = data.filter(d => d.priceChange > 0).length;
-    const percentBullish = (bullishCount / data.length) * 100;
+    const percentBullish = (bullishCount / (data.length || 1)) * 100;
 
     let status = "NEUTRAL";
     let recommendation = "El mercado muestra una fase de consolidación lateral. Se recomienda esperar confirmación de ruptura en niveles clave de BTC.";
 
     if (avgChange > 1.5 && percentBullish > 60) {
       status = "ALCISTA";
-      recommendation = "Fuerte impulso alcista detectado en el Top 500. El capital está rotando hacia altcoins de mediana capitalización. Oportunidad en breakouts confirmados.";
+      recommendation = "Fuerte impulso alcista detectado en el Top " + activeTab + ". El capital está rotando hacia altcoins de mediana capitalización. Oportunidad en breakouts confirmados.";
     } else if (avgChange < -1.5 && percentBullish < 40) {
       status = "BAJISTA";
       recommendation = "Presión vendedora dominante. Alta correlación con la debilidad de BTC. Se recomienda cautela, priorizar la liquidez y buscar coberturas.";
     }
 
     return { status, percentBullish, avgChange, recommendation };
-  }, [data]);
+  }, [data, activeTab]);
 
   return (
     <div className="min-h-screen bg-[#080a0c] pt-24 pb-32 px-6 flex flex-col gap-6 overflow-hidden">
@@ -280,21 +280,25 @@ const CryptoBubbles: React.FC = () => {
         </div>
 
         {/* Tab System */}
-        <div className="flex items-center gap-1 bg-surface-container-high/50 p-1.5 rounded-2xl border border-outline-variant/10">
+        <div className="flex items-center gap-1 bg-surface-container-high/50 p-1.5 rounded-2xl border border-outline-variant/10 overflow-x-auto no-scrollbar">
           {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={cn(
-                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative overflow-hidden group",
+                "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative whitespace-nowrap",
                 activeTab === tab 
-                  ? "bg-primary text-on-primary shadow-lg shadow-primary/20" 
+                  ? "text-on-primary" 
                   : "text-on-surface-variant hover:text-on-surface hover:bg-white/5"
               )}
             >
-              TOP {tab}
+              <span className="relative z-10">TOP {tab}</span>
               {activeTab === tab && (
-                <motion.div layoutId="activeTab" className="absolute inset-0 bg-primary -z-10" />
+                <motion.div 
+                  layoutId="activeTab" 
+                  className="absolute inset-0 bg-primary rounded-xl" 
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
               )}
             </button>
           ))}

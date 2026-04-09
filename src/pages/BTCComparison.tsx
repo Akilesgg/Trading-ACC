@@ -322,8 +322,11 @@ const BTCComparison: React.FC = () => {
                   >
                     <div className="flex items-start justify-between mb-6">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-surface-container-high rounded-2xl flex items-center justify-center border border-outline-variant/10 shadow-lg group-hover:border-primary/30 transition-colors">
+                        <div className="w-12 h-12 bg-surface-container-high rounded-2xl flex items-center justify-center border border-outline-variant/10 shadow-lg group-hover:border-primary/30 transition-colors relative">
                           <span className="text-sm font-black text-primary">{asset.symbol}</span>
+                          <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary text-on-primary rounded-full flex items-center justify-center text-[10px] font-black border-2 border-background">
+                            {idx + 1}
+                          </div>
                         </div>
                         <div>
                           <h4 className="text-sm font-black text-on-surface tracking-tighter leading-none mb-1">{asset.name}</h4>
@@ -336,15 +339,18 @@ const BTCComparison: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Potencial vs BTC</p>
-                        <div className={cn(
-                          "text-xl font-black tracking-tighter flex items-center justify-end gap-1",
-                          asset.profitPotential >= 0 ? "text-primary" : "text-secondary"
-                        )}>
-                          {asset.profitPotential >= 0 ? "+" : ""}{asset.profitPotential.toFixed(2)}%
-                        </div>
-                      </div>
+                <div className="text-right">
+                  <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Potencial vs BTC</p>
+                  <div className={cn(
+                    "text-xl font-black tracking-tighter flex items-center justify-end gap-1",
+                    asset.profitPotential >= 0 ? "text-primary" : "text-secondary"
+                  )}>
+                    {asset.profitPotential >= 0 ? "+" : ""}{asset.profitPotential.toFixed(2)}%
+                  </div>
+                  <p className="text-[8px] font-bold text-on-surface-variant uppercase tracking-widest mt-1">
+                    Operación: <span className={asset.estimatedMove >= 0 ? "text-primary" : "text-secondary"}>{asset.estimatedMove >= 0 ? "LONG" : "SHORT"}</span>
+                  </p>
+                </div>
                     </div>
 
                     <div className="space-y-4">

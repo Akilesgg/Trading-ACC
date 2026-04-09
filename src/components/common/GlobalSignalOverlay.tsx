@@ -14,7 +14,7 @@ import { useSignalStore } from "@/store/useSignalStore";
 import { Link } from "react-router-dom";
 
 const GlobalSignalOverlay: React.FC = () => {
-  const { activeSignals, removeSignal } = useSignalStore();
+  const { activeSignals } = useSignalStore();
 
   if (activeSignals.length === 0) return null;
 
@@ -23,7 +23,7 @@ const GlobalSignalOverlay: React.FC = () => {
       <AnimatePresence>
         {activeSignals.map((signal, idx) => (
           <motion.div
-            key={signal.symbol}
+            key={signal.id}
             initial={{ opacity: 0, x: 100, scale: 0.9 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 100, scale: 0.9 }}
@@ -40,15 +40,9 @@ const GlobalSignalOverlay: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em] leading-none mb-1">¡SEÑAL CALIENTE!</h4>
-                    <p className="text-sm font-black text-on-surface tracking-tighter uppercase">{signal.symbol}</p>
+                    <p className="text-sm font-black text-on-surface tracking-tighter uppercase">{signal.activo}</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => removeSignal(signal.symbol)}
-                  className="p-2 hover:bg-white/5 rounded-full transition-colors"
-                >
-                  <X className="w-4 h-4 text-on-surface-variant" />
-                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3 mb-4 relative z-10">
@@ -58,7 +52,7 @@ const GlobalSignalOverlay: React.FC = () => {
                 </div>
                 <div className="bg-surface-container-high/50 p-3 rounded-xl border border-outline-variant/5">
                   <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Stop Loss</p>
-                  <p className="text-xs font-black text-secondary font-mono">${signal.stopLoss?.toFixed(2)}</p>
+                  <p className="text-xs font-black text-secondary font-mono">${signal.sl?.toFixed(2)}</p>
                 </div>
               </div>
 
@@ -66,33 +60,36 @@ const GlobalSignalOverlay: React.FC = () => {
                 <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest">
                   <span className="text-on-surface-variant opacity-60">Objetivos TP</span>
                   <div className="flex gap-1">
-                    {signal.takeProfits?.slice(0, 3).map((tp, i) => (
-                      <span key={i} className="text-primary">T{i+1}</span>
-                    ))}
+                    <span className="text-primary">T1</span>
+                    {signal.tp2 && <span className="text-primary">T2</span>}
+                    {signal.tp3 && <span className="text-primary">T3</span>}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {signal.takeProfits?.slice(0, 3).map((tp, i) => (
-                    <div key={i} className="flex-1 bg-primary/5 border border-primary/10 py-2 rounded-lg text-center">
-                      <p className="text-[10px] font-black text-on-surface font-mono">${tp.toFixed(2)}</p>
+                  <div className="flex-1 bg-primary/5 border border-primary/10 py-2 rounded-lg text-center">
+                    <p className="text-[10px] font-black text-on-surface font-mono">${signal.tp1.toFixed(2)}</p>
+                  </div>
+                  {signal.tp2 && (
+                    <div className="flex-1 bg-primary/5 border border-primary/10 py-2 rounded-lg text-center">
+                      <p className="text-[10px] font-black text-on-surface font-mono">${signal.tp2.toFixed(2)}</p>
                     </div>
-                  ))}
+                  )}
+                  {signal.tp3 && (
+                    <div className="flex-1 bg-primary/5 border border-primary/10 py-2 rounded-lg text-center">
+                      <p className="text-[10px] font-black text-on-surface font-mono">${signal.tp3.toFixed(2)}</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-3 relative z-10">
                 <Link 
-                  to={`/signal/${signal.symbol}`}
-                  onClick={() => removeSignal(signal.symbol)}
+                  to={`/analysis?symbol=${signal.activo}`}
                   className="flex-1 py-3 bg-primary text-on-primary rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
                   <Target className="w-3 h-3" />
                   Ver Análisis
                 </Link>
-                <div className="px-3 py-3 bg-surface-container-high rounded-xl border border-outline-variant/10 flex items-center gap-2">
-                  <Bell className="w-3 h-3 text-primary" />
-                  <span className="text-[9px] font-black text-on-surface">{signal.consensus}%</span>
-                </div>
               </div>
             </div>
           </motion.div>

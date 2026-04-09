@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "./AuthProvider";
+import { useSignalStore } from "./store/useSignalStore";
 
 // Pages
 import Dashboard from "./pages/Dashboard";
@@ -236,9 +237,42 @@ const BottomNavBar = () => {
 import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
 import SignalMonitor from "./components/common/SignalMonitor";
 
+const ActiveSignalsBanner = () => {
+  const activeSignals = useSignalStore(state => state.activeSignals.filter(s => s.estado === 'activa'));
+  
+  if (activeSignals.length === 0) return null;
+
+  return (
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl px-6 pointer-events-none">
+      <div className="bg-surface-container-high/60 backdrop-blur-2xl border border-primary/20 rounded-2xl p-3 shadow-2xl flex items-center gap-4 overflow-x-auto no-scrollbar pointer-events-auto">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20 flex-shrink-0">
+          <Zap className="w-3.5 h-3.5 text-primary animate-pulse" />
+          <span className="text-[9px] font-black text-primary uppercase tracking-widest">SEÑALES ACTIVAS</span>
+        </div>
+        <div className="flex items-center gap-4">
+          {activeSignals.slice(0, 3).map((signal, idx) => (
+            <div key={idx} className="flex items-center gap-2 whitespace-nowrap">
+              <span className="text-[10px] font-black text-on-surface uppercase">{signal.activo}</span>
+              <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-md", signal.tipo === 'LONG' ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary")}>
+                {signal.tipo} @ {signal.entry}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const { user, loading, login } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const initSignals = useSignalStore(state => state.init);
+
+  useEffect(() => {
+    const unsubscribe = initSignals();
+    return () => unsubscribe();
+  }, [initSignals]);
 
   useEffect(() => {
     if (user) {
@@ -321,6 +355,7 @@ export default function App() {
               </Routes>
             </AnimatePresence>
           </main>
+          <ActiveSignalsBanner />
           <BottomNavBar />
         </div>
       </Router>

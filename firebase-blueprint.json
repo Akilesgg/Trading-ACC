@@ -45,6 +45,24 @@
         "timestamp": { "type": "string", "format": "date-time", "description": "Execution timestamp" }
       },
       "required": ["uid", "symbol", "side", "type", "price", "amount", "total", "timestamp"]
+    },
+    "Signal": {
+      "title": "Signal",
+      "description": "Trading signal",
+      "type": "object",
+      "properties": {
+        "activo": { "type": "string", "description": "Symbol (e.g., BTCUSDT)" },
+        "tipo": { "type": "string", "enum": ["LONG", "SHORT"], "description": "Signal type" },
+        "entry": { "type": "number", "description": "Entry price" },
+        "tp1": { "type": "number", "description": "Take profit 1" },
+        "tp2": { "type": "number", "description": "Take profit 2" },
+        "tp3": { "type": "number", "description": "Take profit 3" },
+        "sl": { "type": "number", "description": "Stop loss" },
+        "estado": { "type": "string", "enum": ["activa", "cerrada"], "description": "Signal status" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "authorUid": { "type": "string", "description": "UID of the user who created the signal" }
+      },
+      "required": ["activo", "tipo", "entry", "tp1", "sl", "estado", "timestamp"]
     }
   },
   "firestore": {
@@ -59,6 +77,10 @@
     "/trades/{tradeId}": {
       "schema": "Trade",
       "description": "Global trade history (filtered by uid in rules)"
+    },
+    "/signals/{signalId}": {
+      "schema": "Signal",
+      "description": "Global trading signals"
     }
   }
 }

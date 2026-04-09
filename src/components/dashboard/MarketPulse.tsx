@@ -44,7 +44,7 @@ const MarketPulse: React.FC<MarketPulseProps> = ({ sentiment, onShowSettings, ma
         {/* Main Content Section */}
         <div className="flex-1 flex flex-col justify-center py-6 space-y-6">
           <div className="space-y-2">
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter leading-[0.85] uppercase flex flex-col">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.9] uppercase flex flex-col">
               <span className="text-primary drop-shadow-[0_0_30px_rgba(0,255,163,0.4)] filter brightness-110">CODICIA</span>
               <span className="text-on-surface">EXTREMA</span>
             </h2>

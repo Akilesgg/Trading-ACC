@@ -36,6 +36,20 @@ service cloud.firestore {
     //   - total: number (required) - Total value in USDT
     //   - timestamp: timestamp (required) - Execution timestamp
     //
+    // Collection: /signals/{signalId}
+    // Document ID: auto-generated
+    // Fields:
+    //   - activo: string (required) - Symbol (e.g., BTCUSDT)
+    //   - tipo: string (required, enum: ["LONG", "SHORT"]) - Signal type
+    //   - entry: number (required) - Entry price
+    //   - tp1: number (required) - Take profit 1
+    //   - tp2: number (optional) - Take profit 2
+    //   - tp3: number (optional) - Take profit 3
+    //   - sl: number (required) - Stop loss
+    //   - estado: string (required, enum: ["activa", "cerrada"]) - Signal status
+    //   - timestamp: timestamp (required) - Creation timestamp
+    //   - authorUid: string (optional) - UID of the user who created the signal
+    //
     // ===============================================================
 
     // ===============================================================
@@ -106,6 +120,18 @@ service cloud.firestore {
              data.timestamp is timestamp;
     }
 
+    function isValidSignal(data) {
+      return hasRequiredFields(['activo', 'tipo', 'entry', 'tp1', 'sl', 'estado', 'timestamp']) &&
+             hasOnlyAllowedFields(['activo', 'tipo', 'entry', 'tp1', 'tp2', 'tp3', 'sl', 'estado', 'timestamp', 'authorUid']) &&
+             data.activo is string &&
+             data.tipo in ['LONG', 'SHORT'] &&
+             data.entry is number &&
+             data.tp1 is number &&
+             data.sl is number &&
+             data.estado in ['activa', 'cerrada'] &&
+             data.timestamp is timestamp;
+    }
+
     // ===============================================================
     // Match Rules
     // ===============================================================
@@ -125,6 +151,13 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
       allow create: if isAuthenticated() && isValidTrade(request.resource.data);
       allow update, delete: if isAdmin();
+    }
+
+    match /signals/{signalId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidSignal(request.resource.data);
+      allow update: if isAuthenticated() && isValidSignal(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     // Default deny

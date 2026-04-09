@@ -157,7 +157,16 @@ const Dashboard = () => {
           // If price is very close to entry (within 0.5%) and not already triggered
           if (proximity <= 0.5 && !triggeredAlerts.has(ticker.symbol)) {
             // Trigger Global Signal Store
-            addSignal(ticker);
+            addSignal({
+              activo: ticker.symbol,
+              tipo: parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT',
+              entry: ticker.entry || parseFloat(ticker.price),
+              tp1: ticker.takeProfits?.[0] || (parseFloat(ticker.price) * 1.05),
+              tp2: ticker.takeProfits?.[1],
+              tp3: ticker.takeProfits?.[2],
+              sl: ticker.stopLoss || (parseFloat(ticker.price) * 0.95),
+              estado: 'activa'
+            });
             
             // Trigger Telegram Alert
             if (telegramToken && telegramChatId) {

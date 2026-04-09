@@ -89,23 +89,25 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
               <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
                 <Zap className="w-4 h-4 text-primary" />
               </div>
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-on-surface">Generador de Señales Activas</h3>
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-on-surface">Señales Activas Recientes</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {activeSignals.map((signal) => (
-                <div key={signal.symbol} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 flex justify-between items-center group hover:border-primary/30 transition-all">
+              {activeSignals.slice(0, 4).map((signal) => (
+                <div key={signal.id} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 flex justify-between items-center group hover:border-primary/30 transition-all">
                   <div className="flex items-center gap-3">
-                    <img src={signal.image} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-[10px] font-black text-primary border border-primary/20">
+                      {signal.activo[0]}
+                    </div>
                     <div>
-                      <p className="text-[10px] font-black text-on-surface uppercase leading-none mb-1">{signal.symbol.replace("USDT", "")}</p>
-                      <p className="text-[8px] font-black text-primary uppercase tracking-widest">Probabilidad: {signal.consensus}%</p>
+                      <p className="text-[10px] font-black text-on-surface uppercase leading-none mb-1">{signal.activo.replace("USDT", "")}</p>
+                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Entrada: ${signal.entry}</p>
                     </div>
                   </div>
                   <div className={cn(
                     "px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest",
-                    parseFloat(signal.priceChangePercent) > 0 ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                    signal.tipo === 'LONG' ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
                   )}>
-                    {parseFloat(signal.priceChangePercent) > 0 ? "LONG" : "SHORT"}
+                    {signal.tipo}
                   </div>
                 </div>
               ))}

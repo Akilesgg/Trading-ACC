@@ -107,6 +107,16 @@ const MarketPage = () => {
               <Activity className="w-4 h-4 text-primary" /> SPOT VS FUTURES
             </h3>
             <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5">
+                  <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest block mb-1">Volumen Spot</span>
+                  <span className="text-sm font-black text-on-surface">$42.8B</span>
+                </div>
+                <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5">
+                  <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest block mb-1">Dominancia</span>
+                  <span className="text-sm font-black text-primary">52.4%</span>
+                </div>
+              </div>
               <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Funding Rate</span>
@@ -127,7 +137,7 @@ const MarketPage = () => {
               </div>
               <div className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Ratio Long/Short</span>
+                  <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Presión Long/Short</span>
                   <span className="text-[10px] font-black text-secondary">0.85</span>
                 </div>
                 <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden flex">

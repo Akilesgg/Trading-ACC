@@ -14,9 +14,12 @@ export interface TelegramAlert {
   leverage?: string;
 }
 
+const DEFAULT_TOKEN = "8287353475:AAE90JqwdWnwoJSrr9OaNIphmKtmuy0Qu0Q";
+const DEFAULT_CHAT_ID = "-1003045390811";
+
 export const sendTelegramAlert = async (alert: TelegramAlert) => {
-  const token = localStorage.getItem("telegramToken") || (import.meta as any).env.VITE_TELEGRAM_BOT_TOKEN;
-  const chatId = localStorage.getItem("telegramChatId") || (import.meta as any).env.VITE_TELEGRAM_CHAT_ID;
+  const token = localStorage.getItem("telegramToken") || DEFAULT_TOKEN;
+  const chatId = localStorage.getItem("telegramChatId") || DEFAULT_CHAT_ID;
 
   if (!token || !chatId) return;
 
@@ -24,20 +27,15 @@ export const sendTelegramAlert = async (alert: TelegramAlert) => {
   const typeText = alert.type === "BREAKOUT" ? "RUPTURA DETECTADA" : alert.type === "BULLISH" ? "SEÑAL ALCISTA" : alert.type === "BEARISH" ? "SEÑAL BAJISTA" : "NUEVA SEÑAL";
 
   const message = `
-${emoji} *${typeText}*
+🚨 *${typeText}*
 
 *Activo:* ${alert.symbol.replace("USDT", " / USDT")}
-*Precio:* $${parseFloat(alert.price).toLocaleString()}
-*Cambio (24h):* ${alert.change}%
-*Confianza:* ${alert.confidence}%
-${alert.leverage ? `*Apalancamiento:* ${alert.leverage}` : ""}
-
-*NIVELES OPERATIVOS:*
-📍 *Entrada:* ${alert.entry || "---"}
-🛑 *Stop Loss:* ${alert.sl || "---"}
-✅ *TP 1:* ${alert.tp1 || "---"}
-✅ *TP 2:* ${alert.tp2 || "---"}
-✅ *TP 3:* ${alert.tp3 || "---"}
+*Tipo:* ${alert.type === "BULLISH" ? "LONG" : alert.type === "BEARISH" ? "SHORT" : "SIGNAL"}
+*Entrada:* ${alert.entry || "---"}
+*TP 1:* ${alert.tp1 || "---"}
+*TP 2:* ${alert.tp2 || "---"}
+*TP 3:* ${alert.tp3 || "---"}
+*Stop Loss:* ${alert.sl || "---"}
 
 ${alert.analysis ? `*Análisis IA:* \n_${alert.analysis.substring(0, 500)}${alert.analysis.length > 500 ? '...' : ''}_` : ""}
 
