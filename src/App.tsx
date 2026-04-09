@@ -175,17 +175,36 @@ const TopAppBar = () => {
         </div>
 
         <div className="flex items-center gap-6">
-          <button 
-            onClick={handleManualTelegram}
-            disabled={isSending}
-            className={cn(
-              "hidden md:flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary hover:text-on-primary transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none group",
-              isSending && "animate-pulse"
-            )}
-          >
-            <Bell className={cn("w-4 h-4", isSending ? "animate-bounce" : "group-hover:animate-ring")} />
-            <span className="text-[10px] font-black uppercase tracking-widest">Enviar a Telegram</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleManualTelegram}
+              disabled={isSending}
+              className={cn(
+                "hidden md:flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary hover:text-on-primary transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none group",
+                isSending && "animate-pulse"
+              )}
+            >
+              <Bell className={cn("w-4 h-4", isSending ? "animate-bounce" : "group-hover:animate-ring")} />
+              <span className="text-[10px] font-black uppercase tracking-widest">Enviar a Telegram</span>
+            </button>
+            <button 
+              onClick={async () => {
+                const { sendTelegramAlert } = await import("./services/telegramService");
+                await sendTelegramAlert({
+                  symbol: "TEST",
+                  price: "0",
+                  change: "0",
+                  type: "SIGNAL",
+                  confidence: 100,
+                  analysis: "Prueba de conexión desde la barra superior."
+                });
+              }}
+              className="hidden md:flex p-2 bg-surface-container-high rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all active:scale-90"
+              title="Probar Conexión Telegram"
+            >
+              <Activity className="w-3.5 h-3.5 text-on-surface-variant" />
+            </button>
+          </div>
           <div className="hidden md:flex flex-col items-end">
             <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-widest opacity-50">Terminal Activa</span>
             <span className="text-xs font-black text-on-surface tracking-tight">{user?.displayName || "ADMIN_ACC"}</span>
@@ -257,6 +276,7 @@ const BottomNavBar = () => {
 import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
 import SignalMonitor from "./components/common/SignalMonitor";
 import MarketScanner from "./components/common/MarketScanner";
+import SignalNotificationHandler from "./components/common/SignalNotificationHandler";
 
 const ActiveSignalsBanner = () => {
   const allSignals = useSignalStore(state => state.activeSignals);
@@ -357,6 +377,7 @@ export default function App() {
         <GlobalSignalOverlay />
         <SignalMonitor />
         <MarketScanner />
+        <SignalNotificationHandler />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary">
           {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
           <TopAppBar />

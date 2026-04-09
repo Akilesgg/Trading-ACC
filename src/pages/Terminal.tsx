@@ -17,7 +17,10 @@ import FundamentalModal from "@/components/common/FundamentalModal";
 import { generateSignal } from "../services/signalEngine";
 import { useBinanceTicker } from "../hooks/useBinanceTicker";
 
+import { useSearchParams } from "react-router-dom";
+
 const Terminal: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { 
     addSignal, 
     addLog, 
@@ -26,6 +29,13 @@ const Terminal: React.FC = () => {
     timeframe, 
     setTimeframe 
   } = useTerminalStore();
+
+  useEffect(() => {
+    const symbolParam = searchParams.get("symbol");
+    if (symbolParam && symbolParam !== activeSymbol) {
+      setActiveSymbol(symbolParam.toUpperCase());
+    }
+  }, [searchParams, setActiveSymbol, activeSymbol]);
 
   const ticker = useBinanceTicker(activeSymbol);
   const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
