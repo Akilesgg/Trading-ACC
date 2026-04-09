@@ -17,8 +17,10 @@ const MarketScanner: React.FC = () => {
 
   useEffect(() => {
     const scan = async () => {
+      console.log("MarketScanner: Starting scan...");
       try {
         const tickers = await fetchTickers(SUPPORTED_SYMBOLS);
+        console.log(`MarketScanner: Fetched ${tickers.length} tickers.`);
         
         for (const ticker of tickers) {
           const proximity = ticker.proximity || 0;
@@ -31,6 +33,7 @@ const MarketScanner: React.FC = () => {
           const alreadyActive = activeSignals.some(s => s.activo === ticker.symbol && s.estado === 'activa');
           
           if (isSignal && !alreadyActive && !triggeredRef.current.has(ticker.symbol)) {
+            console.log(`MarketScanner: Signal detected for ${ticker.symbol}!`);
             const type = parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT';
             
             // Add to Global Store (Firestore) - This will trigger Telegram Alert automatically

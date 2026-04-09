@@ -376,13 +376,23 @@ const Dashboard = () => {
                 <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Modelos de ejecución optimizados</p>
               </div>
             </div>
-            <button 
-              onClick={exportToZip}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Download className="w-3 h-3" />
-              Exportar Auditoría
-            </button>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={sendTestTelegram}
+                disabled={isSendingTest}
+                className="btn-primary flex items-center gap-2 bg-primary/20 text-primary border-primary/30 hover:bg-primary hover:text-on-primary"
+              >
+                <Zap className={cn("w-3 h-3", isSendingTest && "animate-pulse")} />
+                {isSendingTest ? "Enviando..." : "Probar Telegram"}
+              </button>
+              <button 
+                onClick={exportToZip}
+                className="btn-secondary flex items-center gap-2"
+              >
+                <Download className="w-3 h-3" />
+                Exportar Auditoría
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             {strategies.map((strat) => (
