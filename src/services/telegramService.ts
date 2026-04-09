@@ -20,8 +20,8 @@ const DEFAULT_CHAT_ID = "-1003045390811";
 import { toast } from "sonner";
 
 export const sendTelegramAlert = async (alert: TelegramAlert) => {
-  const token = DEFAULT_TOKEN; // Force use of provided token
-  const chatId = DEFAULT_CHAT_ID; // Force use of provided chat ID
+  const token = DEFAULT_TOKEN;
+  const chatId = DEFAULT_CHAT_ID;
 
   const emoji = alert.type === "BULLISH" ? "🚀" : alert.type === "BEARISH" ? "📉" : alert.type === "BREAKOUT" ? "🔥" : "🎯";
   const typeText = alert.type === "BREAKOUT" ? "RUPTURA DETECTADA" : alert.type === "BULLISH" ? "SEÑAL ALCISTA" : alert.type === "BEARISH" ? "SEÑAL BAJISTA" : "NUEVA SEÑAL";

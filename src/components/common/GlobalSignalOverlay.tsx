@@ -15,13 +15,20 @@ import { Link } from "react-router-dom";
 
 const GlobalSignalOverlay: React.FC = () => {
   const activeSignals = useSignalStore(state => state.activeSignals);
+  const [closedSignals, setClosedSignals] = React.useState<Set<string>>(new Set());
 
-  if (activeSignals.length === 0) return null;
+  const visibleSignals = activeSignals.filter(s => s.id && !closedSignals.has(s.id) && s.estado === 'activa');
+
+  if (visibleSignals.length === 0) return null;
+
+  const handleClose = (id: string) => {
+    setClosedSignals(prev => new Set(prev).add(id));
+  };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[200] flex flex-col gap-4 pointer-events-none">
+    <div className="fixed bottom-32 right-8 z-[200] flex flex-col gap-4 pointer-events-none">
       <AnimatePresence>
-        {activeSignals.map((signal, idx) => (
+        {visibleSignals.map((signal) => (
           <motion.div
             key={signal.id}
             initial={{ opacity: 0, x: 100, scale: 0.9 }}
@@ -33,7 +40,14 @@ const GlobalSignalOverlay: React.FC = () => {
             <div className="bg-[#0a0c0e]/95 backdrop-blur-2xl border border-primary/30 rounded-[1.5rem] p-4 w-64 shadow-[0_20px_50px_rgba(0,255,163,0.15)] relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-[30px] -mr-12 -mt-12 group-hover:bg-primary/10 transition-all duration-1000"></div>
               
-              <div className="flex items-center justify-between mb-3 relative z-10">
+              <button 
+                onClick={() => signal.id && handleClose(signal.id)}
+                className="absolute top-3 right-3 z-20 p-1.5 bg-surface-container-high/50 rounded-lg text-on-surface-variant hover:text-secondary hover:bg-secondary/10 transition-all"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex items-center justify-between mb-3 relative z-10 pr-8">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30 shadow-lg">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
