@@ -14,6 +14,9 @@ export interface Signal {
   estado: 'activa' | 'cerrada';
   timestamp: any;
   authorUid?: string;
+  leverage?: string;
+  analysis?: string;
+  confidence?: number;
 }
 
 interface SignalState {
@@ -39,14 +42,16 @@ export const useSignalStore = create<SignalState>((set, get) => ({
       await sendTelegramAlert({
         symbol: signalData.activo,
         price: signalData.entry.toString(),
-        change: "0", // Initial change
+        change: "0", 
         type: signalData.tipo === 'LONG' ? 'BULLISH' : 'BEARISH',
-        confidence: 90, // Default confidence for manual signals
+        confidence: signalData.confidence || 90,
         entry: signalData.entry.toString(),
         tp1: signalData.tp1.toString(),
         tp2: signalData.tp2?.toString(),
         tp3: signalData.tp3?.toString(),
-        sl: signalData.sl.toString()
+        sl: signalData.sl.toString(),
+        leverage: signalData.leverage,
+        analysis: signalData.analysis
       });
     } catch (error) {
       console.error("Error adding signal:", error);

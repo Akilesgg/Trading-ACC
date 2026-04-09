@@ -95,9 +95,18 @@ const LoginScreen = () => {
   );
 };
 
+import { sendPossibleSignalsToTelegram } from "./services/signalService";
+
 const TopAppBar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
+  const [isSending, setIsSending] = useState(false);
+
+  const handleManualTelegram = async () => {
+    setIsSending(true);
+    await sendPossibleSignalsToTelegram();
+    setIsSending(false);
+  };
 
   const menuItems = [
     { icon: LayoutDashboard, label: "PANEL", path: "/dashboard" },
@@ -166,6 +175,17 @@ const TopAppBar = () => {
         </div>
 
         <div className="flex items-center gap-6">
+          <button 
+            onClick={handleManualTelegram}
+            disabled={isSending}
+            className={cn(
+              "hidden md:flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl border border-primary/20 hover:bg-primary hover:text-on-primary transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none group",
+              isSending && "animate-pulse"
+            )}
+          >
+            <Bell className={cn("w-4 h-4", isSending ? "animate-bounce" : "group-hover:animate-ring")} />
+            <span className="text-[10px] font-black uppercase tracking-widest">Enviar a Telegram</span>
+          </button>
           <div className="hidden md:flex flex-col items-end">
             <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-widest opacity-50">Terminal Activa</span>
             <span className="text-xs font-black text-on-surface tracking-tight">{user?.displayName || "ADMIN_ACC"}</span>
@@ -236,6 +256,7 @@ const BottomNavBar = () => {
 
 import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
 import SignalMonitor from "./components/common/SignalMonitor";
+import MarketScanner from "./components/common/MarketScanner";
 
 const ActiveSignalsBanner = () => {
   const allSignals = useSignalStore(state => state.activeSignals);
@@ -335,6 +356,7 @@ export default function App() {
         <Toaster position="top-right" theme="dark" richColors />
         <GlobalSignalOverlay />
         <SignalMonitor />
+        <MarketScanner />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary">
           {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
           <TopAppBar />

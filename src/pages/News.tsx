@@ -118,6 +118,17 @@ const News: React.FC = () => {
                       <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
                       <span className="text-xs font-bold text-on-surface uppercase">Probabilidad: {item.probability}%</span>
                     </div>
+                    {item.sourceUrl && (
+                      <a 
+                        href={item.sourceUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-primary hover:underline transition-all"
+                      >
+                        <Globe className="w-4 h-4" />
+                        <span className="text-xs font-bold uppercase">Fuente</span>
+                      </a>
+                    )}
                   </div>
                 </div>
 

@@ -357,7 +357,10 @@ const Analysis = () => {
                 tp2: 71500,
                 tp3: 72500,
                 sl: 66200,
-                estado: 'activa'
+                estado: 'activa',
+                leverage: '20x',
+                confidence: 94,
+                analysis: 'Señal generada por el Analizador IA basada en ruptura de estructura y confirmación de volumen institucional.'
               });
               toast.success("Señal publicada globalmente");
             }}

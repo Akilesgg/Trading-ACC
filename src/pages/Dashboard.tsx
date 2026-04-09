@@ -173,46 +173,6 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    allTickers.forEach(ticker => {
-      const proximity = ticker.proximity || 0;
-      if (proximity <= 0.5 && !triggeredAlerts.has(ticker.symbol)) {
-        addSignal({
-          activo: ticker.symbol,
-          tipo: parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT',
-          entry: ticker.entry || parseFloat(ticker.price),
-          tp1: ticker.takeProfits?.[0] || (parseFloat(ticker.price) * 1.05),
-          tp2: ticker.takeProfits?.[1],
-          tp3: ticker.takeProfits?.[2],
-          sl: ticker.stopLoss || (parseFloat(ticker.price) * 0.95),
-          estado: 'activa'
-        });
-        
-        if (telegramToken && telegramChatId) {
-          sendTelegramAlert({
-            symbol: ticker.symbol,
-            price: ticker.price,
-            change: ticker.priceChangePercent,
-            type: "SIGNAL",
-            confidence: ticker.consensus || 85,
-            entry: ticker.entry?.toFixed(4),
-            sl: ticker.stopLoss?.toFixed(4),
-            tp1: ticker.takeProfits?.[0]?.toFixed(4),
-            tp2: ticker.takeProfits?.[1]?.toFixed(4),
-            tp3: ticker.takeProfits?.[2]?.toFixed(4),
-            leverage: `${ticker.leverage}x`
-          });
-        }
-
-        setTriggeredAlerts(prev => new Set(prev).add(ticker.symbol));
-        toast.info(`¡Nueva señal activa para ${ticker.symbol}!`, {
-          description: `Precio cerca de zona de entrada: $${ticker.entry?.toFixed(4)}`,
-          duration: 10000,
-        });
-      }
-    });
-  }, [allTickers, triggeredAlerts, addSignal, telegramToken, telegramChatId]);
-
-  useEffect(() => {
     loadData();
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
@@ -382,16 +342,6 @@ const Dashboard = () => {
             onShowSettings={() => setShowNotifSettings(true)} 
             marketRegime={marketRegime}
           />
-          <div className="flex justify-end -mt-4 mb-4">
-            <button 
-              onClick={sendBestSignalToTelegram}
-              disabled={isSendingTest}
-              className="px-6 py-3 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-            >
-              <Zap className={cn("w-4 h-4", isSendingTest && "animate-spin")} />
-              Enviar Mejor Señal
-            </button>
-          </div>
           <PriceAlerts currentPrices={currentPricesMap} />
         </div>
         <div className="md:col-span-3">
