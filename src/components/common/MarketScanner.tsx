@@ -17,11 +17,16 @@ const MarketScanner: React.FC = () => {
 
   useEffect(() => {
     const scan = async () => {
-      console.log("MarketScanner: Starting scan...");
+      console.log("🔍 MarketScanner: Iniciando escaneo de mercado...");
       try {
         const tickers = await fetchTickers(SUPPORTED_SYMBOLS);
-        console.log(`MarketScanner: Fetched ${tickers.length} tickers.`);
+        console.log(`📊 MarketScanner: Se obtuvieron ${tickers.length} tickers.`);
         
+        if (tickers.length === 0) {
+          console.warn("⚠️ MarketScanner: No se obtuvieron tickers de la API.");
+          return;
+        }
+
         for (const ticker of tickers) {
           const proximity = ticker.proximity || 0;
           const consensus = ticker.consensus || 0;
@@ -33,30 +38,37 @@ const MarketScanner: React.FC = () => {
           const alreadyActive = activeSignals.some(s => s.activo === ticker.symbol && s.estado === 'activa');
           
           if (isSignal && !alreadyActive && !triggeredRef.current.has(ticker.symbol)) {
-            console.log(`MarketScanner: Signal detected for ${ticker.symbol}!`);
+            console.log(`🚀 MarketScanner: ¡SEÑAL DETECTADA para ${ticker.symbol}! Proximidad: ${proximity.toFixed(2)}%, Consenso: ${consensus}%`);
             const type = parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT';
             
-            // Add to Global Store (Firestore) - This will trigger Telegram Alert automatically
-            await addSignal({
-              activo: ticker.symbol,
-              tipo: type,
-              entry: ticker.entry || parseFloat(ticker.price),
-              tp1: ticker.takeProfits?.[0] || (parseFloat(ticker.price) * 1.05),
-              tp2: ticker.takeProfits?.[1],
-              tp3: ticker.takeProfits?.[2],
-              sl: ticker.stopLoss || (parseFloat(ticker.price) * 0.95),
-              estado: 'activa',
-              leverage: `${ticker.leverage}x`,
-              confidence: consensus || 85,
-              analysis: `Señal automática detectada por el Escáner Cuántico. Consenso: ${consensus}%. Proximidad: ${proximity.toFixed(2)}%.`
-            });
-            
-            triggeredRef.current.add(ticker.symbol);
-            
-            toast.success(`¡Nueva señal automática: ${ticker.symbol}!`, {
-              description: `Enviada a Telegram con éxito.`,
-              duration: 5000,
-            });
+            try {
+              // Add to Global Store (Firestore) - This will trigger Telegram Alert automatically
+              await addSignal({
+                activo: ticker.symbol,
+                tipo: type,
+                entry: ticker.entry || parseFloat(ticker.price),
+                tp1: ticker.takeProfits?.[0] || (parseFloat(ticker.price) * 1.05),
+                tp2: ticker.takeProfits?.[1],
+                tp3: ticker.takeProfits?.[2],
+                sl: ticker.stopLoss || (parseFloat(ticker.price) * 0.95),
+                estado: 'activa',
+                leverage: `${ticker.leverage}x`,
+                confidence: consensus || 85,
+                analysis: `Señal automática detectada por el Escáner Cuántico. Consenso: ${consensus}%. Proximidad: ${proximity.toFixed(2)}%.`
+              });
+              
+              triggeredRef.current.add(ticker.symbol);
+              console.log(`✅ MarketScanner: Señal de ${ticker.symbol} añadida correctamente.`);
+              
+              toast.success(`¡Nueva señal automática: ${ticker.symbol}!`, {
+                description: `Enviada a Telegram con éxito.`,
+                duration: 5000,
+              });
+            } catch (addError) {
+              console.error(`❌ MarketScanner: Error al añadir señal para ${ticker.symbol}:`, addError);
+            }
+          } else if (isSignal && alreadyActive) {
+            // console.log(`ℹ️ MarketScanner: Señal para ${ticker.symbol} ya está activa en Firestore.`);
           }
         }
 

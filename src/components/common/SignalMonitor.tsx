@@ -1,97 +1,49 @@
 import React, { useEffect } from "react";
-import { useTerminalStore } from "../../store/useTerminalStore";
+import { useSignalStore } from "../../store/useSignalStore";
 import { fetchTicker } from "../../services/cryptoService";
-import { SignalStatus, TradingSignal } from "../../core/signals/types";
+import { db, doc, updateDoc } from "../../services/firebase";
 
 const SignalMonitor: React.FC = () => {
-  const { signals, updateSignals } = useTerminalStore();
+  const activeSignals = useSignalStore(state => state.activeSignals);
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      const openSignals = signals.filter(s => 
-        s.status === SignalStatus.CONFIRMED || 
-        s.status === SignalStatus.OPEN ||
-        s.status === SignalStatus.TP1_HIT ||
-        s.status === SignalStatus.TP2_HIT
-      );
+      const signalsToMonitor = activeSignals.filter(s => s.estado === 'activa');
 
-      if (openSignals.length === 0) return;
+      if (signalsToMonitor.length === 0) return;
 
-      const updatedSignals = [...signals];
-      let hasChanges = false;
-
-      for (const signal of openSignals) {
+      for (const signal of signalsToMonitor) {
         try {
-          const ticker = await fetchTicker(signal.symbol);
+          const ticker = await fetchTicker(signal.activo);
           const currentPrice = parseFloat(ticker.price);
           const entry = signal.entry;
-          const isLong = signal.type === "LONG";
+          const isLong = signal.tipo === "LONG";
           
-          let newStatus = signal.status;
-          let profit = isLong 
-            ? ((currentPrice - entry) / entry) * 100 
-            : ((entry - currentPrice) / entry) * 100;
-
-          // Check TP/SL
+          let shouldClose = false;
+          
           if (isLong) {
-            if (currentPrice <= signal.stopLoss) {
-              newStatus = SignalStatus.SL_HIT;
-              profit = ((signal.stopLoss - entry) / entry) * 100;
-            } else if (currentPrice >= signal.takeProfit[2]) {
-              newStatus = SignalStatus.TP3_HIT;
-              profit = ((signal.takeProfit[2] - entry) / entry) * 100;
-            } else if (currentPrice >= signal.takeProfit[1]) {
-              newStatus = SignalStatus.TP2_HIT;
-              profit = ((signal.takeProfit[1] - entry) / entry) * 100;
-            } else if (currentPrice >= signal.takeProfit[0]) {
-              newStatus = SignalStatus.TP1_HIT;
-              profit = ((signal.takeProfit[0] - entry) / entry) * 100;
-            } else {
-              newStatus = SignalStatus.OPEN;
+            if (currentPrice <= signal.sl || currentPrice >= (signal.tp3 || signal.tp1 * 1.1)) {
+              shouldClose = true;
             }
           } else {
-            // SHORT
-            if (currentPrice >= signal.stopLoss) {
-              newStatus = SignalStatus.SL_HIT;
-              profit = ((entry - signal.stopLoss) / entry) * 100;
-            } else if (currentPrice <= signal.takeProfit[2]) {
-              newStatus = SignalStatus.TP3_HIT;
-              profit = ((entry - signal.takeProfit[2]) / entry) * 100;
-            } else if (currentPrice <= signal.takeProfit[1]) {
-              newStatus = SignalStatus.TP2_HIT;
-              profit = ((entry - signal.takeProfit[1]) / entry) * 100;
-            } else if (currentPrice <= signal.takeProfit[0]) {
-              newStatus = SignalStatus.TP1_HIT;
-              profit = ((entry - signal.takeProfit[0]) / entry) * 100;
-            } else {
-              newStatus = SignalStatus.OPEN;
+            if (currentPrice >= signal.sl || currentPrice <= (signal.tp3 || signal.tp1 * 0.9)) {
+              shouldClose = true;
             }
           }
 
-          if (newStatus !== signal.status || Math.abs((signal.profit || 0) - profit) > 0.01) {
-            const idx = updatedSignals.findIndex(s => s.id === signal.id);
-            if (idx !== -1) {
-              updatedSignals[idx] = { 
-                ...signal, 
-                status: newStatus, 
-                profit, 
-                lastPrice: currentPrice 
-              };
-              hasChanges = true;
-            }
+          if (shouldClose && signal.id) {
+            console.log(`🎯 SignalMonitor: Cerrando señal para ${signal.activo} por alcanzar TP/SL.`);
+            const signalRef = doc(db, 'signals', signal.id);
+            await updateDoc(signalRef, { estado: 'cerrada' });
           }
         } catch (error) {
-          console.error(`Error monitoring signal ${signal.symbol}:`, error);
+          console.error(`Error monitoring signal ${signal.activo}:`, error);
         }
-      }
-
-      if (hasChanges) {
-        updateSignals(updatedSignals);
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [signals, updateSignals]);
+  }, [activeSignals]);
 
   return null;
 };

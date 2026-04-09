@@ -20,6 +20,9 @@ export const sendTelegramAlert = async (alert: TelegramAlert): Promise<void> => 
   const token = localStorage.getItem("telegramToken") || TELEGRAM_TOKEN;
   const chatId = localStorage.getItem("telegramChatId") || TELEGRAM_CHAT_ID;
 
+  console.log(`📤 Telegram: Intentando enviar alerta para ${alert.symbol}...`);
+  console.log(`📤 Telegram: Usando Token: ${token.substring(0, 5)}... y ChatID: ${chatId}`);
+
   const emoji = alert.type === "BULLISH" ? "🚀" :
                 alert.type === "BEARISH" ? "📉" :
                 alert.type === "BREAKOUT" ? "🔥" : "🎯";
@@ -59,6 +62,21 @@ ${alert.leverage ? `*Apalancamiento:* ${alert.leverage}` : ""}
       console.log("✅ TELEGRAM OK:", alert.symbol);
     } else {
       console.error("❌ TELEGRAM ERROR:", result.description);
+      // Fallback to plain text if Markdown fails
+      if (result.description?.includes("can't parse entities")) {
+        console.log("🔄 Telegram: Reintentando sin formato Markdown...");
+        await fetch(
+          `https://api.telegram.org/bot${token}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: message.replace(/\*/g, "").replace(/_/g, ""),
+            }),
+          }
+        );
+      }
     }
   } catch (err) {
     console.error("❌ TELEGRAM FETCH ERROR:", err);
