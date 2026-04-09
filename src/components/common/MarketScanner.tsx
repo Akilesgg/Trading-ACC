@@ -20,7 +20,7 @@ const MarketScanner: React.FC = () => {
       try {
         const tickers = await fetchTickers(SUPPORTED_SYMBOLS);
         
-        tickers.forEach(ticker => {
+        for (const ticker of tickers) {
           const proximity = ticker.proximity || 0;
           const consensus = ticker.consensus || 0;
           
@@ -34,7 +34,7 @@ const MarketScanner: React.FC = () => {
             const type = parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT';
             
             // Add to Global Store (Firestore) - This will trigger Telegram Alert automatically
-            addSignal({
+            await addSignal({
               activo: ticker.symbol,
               tipo: type,
               entry: ticker.entry || parseFloat(ticker.price),
@@ -55,7 +55,7 @@ const MarketScanner: React.FC = () => {
               duration: 5000,
             });
           }
-        });
+        }
 
         // Clean up triggeredRef for symbols that are no longer signals
         triggeredRef.current.forEach(symbol => {

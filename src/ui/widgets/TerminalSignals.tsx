@@ -4,8 +4,11 @@ import { TrendingUp, TrendingDown, Target, Shield, Zap, Flame, Activity, Brain }
 import { cn } from "@/lib/utils";
 import { SignalStatus } from "../../core/signals/types";
 
+import { useSignalStore } from "../../store/useSignalStore";
+
 const TerminalSignals: React.FC = () => {
-  const { signals } = useTerminalStore();
+  const { activeSignals } = useSignalStore();
+  const signals = activeSignals;
 
   const getStatusColor = (status: SignalStatus) => {
     switch (status) {
@@ -43,26 +46,26 @@ const TerminalSignals: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center",
-                    signal.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                    signal.tipo === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
                   )}>
-                    {signal.type === "LONG" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                    {signal.tipo === "LONG" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                   </div>
                   <div>
-                    <h5 className="text-xs font-black text-on-surface tracking-tighter leading-none mb-1">{signal.symbol}</h5>
+                    <h5 className="text-xs font-black text-on-surface tracking-tighter leading-none mb-1">{signal.activo}</h5>
                     <span className={cn(
                       "text-[7px] font-black px-1.5 py-0.5 rounded-sm border uppercase tracking-widest",
-                      getStatusColor(signal.status)
+                      signal.estado === 'activa' ? "text-primary bg-primary/10 border-primary/20" : "text-secondary bg-secondary/10 border-secondary/20"
                     )}>
-                      {signal.status}
+                      {signal.estado}
                     </span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[7px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-1">Score</p>
+                  <p className="text-[7px] font-black text-on-surface-variant uppercase tracking-widest leading-none mb-1">Confianza</p>
                   <p className={cn(
                     "text-sm font-black",
-                    signal.score >= 80 ? "text-primary" : signal.score >= 60 ? "text-amber-500" : "text-on-surface-variant"
-                  )}>{signal.score}%</p>
+                    (signal.confidence || 0) >= 80 ? "text-primary" : (signal.confidence || 0) >= 60 ? "text-amber-500" : "text-on-surface-variant"
+                  )}>{signal.confidence || 0}%</p>
                 </div>
               </div>
 
@@ -73,7 +76,7 @@ const TerminalSignals: React.FC = () => {
                 </div>
                 <div className="p-2 bg-surface-container/40 rounded border border-outline-variant/5">
                   <p className="text-[7px] font-black text-on-surface-variant uppercase mb-1">Stop Loss</p>
-                  <p className="text-[10px] font-black text-secondary">${signal.stopLoss.toLocaleString()}</p>
+                  <p className="text-[10px] font-black text-secondary">${signal.sl.toLocaleString()}</p>
                 </div>
               </div>
             </div>

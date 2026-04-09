@@ -18,6 +18,7 @@ export interface TradingSignal {
   takeProfit: number[];
   riskReward: number;
   score: number;
+  leverage?: number;
   status: SignalStatus;
   profit?: number;
   lastPrice?: number;

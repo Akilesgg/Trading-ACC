@@ -14,21 +14,24 @@ import { Search, Activity, Shield, History, Zap, TrendingUp, TrendingDown, Info,
 import { cn } from "@/lib/utils";
 import { fetchAssetFundamentals, AssetFundamental } from "@/services/cryptoService";
 import FundamentalModal from "@/components/common/FundamentalModal";
-import { generateSignal } from "../services/signalEngine";
 import { useBinanceTicker } from "../hooks/useBinanceTicker";
 
 import { useSearchParams } from "react-router-dom";
 
+import { useSignalStore } from "@/store/useSignalStore";
+
 const Terminal: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { 
-    addSignal, 
     addLog, 
     activeSymbol, 
     setActiveSymbol, 
     timeframe, 
     setTimeframe 
   } = useTerminalStore();
+  
+  const { activeSignals, addSignal } = useSignalStore();
+  const lastSignal = activeSignals[0];
 
   useEffect(() => {
     const symbolParam = searchParams.get("symbol");
@@ -41,33 +44,17 @@ const Terminal: React.FC = () => {
   const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
 
   useEffect(() => {
-    const checkSignals = async () => {
-      const signal = await generateSignal(activeSymbol, timeframe);
-      if (signal) {
-        addSignal(signal);
-        addLog(`SIGNAL: New ${signal.type} setup detected for ${activeSymbol} (Score: ${signal.score}%)`);
-      }
-    };
+    // We no longer generate local signals here to unify the system.
+    // The MarketScanner and manual buttons handle signal creation via useSignalStore.
+    addLog("SUCCESS: Terminal engine started. Monitoring 100+ pairs.");
+  }, []);
 
-    const interval = setInterval(checkSignals, 30000); // Check every 30s
-    checkSignals(); // Initial check
-
-    return () => clearInterval(interval);
-  }, [activeSymbol, timeframe]);
-
-  const { signals } = useTerminalStore();
-  const lastSignal = signals[signals.length - 1];
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   const showFundamentals = async (symbol: string) => {
     const data = await fetchAssetFundamentals(symbol);
     setSelectedFundamental(data);
   };
-
-  useEffect(() => {
-    addLog("SUCCESS: Terminal engine started. Monitoring 100+ pairs.");
-  }, []);
-
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
 
   return (
     <div className="flex flex-col bg-background min-h-screen pt-20 pb-24 overflow-hidden">
@@ -188,12 +175,12 @@ const Terminal: React.FC = () => {
             <div className="flex items-center gap-3 group cursor-pointer">
               <div className={cn(
                 "w-2.5 h-2.5 rounded-full animate-pulse shadow-lg",
-                lastSignal.type === "LONG" ? "bg-primary shadow-primary/80" : "bg-secondary shadow-secondary/80"
+                lastSignal.tipo === "LONG" ? "bg-primary shadow-primary/80" : "bg-secondary shadow-secondary/80"
               )} />
               <span className="text-on-surface group-hover:text-primary transition-colors">
-                {lastSignal.indicators?.smc || "SMC"}: <span className={cn("font-black", lastSignal.type === "LONG" ? "text-primary" : "text-secondary")}>
-                  {lastSignal.type} {lastSignal.indicators?.smc || "BOS"}
-                </span> DETECTED AT ${lastSignal.entry.toLocaleString()}
+                IA ANALYSIS: <span className={cn("font-black", lastSignal.tipo === "LONG" ? "text-primary" : "text-secondary")}>
+                  {lastSignal.tipo} DETECTED AT ${lastSignal.entry.toLocaleString()}
+                </span>
               </span>
             </div>
           ) : (

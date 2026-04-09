@@ -32,6 +32,7 @@ export const useSignalStore = create<SignalState>((set, get) => ({
   loading: true,
   addSignal: async (signalData) => {
     try {
+      console.log("Adding signal to Firestore:", signalData.activo);
       await addDoc(collection(db, 'signals'), {
         ...signalData,
         timestamp: Timestamp.now(),
@@ -39,6 +40,7 @@ export const useSignalStore = create<SignalState>((set, get) => ({
       });
 
       // Send Telegram Alert
+      console.log("Triggering Telegram alert for:", signalData.activo);
       await sendTelegramAlert({
         symbol: signalData.activo,
         price: signalData.entry.toString(),
