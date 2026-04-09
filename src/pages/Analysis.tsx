@@ -67,7 +67,7 @@ const DEFAULT_LAYOUT = [
 ];
 
 const Analysis = () => {
-  const { addSignal } = useSignalStore();
+  const addSignal = useSignalStore(state => state.addSignal);
   const [searchParams] = useSearchParams();
   const urlSymbol = searchParams.get("symbol");
   const [selectedSymbol, setSelectedSymbol] = useState(urlSymbol || "BTCUSDT");

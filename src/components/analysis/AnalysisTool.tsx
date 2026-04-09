@@ -37,7 +37,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
   onLoadLayout,
   onShowFundamentals
 }) => {
-  const { activeSignals } = useSignalStore();
+  const activeSignals = useSignalStore(state => state.activeSignals);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);

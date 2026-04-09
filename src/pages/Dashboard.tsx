@@ -41,7 +41,7 @@ import MarketConclusion from "@/components/dashboard/MarketConclusion";
 import { useSignalStore } from "@/store/useSignalStore";
 
 const Dashboard = () => {
-  const { addSignal } = useSignalStore();
+  const addSignal = useSignalStore(state => state.addSignal);
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allTickers, setAllTickers] = useState<CryptoData[]>([]);
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
@@ -132,7 +132,7 @@ const Dashboard = () => {
       const data = await fetchTickers(symbols);
       
       setAllTickers(prev => {
-        const updated = data.map(t => {
+        return data.map(t => {
           const existing = prev.find(p => p.symbol === t.symbol);
           if (existing) {
             return {
@@ -150,51 +150,6 @@ const Dashboard = () => {
           }
           return t;
         });
-
-        // Signal Detection Logic
-        updated.forEach(ticker => {
-          const proximity = ticker.proximity || 0;
-          // If price is very close to entry (within 0.5%) and not already triggered
-          if (proximity <= 0.5 && !triggeredAlerts.has(ticker.symbol)) {
-            // Trigger Global Signal Store
-            addSignal({
-              activo: ticker.symbol,
-              tipo: parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT',
-              entry: ticker.entry || parseFloat(ticker.price),
-              tp1: ticker.takeProfits?.[0] || (parseFloat(ticker.price) * 1.05),
-              tp2: ticker.takeProfits?.[1],
-              tp3: ticker.takeProfits?.[2],
-              sl: ticker.stopLoss || (parseFloat(ticker.price) * 0.95),
-              estado: 'activa'
-            });
-            
-            // Trigger Telegram Alert
-            if (telegramToken && telegramChatId) {
-              const isBullish = parseFloat(ticker.priceChangePercent) > 0;
-              sendTelegramAlert({
-                symbol: ticker.symbol,
-                price: ticker.price,
-                change: ticker.priceChangePercent,
-                type: "SIGNAL",
-                confidence: ticker.consensus || 85,
-                entry: ticker.entry?.toFixed(4),
-                sl: ticker.stopLoss?.toFixed(4),
-                tp1: ticker.takeProfits?.[0]?.toFixed(4),
-                tp2: ticker.takeProfits?.[1]?.toFixed(4),
-                tp3: ticker.takeProfits?.[2]?.toFixed(4),
-                leverage: `${ticker.leverage}x`
-              });
-            }
-
-            setTriggeredAlerts(prev => new Set(prev).add(ticker.symbol));
-            toast.info(`¡Nueva señal activa para ${ticker.symbol}!`, {
-              description: `Precio cerca de zona de entrada: $${ticker.entry?.toFixed(4)}`,
-              duration: 10000,
-            });
-          }
-        });
-
-        return updated;
       });
 
       const [whales, traders, txs, events] = await Promise.all([
@@ -216,6 +171,46 @@ const Dashboard = () => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    allTickers.forEach(ticker => {
+      const proximity = ticker.proximity || 0;
+      if (proximity <= 0.5 && !triggeredAlerts.has(ticker.symbol)) {
+        addSignal({
+          activo: ticker.symbol,
+          tipo: parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT',
+          entry: ticker.entry || parseFloat(ticker.price),
+          tp1: ticker.takeProfits?.[0] || (parseFloat(ticker.price) * 1.05),
+          tp2: ticker.takeProfits?.[1],
+          tp3: ticker.takeProfits?.[2],
+          sl: ticker.stopLoss || (parseFloat(ticker.price) * 0.95),
+          estado: 'activa'
+        });
+        
+        if (telegramToken && telegramChatId) {
+          sendTelegramAlert({
+            symbol: ticker.symbol,
+            price: ticker.price,
+            change: ticker.priceChangePercent,
+            type: "SIGNAL",
+            confidence: ticker.consensus || 85,
+            entry: ticker.entry?.toFixed(4),
+            sl: ticker.stopLoss?.toFixed(4),
+            tp1: ticker.takeProfits?.[0]?.toFixed(4),
+            tp2: ticker.takeProfits?.[1]?.toFixed(4),
+            tp3: ticker.takeProfits?.[2]?.toFixed(4),
+            leverage: `${ticker.leverage}x`
+          });
+        }
+
+        setTriggeredAlerts(prev => new Set(prev).add(ticker.symbol));
+        toast.info(`¡Nueva señal activa para ${ticker.symbol}!`, {
+          description: `Precio cerca de zona de entrada: $${ticker.entry?.toFixed(4)}`,
+          duration: 10000,
+        });
+      }
+    });
+  }, [allTickers, triggeredAlerts, addSignal, telegramToken, telegramChatId]);
 
   useEffect(() => {
     loadData();

@@ -14,7 +14,7 @@ import { useSignalStore } from "@/store/useSignalStore";
 import { Link } from "react-router-dom";
 
 const GlobalSignalOverlay: React.FC = () => {
-  const { activeSignals } = useSignalStore();
+  const activeSignals = useSignalStore(state => state.activeSignals);
 
   if (activeSignals.length === 0) return null;
 

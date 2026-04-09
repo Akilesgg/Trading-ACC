@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Toaster } from "sonner";
@@ -238,7 +238,8 @@ import GlobalSignalOverlay from "./components/common/GlobalSignalOverlay";
 import SignalMonitor from "./components/common/SignalMonitor";
 
 const ActiveSignalsBanner = () => {
-  const activeSignals = useSignalStore(state => state.activeSignals.filter(s => s.estado === 'activa'));
+  const allSignals = useSignalStore(state => state.activeSignals);
+  const activeSignals = useMemo(() => allSignals.filter(s => s.estado === 'activa'), [allSignals]);
   
   if (activeSignals.length === 0) return null;
 
