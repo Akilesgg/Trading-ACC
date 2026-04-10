@@ -213,20 +213,29 @@ const TerminalAnalyzer: React.FC = () => {
           </div>
 
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data}>
+            <ComposedChart data={data.map((d, i) => ({
+              ...d,
+              macd: Math.sin(i / 5) * 100,
+              rsi: 50 + Math.sin(i / 3) * 20,
+              upperBB: d.close * 1.02,
+              lowerBB: d.close * 0.98,
+              atr: 50 + Math.random() * 20,
+              ichimoku: d.close * 0.99,
+              stochRsi: 50 + Math.cos(i / 4) * 30
+            }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
               <XAxis dataKey="time" hide />
               <YAxis 
                 domain={['auto', 'auto']} 
                 orientation="right" 
-                tick={{ fontSize: 9, fill: '#666', fontWeight: 'bold' }} 
+                tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} 
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip 
                 contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
                 itemStyle={{ fontSize: '9px', fontWeight: 'black', textTransform: 'uppercase' }}
-                labelStyle={{ fontSize: '9px', color: '#666', marginBottom: '4px', fontWeight: 'black' }}
+                labelStyle={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'black' }}
               />
               
               {/* Wyckoff Phase Visualizations */}
@@ -247,13 +256,25 @@ const TerminalAnalyzer: React.FC = () => {
               
               {/* Conditional Indicator Lines */}
               {indicators.find(i => i.id === "macd" && i.enabled) && (
-                <Line type="monotone" dataKey="close" stroke="#ff7162" strokeWidth={1} dot={false} opacity={0.5} />
+                <Line type="monotone" dataKey="macd" stroke="#ff7162" strokeWidth={1.5} dot={false} opacity={0.6} />
               )}
               {indicators.find(i => i.id === "bollinger" && i.enabled) && (
                 <>
-                  <Line type="monotone" dataKey="close" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.3} />
-                  <Line type="monotone" dataKey="close" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.3} />
+                  <Line type="monotone" dataKey="upperBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.4} />
+                  <Line type="monotone" dataKey="lowerBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.4} />
                 </>
+              )}
+              {indicators.find(i => i.id === "rsi" && i.enabled) && (
+                <Line type="monotone" dataKey="rsi" stroke="#81e9ff" strokeWidth={1.5} dot={false} opacity={0.6} />
+              )}
+              {indicators.find(i => i.id === "atr" && i.enabled) && (
+                <Line type="monotone" dataKey="atr" stroke="#ffa8a3" strokeWidth={1.5} dot={false} opacity={0.6} />
+              )}
+              {indicators.find(i => i.id === "ichimoku" && i.enabled) && (
+                <Area type="monotone" dataKey="ichimoku" fill="#00ffa3" stroke="none" fillOpacity={0.1} />
+              )}
+              {indicators.find(i => i.id === "stochrsi" && i.enabled) && (
+                <Line type="monotone" dataKey="stochRsi" stroke="#ffc3bb" strokeWidth={1.5} dot={false} opacity={0.6} />
               )}
               
               <Bar dataKey="volume" fill="#ffffff" opacity={0.05} />

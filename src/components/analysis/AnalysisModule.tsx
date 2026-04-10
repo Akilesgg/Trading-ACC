@@ -414,7 +414,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {analysisSections["INDICADORES TÉCNICOS (TOP 2026)"].split("\n").filter((line: string) => line.trim()).map((line: string, idx: number) => (
               <div key={idx} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 flex items-center justify-between group hover:border-primary/30 transition-all">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{line.split(":")[0]?.replace(/^[-\s*]+/, "")}</span>
+                <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest">{line.split(":")[0]?.replace(/^[-\s*]+/, "")}</span>
                 <span className="text-[10px] font-black text-primary text-right uppercase tracking-widest">{line.split(":")[1] || "ACTIVO"}</span>
               </div>
             ))}

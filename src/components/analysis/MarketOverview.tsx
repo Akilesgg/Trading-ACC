@@ -41,7 +41,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
           </div>
           <div>
             <h3 className="text-3xl font-black tracking-tighter text-on-surface leading-none mb-1">{selectedSymbol.replace("USDT", "")}</h3>
-            <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Binance Spot • {timeframe.toUpperCase()}</p>
+            <p className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest">Binance Spot • {timeframe.toUpperCase()}</p>
           </div>
         </div>
         <div className="text-right">

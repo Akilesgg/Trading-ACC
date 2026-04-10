@@ -83,14 +83,14 @@ const TerminalChart: React.FC = () => {
             <YAxis 
               domain={['auto', 'auto']} 
               orientation="right" 
-              tick={{ fontSize: 9, fill: '#666', fontWeight: 'bold' }} 
+              tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} 
               axisLine={false}
               tickLine={false}
             />
             <Tooltip 
               contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
               itemStyle={{ fontSize: '9px', fontWeight: 'black', textTransform: 'uppercase' }}
-              labelStyle={{ fontSize: '9px', color: '#666', marginBottom: '4px', fontWeight: 'black' }}
+              labelStyle={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'black' }}
             />
             
             {/* SMC Visualizations - Soft Colors */}
