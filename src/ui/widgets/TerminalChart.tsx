@@ -81,12 +81,14 @@ const TerminalChart: React.FC = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
             <XAxis dataKey="time" hide />
             <YAxis 
+              yAxisId="price"
               domain={['auto', 'auto']} 
               orientation="right" 
               tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} 
               axisLine={false}
               tickLine={false}
             />
+            <YAxis yAxisId="volume" hide />
             <Tooltip 
               contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
               itemStyle={{ fontSize: '9px', fontWeight: 'black', textTransform: 'uppercase' }}
@@ -96,28 +98,28 @@ const TerminalChart: React.FC = () => {
             {/* SMC Visualizations - Soft Colors */}
             {data.map((entry, index) => (
               entry.isBOS && (
-                <ReferenceLine key={`bos-${index}`} x={entry.time} stroke="#00ffa3" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'BOS', fill: '#00ffa3', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
+                <ReferenceLine yAxisId="price" key={`bos-${index}`} x={entry.time} stroke="#00ffa3" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'BOS', fill: '#00ffa3', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
               )
             ))}
             
             {data.map((entry, index) => (
               entry.isCHoCH && (
-                <ReferenceLine key={`choch-${index}`} x={entry.time} stroke="#ff7162" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'CHoCH', fill: '#ff7162', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
+                <ReferenceLine yAxisId="price" key={`choch-${index}`} x={entry.time} stroke="#ff7162" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'CHoCH', fill: '#ff7162', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
               )
             ))}
 
             {/* Order Blocks - Soft Fills */}
             {data.map((entry, index) => (
               entry.isOB && (
-                <ReferenceArea key={`ob-${index}`} x1={entry.time} x2={data[index+2]?.time} y1={entry.close - 100} y2={entry.close + 100} fill="#00ffa3" fillOpacity={0.03} stroke="#00ffa3" strokeOpacity={0.1} />
+                <ReferenceArea yAxisId="price" key={`ob-${index}`} x1={entry.time} x2={data[index+2]?.time} y1={entry.close - 100} y2={entry.close + 100} fill="#00ffa3" fillOpacity={0.03} stroke="#00ffa3" strokeOpacity={0.1} />
               )
             ))}
 
-            <Line type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={1.5} dot={false} animationDuration={1000} opacity={0.8} />
-            <Line type="monotone" dataKey="ema20" stroke="#ff7162" strokeWidth={1} dot={false} opacity={0.3} />
-            <Line type="monotone" dataKey="ema50" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.2} />
+            <Line yAxisId="price" type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={1.5} dot={false} animationDuration={1000} opacity={0.8} />
+            <Line yAxisId="price" type="monotone" dataKey="ema20" stroke="#ff7162" strokeWidth={1} dot={false} opacity={0.3} />
+            <Line yAxisId="price" type="monotone" dataKey="ema50" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.2} />
             
-            <Bar dataKey="volume" fill="#ffffff" opacity={0.03} yAxisId={0} />
+            <Bar yAxisId="volume" dataKey="volume" fill="#ffffff" opacity={0.03} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

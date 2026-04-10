@@ -226,12 +226,15 @@ const TerminalAnalyzer: React.FC = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
               <XAxis dataKey="time" hide />
               <YAxis 
+                yAxisId="price"
                 domain={['auto', 'auto']} 
                 orientation="right" 
                 tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} 
                 axisLine={false}
                 tickLine={false}
               />
+              <YAxis yAxisId="volume" hide />
+              <YAxis yAxisId="oscillator" domain={[0, 100]} hide />
               <Tooltip 
                 contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
                 itemStyle={{ fontSize: '9px', fontWeight: 'black', textTransform: 'uppercase' }}
@@ -241,6 +244,7 @@ const TerminalAnalyzer: React.FC = () => {
               {/* Wyckoff Phase Visualizations */}
               {wyckoffPhase.includes("Acumulación") && (
                 <ReferenceArea 
+                  yAxisId="price"
                   x1={data[0]?.time} 
                   x2={data[data.length-1]?.time} 
                   y1={data[0]?.low} 
@@ -252,32 +256,32 @@ const TerminalAnalyzer: React.FC = () => {
                 />
               )}
 
-              <Line type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={2} dot={false} animationDuration={1000} />
+              <Line yAxisId="price" type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={2} dot={false} animationDuration={1000} />
               
               {/* Conditional Indicator Lines */}
               {indicators.find(i => i.id === "macd" && i.enabled) && (
-                <Line type="monotone" dataKey="macd" stroke="#ff7162" strokeWidth={1.5} dot={false} opacity={0.6} />
+                <Line yAxisId="oscillator" type="monotone" dataKey="macd" stroke="#ff7162" strokeWidth={1.5} dot={false} opacity={0.6} />
               )}
               {indicators.find(i => i.id === "bollinger" && i.enabled) && (
                 <>
-                  <Line type="monotone" dataKey="upperBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.4} />
-                  <Line type="monotone" dataKey="lowerBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.4} />
+                  <Line yAxisId="price" type="monotone" dataKey="upperBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.4} />
+                  <Line yAxisId="price" type="monotone" dataKey="lowerBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.4} />
                 </>
               )}
               {indicators.find(i => i.id === "rsi" && i.enabled) && (
-                <Line type="monotone" dataKey="rsi" stroke="#81e9ff" strokeWidth={1.5} dot={false} opacity={0.6} />
+                <Line yAxisId="oscillator" type="monotone" dataKey="rsi" stroke="#81e9ff" strokeWidth={1.5} dot={false} opacity={0.6} />
               )}
               {indicators.find(i => i.id === "atr" && i.enabled) && (
-                <Line type="monotone" dataKey="atr" stroke="#ffa8a3" strokeWidth={1.5} dot={false} opacity={0.6} />
+                <Line yAxisId="oscillator" type="monotone" dataKey="atr" stroke="#ffa8a3" strokeWidth={1.5} dot={false} opacity={0.6} />
               )}
               {indicators.find(i => i.id === "ichimoku" && i.enabled) && (
-                <Area type="monotone" dataKey="ichimoku" fill="#00ffa3" stroke="none" fillOpacity={0.1} />
+                <Area yAxisId="price" type="monotone" dataKey="ichimoku" fill="#00ffa3" stroke="none" fillOpacity={0.1} />
               )}
               {indicators.find(i => i.id === "stochrsi" && i.enabled) && (
-                <Line type="monotone" dataKey="stochRsi" stroke="#ffc3bb" strokeWidth={1.5} dot={false} opacity={0.6} />
+                <Line yAxisId="oscillator" type="monotone" dataKey="stochRsi" stroke="#ffc3bb" strokeWidth={1.5} dot={false} opacity={0.6} />
               )}
               
-              <Bar dataKey="volume" fill="#ffffff" opacity={0.05} />
+              <Bar yAxisId="volume" dataKey="volume" fill="#ffffff" opacity={0.05} />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
