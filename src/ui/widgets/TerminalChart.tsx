@@ -85,6 +85,10 @@ const TerminalChart: React.FC = () => {
     return () => clearTimeout(timeout);
   }, [activeSymbol, timeframe]);
 
+  const bosMarkers = useMemo(() => chartData.filter(d => d.isBOS), [chartData]);
+  const chochMarkers = useMemo(() => chartData.filter(d => d.isCHoCH), [chartData]);
+  const obMarkers = useMemo(() => chartData.filter(d => d.isOB), [chartData]);
+
   return (
     <div className="h-full flex flex-col bg-surface-container-low/30 relative group">
       {loading && (
@@ -127,25 +131,22 @@ const TerminalChart: React.FC = () => {
               wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', paddingBottom: '10px' }}
             />
             
-            {/* SMC Visualizations - Soft Colors */}
-            {chartData.map((entry, index) => (
-              entry.isBOS && (
-                <ReferenceLine yAxisId="price" key={`bos-${index}`} x={entry.time} stroke="#00ffa3" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'BOS', fill: '#00ffa3', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
-              )
+            {/* SMC Visualizations - Optimized */}
+            {bosMarkers.map((entry, index) => (
+              <ReferenceLine yAxisId="price" key={`bos-${index}`} x={entry.time} stroke="#00ffa3" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'BOS', fill: '#00ffa3', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
             ))}
             
-            {chartData.map((entry, index) => (
-              entry.isCHoCH && (
-                <ReferenceLine yAxisId="price" key={`choch-${index}`} x={entry.time} stroke="#ff7162" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'CHoCH', fill: '#ff7162', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
-              )
+            {chochMarkers.map((entry, index) => (
+              <ReferenceLine yAxisId="price" key={`choch-${index}`} x={entry.time} stroke="#ff7162" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'CHoCH', fill: '#ff7162', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
             ))}
 
-            {/* Order Blocks - Soft Fills */}
-            {chartData.map((entry, index) => (
-              entry.isOB && (
-                <ReferenceArea yAxisId="price" key={`ob-${index}`} x1={entry.time} x2={chartData[index+2]?.time} y1={entry.close - 100} y2={entry.close + 100} fill="#00ffa3" fillOpacity={0.03} stroke="#00ffa3" strokeOpacity={0.1} />
-              )
-            ))}
+            {/* Order Blocks - Optimized */}
+            {obMarkers.map((entry, index) => {
+              const entryIdx = chartData.findIndex(d => d.time === entry.time);
+              return (
+                <ReferenceArea yAxisId="price" key={`ob-${index}`} x1={entry.time} x2={chartData[entryIdx+2]?.time || entry.time} y1={entry.close - 100} y2={entry.close + 100} fill="#00ffa3" fillOpacity={0.03} stroke="#00ffa3" strokeOpacity={0.1} />
+              );
+            })}
 
             {/* Candlesticks */}
             <Bar yAxisId="price" dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>

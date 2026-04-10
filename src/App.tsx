@@ -264,17 +264,18 @@ const BottomNavBar = () => {
             key={item.label}
             to={item.path}
             className={cn(
-              "flex flex-col items-center justify-center transition-all active:scale-90 duration-200 relative group",
-              isActive ? "text-primary" : "text-on-background/40 hover:text-primary/60"
+              "flex flex-col items-center justify-center transition-all active:scale-90 duration-200 relative group focus:outline-none",
+              isActive ? "text-primary scale-110" : "text-on-background/40 hover:text-primary/60"
             )}
           >
             {isActive && (
               <motion.div 
-                layoutId="nav-active"
-                className="absolute -inset-x-4 -inset-y-2 bg-primary/10 rounded-2xl blur-lg"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute -inset-x-6 -inset-y-3 bg-primary/10 rounded-full blur-xl"
               />
             )}
-            <item.icon className={cn("w-7 h-7 relative z-10 transition-transform", isActive && "scale-110")} />
+            <item.icon className={cn("w-7 h-7 relative z-10 transition-transform", isActive && "scale-110 drop-shadow-[0_0_8px_rgba(0,255,163,0.5)]")} />
             <span className="font-black text-[9px] uppercase tracking-[0.2em] mt-2 relative z-10">{item.label}</span>
           </Link>
         );

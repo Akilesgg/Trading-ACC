@@ -11,18 +11,19 @@ import TerminalBacktest from "../ui/widgets/TerminalBacktest";
 import TerminalAlerts from "../ui/widgets/TerminalAlerts";
 import { useTerminalStore } from "../store/useTerminalStore";
 import { SignalStatus } from "../core/signals/types";
-import { Search, Activity, Shield, History, Zap, TrendingUp, TrendingDown, Info, X } from "lucide-react";
+import { Search, Activity, Shield, History, Zap, TrendingUp, TrendingDown, Info, X, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchAssetFundamentals, AssetFundamental } from "@/services/cryptoService";
 import FundamentalModal from "@/components/common/FundamentalModal";
 import { useBinanceTicker } from "../hooks/useBinanceTicker";
 
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 import { useSignalStore } from "@/store/useSignalStore";
 
 const Terminal: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { 
     addLog, 
     activeSymbol, 
@@ -63,6 +64,13 @@ const Terminal: React.FC = () => {
       <div className="h-auto md:h-20 bg-surface-container-low/50 backdrop-blur-2xl border-b border-outline-variant/10 flex flex-col md:flex-row items-center justify-between px-4 md:px-10 py-4 md:py-0 z-40 shadow-2xl gap-4 md:gap-0">
         <div className="flex items-center gap-4 md:gap-10 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-3 md:gap-5">
+            <button 
+              onClick={() => navigate(-1)}
+              className="p-2 md:p-3 bg-surface-container-high/50 border border-outline-variant/10 rounded-2xl transition-all text-on-surface-variant hover:text-primary hover:border-primary/30 active:scale-90 shadow-lg group focus:outline-none"
+              title="Volver"
+            >
+              <ChevronLeft className="w-5 h-5 md:w-6 md:h-6 group-hover:-translate-x-1 transition-transform" />
+            </button>
             <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20 shadow-xl shadow-primary/5 group hover:scale-110 transition-transform cursor-pointer">
               <Zap className="w-6 h-6 md:w-7 md:h-7 text-primary" />
             </div>
@@ -83,7 +91,7 @@ const Terminal: React.FC = () => {
                 key={tf}
                 onClick={() => setTimeframe(tf)}
                 className={cn(
-                  "px-3 md:px-5 py-1.5 md:py-2 rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+                  "px-3 md:px-5 py-1.5 md:py-2 rounded-xl text-[9px] md:text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap focus:outline-none",
                   timeframe === tf ? "bg-primary text-on-primary shadow-xl shadow-primary/20 scale-105" : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest"
                 )}
               >
@@ -118,7 +126,7 @@ const Terminal: React.FC = () => {
           <div className="flex items-center gap-2 md:gap-4">
             <button 
               onClick={() => showFundamentals(activeSymbol)}
-              className="p-2 md:p-3.5 bg-surface-container-high/50 border border-outline-variant/10 rounded-2xl transition-all text-on-surface-variant hover:text-primary hover:border-primary/30 active:scale-90 shadow-lg group"
+              className="p-2 md:p-3.5 bg-surface-container-high/50 border border-outline-variant/10 rounded-2xl transition-all text-on-surface-variant hover:text-primary hover:border-primary/30 active:scale-90 shadow-lg group focus:outline-none"
               title="Análisis Fundamental"
             >
               <Info className="w-4 h-4 md:w-5 md:h-5 group-hover:scale-110 transition-transform" />

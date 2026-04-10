@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Brain, 
@@ -93,11 +93,11 @@ const TerminalAnalyzer: React.FC = () => {
 
   const activeIndicators = useMemo(() => indicators.filter(i => i.enabled), [indicators]);
 
-  const toggleIndicator = (id: string) => {
+  const toggleIndicator = useCallback((id: string) => {
     setIndicators(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
-  };
+  }, []);
 
-  const runAnalysis = async () => {
+  const runAnalysis = useCallback(async () => {
     setLoading(true);
     addLog(`ANALYZER: Iniciando análisis profundo para ${activeSymbol} (${timeframe})...`);
     
@@ -109,11 +109,8 @@ const TerminalAnalyzer: React.FC = () => {
       const ticker = await fetchTicker(activeSymbol);
       
       // Use Gemini for Wyckoff and Indicator analysis
-      // We use the existing analyzeMarket service which returns a formatted string
       const aiResponse = await analyzeMarket(activeSymbol, ticker.price, ticker.priceChangePercent);
       
-      // Parse the AI response to extract Wyckoff and other info
-      // The fallback and standard response usually contains "FASE WYCKOFF"
       const wyckoffMatch = aiResponse.match(/FASE WYCKOFF:?\s*(.*)/i);
       const phase = wyckoffMatch ? wyckoffMatch[1].split('\n')[0].trim() : "Acumulación - Fase C";
       setWyckoffPhase(phase);
@@ -127,7 +124,6 @@ const TerminalAnalyzer: React.FC = () => {
       
       const analysisMap: Record<string, string> = {};
       activeIndicators.forEach(ind => {
-        // Look for indicator specific info in the AI response
         const indRegex = new RegExp(`${ind.name}:?\\s*(.*)`, 'i');
         const indMatch = aiResponse.match(indRegex);
         analysisMap[ind.id] = indMatch 
@@ -137,7 +133,7 @@ const TerminalAnalyzer: React.FC = () => {
       setIndicatorAnalysis(analysisMap);
       
       const conclusionMatch = aiResponse.match(/\*\*RECOMENDACIÓN FINAL\*\*:?\s*(.*)/i);
-      setFinalConclusion(conclusionMatch ? conclusionMatch[1].trim() : `Análisis integral para ${activeSymbol}: La confluencia de Wyckoff en ${phase} y los indicadores técnicos activos sugieren una alta probabilidad de movimiento direccional. Se recomienda gestionar el riesgo con el SL indicado.`);
+      setFinalConclusion(conclusionMatch ? conclusionMatch[1].trim() : `Análisis integral para ${activeSymbol}: La confluencia de Wyckoff en ${phase} y los indicadores técnicos activos sugieren una alta probabilidad de movimiento direccional.`);
 
       addLog(`SUCCESS: Análisis completado para ${activeSymbol}.`);
     } catch (error) {
@@ -146,11 +142,11 @@ const TerminalAnalyzer: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeSymbol, timeframe, activeIndicators, addLog]);
 
   useEffect(() => {
     runAnalysis();
-  }, [activeSymbol, timeframe, activeIndicators.length]);
+  }, [runAnalysis]);
 
   return (
     <div className="h-full flex flex-col bg-surface-container-low/30 overflow-hidden">
@@ -186,7 +182,7 @@ const TerminalAnalyzer: React.FC = () => {
               key={ind.id}
               onClick={() => toggleIndicator(ind.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all",
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all focus:outline-none",
                 ind.enabled 
                   ? "bg-primary/10 border-primary/30 text-primary shadow-lg shadow-primary/5" 
                   : "bg-surface-container-high border-outline-variant/10 text-on-surface-variant hover:border-outline-variant/30"

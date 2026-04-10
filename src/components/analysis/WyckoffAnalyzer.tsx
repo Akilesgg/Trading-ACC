@@ -259,7 +259,7 @@ const WyckoffAnalyzer: React.FC = () => {
   }, [selectedSymbol, selectedTimeframe, activeStrategies.length, indicators.filter(i => i.enabled).length]);
 
   return (
-    <div className="space-y-8 bg-surface-container-low/10 p-8 rounded-[2.5rem] border border-outline-variant/10">
+    <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
       {/* Strategy Selector */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {strategies.map((strat) => {
