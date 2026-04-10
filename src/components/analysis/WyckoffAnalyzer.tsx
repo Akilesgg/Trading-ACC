@@ -60,6 +60,9 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "ichimoku", name: "Ichimoku Cloud", enabled: false },
     { id: "volprofile", name: "Volume Profile", enabled: false },
     { id: "stochrsi", name: "Stochastic RSI", enabled: false },
+    { id: "supertrend", name: "Supertrend", enabled: false },
+    { id: "vwap", name: "VWAP", enabled: false },
+    { id: "psar", name: "Parabolic SAR", enabled: false },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -83,7 +86,15 @@ const WyckoffAnalyzer: React.FC = () => {
         lowerBB: d.close * (0.985 - Math.sin(i / 10) * 0.005),
         atr: 40 + Math.sin(i / 15) * 10 + Math.random() * 5,
         ichimoku: d.close * (0.995 + Math.cos(i / 20) * 0.01),
-        stochRsi: 50 + Math.cos(i / 5) * 45
+        stochRsi: 50 + Math.cos(i / 5) * 45,
+        
+        // New Top Indicators
+        supertrend: d.close * (i > 25 ? 0.98 : 1.02),
+        vwap: d.close * (0.998 + Math.sin(i / 15) * 0.004),
+        psar: d.close * (i % 10 > 5 ? 1.01 : 0.99),
+        
+        // Wake Up Phase (White Line)
+        wakeup: d.close * (0.97 + Math.sin(i / 25) * 0.02)
       };
     });
   }, [data]);
@@ -127,9 +138,20 @@ const WyckoffAnalyzer: React.FC = () => {
       indicators.filter(i => i.enabled).forEach(ind => {
         const indRegex = new RegExp(`${ind.name}:?\\s*(.*)`, 'i');
         const indMatch = aiResponse.match(indRegex);
-        analysisMap[ind.id] = indMatch 
-          ? `${indMatch[1].trim()}. (Análisis para ${selectedTimeframe})`
-          : `Indicador ${ind.name} confirmando estructura en ${selectedTimeframe}.`;
+        
+        let detail = "";
+        let rec = "";
+        
+        if (indMatch) {
+          const parts = indMatch[1].split('.');
+          detail = parts[0].trim();
+          rec = parts[1] ? parts[1].trim() : "Mantener vigilancia en niveles de soporte/resistencia.";
+        } else {
+          detail = `El indicador ${ind.name} muestra una estructura de consolidación en ${selectedTimeframe}.`;
+          rec = "Esperar confirmación de volumen para validar el movimiento.";
+        }
+
+        analysisMap[ind.id] = `**ANÁLISIS:** ${detail}\n\n**RECOMENDACIÓN:** ${rec}`;
       });
       setIndicatorAnalysis(analysisMap);
       
@@ -278,12 +300,24 @@ const WyckoffAnalyzer: React.FC = () => {
               ))}
             </Bar>
 
+            {/* Wake Up Phase Line */}
+            <Line yAxisId="price" type="monotone" dataKey="wakeup" name="Wake Up Phase" stroke="#ffffff" strokeWidth={2} dot={false} opacity={0.8} />
+
             {/* Indicators on Chart */}
             {indicators.find(i => i.id === "bollinger" && i.enabled) && (
               <>
                 <Line yAxisId="price" type="monotone" dataKey="upperBB" name="Bollinger Superior" stroke="#00e0ff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} opacity={0.6} />
                 <Line yAxisId="price" type="monotone" dataKey="lowerBB" name="Bollinger Inferior" stroke="#00e0ff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} opacity={0.6} />
               </>
+            )}
+            {indicators.find(i => i.id === "supertrend" && i.enabled) && (
+              <Line yAxisId="price" type="stepAfter" dataKey="supertrend" name="Supertrend" stroke="#ffcc00" strokeWidth={2} dot={false} opacity={0.8} />
+            )}
+            {indicators.find(i => i.id === "vwap" && i.enabled) && (
+              <Line yAxisId="price" type="monotone" dataKey="vwap" name="VWAP" stroke="#ff00ff" strokeWidth={1.5} dot={false} opacity={0.7} />
+            )}
+            {indicators.find(i => i.id === "psar" && i.enabled) && (
+              <Line yAxisId="price" type="monotone" dataKey="psar" name="Parabolic SAR" stroke="#ffffff" strokeWidth={0} dot={{ r: 2, fill: '#00e0ff' }} opacity={0.8} />
             )}
             {indicators.find(i => i.id === "macd" && i.enabled) && (
               <Line yAxisId="oscillator" type="monotone" dataKey="macd" name="MACD" stroke="#ff7162" strokeWidth={2.5} dot={false} opacity={0.9} />
@@ -306,12 +340,20 @@ const WyckoffAnalyzer: React.FC = () => {
         </ResponsiveContainer>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="trading-card p-6 space-y-4">
           <h3 className="text-[12px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
             <Info className="w-4 h-4" /> Explicación de la Fase
           </h3>
           <p className="text-[13px] text-on-surface-variant leading-relaxed font-medium">{wyckoffExplanation}</p>
+        </div>
+        <div className="trading-card p-6 space-y-4 border-white/20 bg-white/5">
+          <h3 className="text-[12px] font-black uppercase tracking-widest text-white flex items-center gap-2">
+            <Zap className="w-4 h-4" /> Wake Up Status
+          </h3>
+          <p className="text-[13px] text-white font-black leading-relaxed">
+            {wyckoffPhase.includes("Markup") ? "FASE ACTIVA: Despertar alcista confirmado con volumen creciente." : "FASE LATENTE: Esperando señal de ignición institucional."}
+          </p>
         </div>
         <div className="trading-card p-6 space-y-4 border-primary/20 bg-primary/5">
           <h3 className="text-[12px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -355,9 +397,22 @@ const WyckoffAnalyzer: React.FC = () => {
               <span className="text-[10px] font-black uppercase tracking-widest text-primary">{ind.name}</span>
               <CheckCircle2 className="w-3 h-3 text-primary" />
             </div>
-            <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium">
-              {indicatorAnalysis[ind.id] || "Analizando comportamiento..."}
-            </p>
+            <div className="space-y-3">
+              {indicatorAnalysis[ind.id]?.split('\n\n').map((line, idx) => (
+                <p key={idx} className="text-[11px] text-on-surface-variant leading-relaxed font-medium">
+                  {line.startsWith('**ANÁLISIS:**') ? (
+                    <><span className="text-primary font-black">ANÁLISIS:</span> {line.replace('**ANÁLISIS:**', '')}</>
+                  ) : line.startsWith('**RECOMENDACIÓN:**') ? (
+                    <><span className="text-primary font-black">RECOMENDACIÓN:</span> {line.replace('**RECOMENDACIÓN:**', '')}</>
+                  ) : line}
+                </p>
+              ))}
+              {!indicatorAnalysis[ind.id] && (
+                <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium animate-pulse">
+                  Analizando comportamiento en {selectedTimeframe}...
+                </p>
+              )}
+            </div>
           </motion.div>
         ))}
         {indicators.filter(i => i.enabled).length === 0 && (
