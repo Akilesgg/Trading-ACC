@@ -62,11 +62,6 @@ const MarketScanner: React.FC = () => {
               
               triggeredRef.current.add(ticker.symbol);
               console.log(`✅ MarketScanner: Señal de ${ticker.symbol} añadida correctamente.`);
-              
-              toast.success(`¡Nueva señal automática: ${ticker.symbol}!`, {
-                description: `Enviada a Telegram con éxito.`,
-                duration: 5000,
-              });
             } catch (addError) {
               console.error(`❌ MarketScanner: Error al añadir señal para ${ticker.symbol}:`, addError);
             }
