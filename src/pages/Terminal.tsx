@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import TerminalLayout from "../ui/layouts/TerminalLayout";
 import TerminalChart from "../ui/widgets/TerminalChart";
+import TerminalAnalyzer from "../ui/widgets/TerminalAnalyzer";
 import TerminalSignals from "../ui/widgets/TerminalSignals";
 import TerminalOrderbook from "../ui/widgets/TerminalOrderbook";
 import TerminalConsole from "../ui/widgets/TerminalConsole";
@@ -151,6 +152,7 @@ const Terminal: React.FC = () => {
           <TerminalLayout>
             {{
               chart: <TerminalChart />,
+              analyzer: <TerminalAnalyzer />,
               signals: <TerminalSignals />,
               trade: <TerminalTradePanel />,
               orderbook: <TerminalOrderbook />,

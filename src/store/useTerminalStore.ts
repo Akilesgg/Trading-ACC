@@ -23,13 +23,13 @@ export const useTerminalStore = create<TerminalState>()(
   persist(
     (set, get) => ({
       layout: [
-        { i: "chart", x: 0, y: 0, w: 9, h: 18, static: false },
-        { i: "signals", x: 9, y: 0, w: 3, h: 6, static: false },
-        { i: "orderbook", x: 9, y: 6, w: 3, h: 6, static: false },
-        { i: "trade", x: 9, y: 12, w: 3, h: 6, static: false },
-        { i: "backtest", x: 0, y: 18, w: 4, h: 6, static: false },
-        { i: "alerts", x: 4, y: 18, w: 4, h: 6, static: false },
-        { i: "console", x: 8, y: 18, w: 4, h: 6, static: false },
+        { i: "analyzer", x: 0, y: 0, w: 9, h: 24, static: false },
+        { i: "signals", x: 9, y: 0, w: 3, h: 8, static: false },
+        { i: "orderbook", x: 9, y: 8, w: 3, h: 8, static: false },
+        { i: "trade", x: 9, y: 16, w: 3, h: 8, static: false },
+        { i: "backtest", x: 0, y: 24, w: 4, h: 6, static: false },
+        { i: "alerts", x: 4, y: 24, w: 4, h: 6, static: false },
+        { i: "console", x: 8, y: 24, w: 4, h: 6, static: false },
       ],
       setLayout: (layout) => set({ layout }),
       signals: [], // This will be synced with useSignalStore in the UI
