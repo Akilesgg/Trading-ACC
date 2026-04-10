@@ -47,6 +47,7 @@ import MarketOverview from "@/components/analysis/MarketOverview";
 import AnalysisModule from "@/components/analysis/AnalysisModule";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import FundamentalModal from "@/components/common/FundamentalModal";
+import WyckoffAnalyzer from "@/components/analysis/WyckoffAnalyzer";
 
 const DEFAULT_LAYOUT = [
   "comparator",
@@ -290,6 +291,9 @@ const Analysis = () => {
           </div>
         </div>
       </div>
+      
+      {/* Wyckoff Analyzer Section */}
+      <WyckoffAnalyzer />
 
       {/* Analysis Tool */}
       <AnalysisTool 
