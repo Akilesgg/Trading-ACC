@@ -26,7 +26,7 @@ export interface CryptoData {
   image?: string;
 }
 
-export async function fetchTicker(symbol: string): Promise<CryptoData> {
+export async function fetchTicker(symbol: string, timeframe: string = "1h"): Promise<CryptoData> {
   try {
     const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
     if (!response.ok) throw new Error("Failed to fetch ticker");
@@ -56,7 +56,7 @@ export async function fetchTicker(symbol: string): Promise<CryptoData> {
       volume: data.volume,
       market: "FUTUROS",
       entry: price * (isBullish ? 0.995 : 1.005),
-      timeframe: "1h",
+      timeframe,
       winRate: Math.floor(Math.random() * 20) + 65,
       proximity: Math.random() * 0.5,
       direction: isBullish ? "LONG" : "SHORT",
@@ -89,8 +89,8 @@ export async function fetchTicker(symbol: string): Promise<CryptoData> {
   }
 }
 
-export async function fetchTickers(symbols: string[]): Promise<CryptoData[]> {
-  const results = await Promise.all(symbols.map(s => fetchTicker(s)));
+export async function fetchTickers(symbols: string[], timeframe: string = "1h"): Promise<CryptoData[]> {
+  const results = await Promise.all(symbols.map(s => fetchTicker(s, timeframe)));
   return results.filter(t => t.price !== "0.00");
 }
 

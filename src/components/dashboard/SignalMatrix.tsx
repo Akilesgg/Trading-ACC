@@ -146,6 +146,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                 <thead>
                   <tr className="bg-surface-container-high/50 border-b border-outline-variant/10">
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Activo</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">TF</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Tendencia</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('price')}>Precio</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('priceChangePercent')}>24h %</th>
@@ -186,7 +187,10 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                             </div>
                             <div>
                               <p className="font-black text-sm tracking-tight uppercase">{ticker.symbol.replace("USDT", "")}</p>
-                              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.timeframe} | {ticker.market}</p>
+                              <div className="flex items-center gap-2">
+                                <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[8px] font-black">{ticker.timeframe}</span>
+                                <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.market}</span>
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -382,7 +386,10 @@ const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, 
           </div>
           <div>
             <h4 className="font-black text-xl tracking-tighter uppercase text-on-surface">{ticker.symbol.replace("USDT", "")}</h4>
-            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.timeframe} | {ticker.market}</span>
+            <div className="flex items-center gap-2">
+              <span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded text-[8px] font-black">{ticker.timeframe}</span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.market}</span>
+            </div>
           </div>
         </div>
         <div className="flex gap-2">

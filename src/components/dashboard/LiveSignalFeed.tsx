@@ -87,7 +87,12 @@ const LiveSignalFeed: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">
-                  <span>{formatTime(signal.timestamp)}</span>
+                  <div className="flex items-center gap-2">
+                    <span>{formatTime(signal.timestamp)}</span>
+                    {signal.timeframe && (
+                      <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[8px]">{signal.timeframe}</span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1 group-hover:text-primary transition-colors">
                     VER ANÁLISIS
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />

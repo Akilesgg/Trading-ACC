@@ -5,7 +5,9 @@ import {
   Info,
   Download,
   X,
-  Zap
+  Zap,
+  RefreshCw,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -42,6 +44,8 @@ import { useSignalStore } from "@/store/useSignalStore";
 
 const Dashboard = () => {
   const addSignal = useSignalStore(state => state.addSignal);
+  const currentTimeframe = useSignalStore(state => state.currentTimeframe);
+  const setTimeframe = useSignalStore(state => state.setTimeframe);
   const [tickers, setTickers] = useState<CryptoData[]>([]);
   const [allTickers, setAllTickers] = useState<CryptoData[]>([]);
   const [sentiment, setSentiment] = useState<string>("Cargando inteligencia de mercado...");
@@ -127,9 +131,11 @@ const Dashboard = () => {
         "APEUSDT", "GALAUSDT", "AXSUSDT", "CHZUSDT", "EGLDUSDT", "FILUSDT"
       ];
       
-      const data = await fetchTickers(symbols);
+      const data = await fetchTickers(symbols, currentTimeframe);
       
       setAllTickers(prev => {
+        // If timeframe changed, we might want to reset or filter differently
+        // For now, let's just update with new data
         return data.map(t => {
           const existing = prev.find(p => p.symbol === t.symbol);
           if (existing) {
@@ -182,10 +188,11 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    setAllTickers([]); // Clear current signals when timeframe changes
     loadData();
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, [loadData]);
+  }, [loadData, currentTimeframe]);
 
   useEffect(() => {
     audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
@@ -332,6 +339,47 @@ const Dashboard = () => {
       exit={{ opacity: 0, y: -20 }}
       className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8"
     >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-surface-container-high/40 p-6 rounded-[2rem] border border-outline-variant/10 backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
+            <Clock className="w-6 h-6 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black tracking-tighter text-on-surface uppercase">Temporalidad del Mercado</h2>
+            <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-60">Escaneo activo en {currentTimeframe}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          {["1m", "5m", "15m", "1h", "4h", "1d"].map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setTimeframe(tf)}
+              className={cn(
+                "px-5 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border",
+                currentTimeframe === tf 
+                  ? "bg-primary text-on-primary border-primary shadow-lg shadow-primary/20" 
+                  : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:border-primary/30"
+              )}
+            >
+              {tf}
+            </button>
+          ))}
+          <div className="w-px h-8 bg-outline-variant/20 mx-2 hidden md:block" />
+          <button 
+            onClick={() => {
+              setLoading(true);
+              loadData();
+              toast.success("Actualizando señales y datos de mercado...");
+            }}
+            className="p-3 bg-surface-container-high text-primary rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all active:rotate-180 duration-500"
+            title="Actualizar Datos"
+          >
+            <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
+          </button>
+        </div>
+      </div>
+
       <NotificationSettings 
         isOpen={showNotifSettings}
         onClose={() => setShowNotifSettings(false)}

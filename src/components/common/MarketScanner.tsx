@@ -13,6 +13,7 @@ const SUPPORTED_SYMBOLS = [
 const MarketScanner: React.FC = () => {
   const addSignal = useSignalStore(state => state.addSignal);
   const activeSignals = useSignalStore(state => state.activeSignals);
+  const currentTimeframe = useSignalStore(state => state.currentTimeframe);
   const activeSignalsRef = useRef(activeSignals);
   const triggeredRef = useRef<Set<string>>(new Set());
 
@@ -22,7 +23,7 @@ const MarketScanner: React.FC = () => {
 
   useEffect(() => {
     const scan = async () => {
-      console.log("🔍 MarketScanner: Iniciando escaneo de mercado...");
+      console.log(`🔍 MarketScanner: Iniciando escaneo de mercado (${currentTimeframe})...`);
       try {
         const tickers = await fetchTickers(SUPPORTED_SYMBOLS);
         console.log(`📊 MarketScanner: Se obtuvieron ${tickers.length} tickers.`);
@@ -39,14 +40,19 @@ const MarketScanner: React.FC = () => {
           // Condition for automatic signal: Proximity < 2.0% OR Consensus > 90%
           const isSignal = proximity <= 2.0 || consensus >= 90;
           
-          // Check if we already have an active signal for this asset in the store
-          const alreadyActiveInStore = activeSignalsRef.current.some(s => s.activo === ticker.symbol && s.estado === 'activa');
+          // Check if we already have an active signal for this asset in the store with the SAME timeframe
+          const alreadyActiveInStore = activeSignalsRef.current.some(s => 
+            s.activo === ticker.symbol && 
+            s.estado === 'activa' && 
+            s.timeframe === currentTimeframe
+          );
           
-          // Check if we already triggered it in this session
-          const alreadyTriggered = triggeredRef.current.has(ticker.symbol);
+          // Check if we already triggered it in this session for this timeframe
+          const triggerKey = `${ticker.symbol}_${currentTimeframe}`;
+          const alreadyTriggered = triggeredRef.current.has(triggerKey);
 
           if (isSignal && !alreadyActiveInStore && !alreadyTriggered) {
-            console.log(`🚀 MarketScanner: ¡SEÑAL DETECTADA para ${ticker.symbol}! Proximidad: ${proximity.toFixed(2)}%, Consenso: ${consensus}%`);
+            console.log(`🚀 MarketScanner: ¡SEÑAL DETECTADA para ${ticker.symbol} en ${currentTimeframe}!`);
             const type = parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT';
             
             try {
@@ -62,27 +68,29 @@ const MarketScanner: React.FC = () => {
                 estado: 'activa',
                 leverage: `${ticker.leverage}x`,
                 confidence: consensus || 85,
-                analysis: `Señal automática detectada por el Escáner Cuántico. Consenso: ${consensus}%. Proximidad: ${proximity.toFixed(2)}%.`
+                timeframe: currentTimeframe,
+                analysis: `Señal automática detectada por el Escáner Cuántico en temporalidad ${currentTimeframe}. Consenso: ${consensus}%.`
               });
               
-              triggeredRef.current.add(ticker.symbol);
-              console.log(`✅ MarketScanner: Señal de ${ticker.symbol} añadida correctamente.`);
+              triggeredRef.current.add(triggerKey);
+              console.log(`✅ MarketScanner: Señal de ${ticker.symbol} (${currentTimeframe}) añadida correctamente.`);
             } catch (addError) {
               console.error(`❌ MarketScanner: Error al añadir señal para ${ticker.symbol}:`, addError);
             }
-          } else if (isSignal && alreadyActiveInStore) {
-            // console.log(`ℹ️ MarketScanner: Señal para ${ticker.symbol} ya está activa en Firestore.`);
           }
         }
 
-        // Clean up triggeredRef for symbols that are no longer signals
-        triggeredRef.current.forEach(symbol => {
+        // Clean up triggeredRef
+        triggeredRef.current.forEach(key => {
+          const [symbol, tf] = key.split('_');
+          if (tf !== currentTimeframe) return; // Only clean up current tf
+
           const ticker = tickers.find(t => t.symbol === symbol);
           if (ticker) {
             const proximity = ticker.proximity || 0;
             const consensus = ticker.consensus || 0;
             if (proximity > 2.0 && consensus < 70) {
-              triggeredRef.current.delete(symbol);
+              triggeredRef.current.delete(key);
             }
           }
         });
@@ -95,7 +103,7 @@ const MarketScanner: React.FC = () => {
     scan();
     const interval = setInterval(scan, SCAN_INTERVAL);
     return () => clearInterval(interval);
-  }, [addSignal]);
+  }, [addSignal, currentTimeframe]);
 
   return null;
 };

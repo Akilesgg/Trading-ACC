@@ -17,12 +17,15 @@ export interface Signal {
   leverage?: string;
   analysis?: string;
   confidence?: number;
+  timeframe?: string;
 }
 
 interface SignalState {
   activeSignals: Signal[];
   loading: boolean;
   isMuted: boolean;
+  currentTimeframe: string;
+  setTimeframe: (tf: string) => void;
   toggleMute: () => void;
   addSignal: (signal: Omit<Signal, 'id' | 'timestamp'>) => Promise<void>;
   closeSignal: (id: string) => Promise<void>;
@@ -33,6 +36,11 @@ export const useSignalStore = create<SignalState>((set, get) => ({
   activeSignals: [],
   loading: true,
   isMuted: localStorage.getItem('isMuted') === 'true',
+  currentTimeframe: localStorage.getItem('currentTimeframe') || '1h',
+  setTimeframe: (tf) => {
+    localStorage.setItem('currentTimeframe', tf);
+    set({ currentTimeframe: tf });
+  },
   toggleMute: () => {
     const newMuted = !get().isMuted;
     localStorage.setItem('isMuted', String(newMuted));
