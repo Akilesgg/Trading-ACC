@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useTerminalStore } from "../../store/useTerminalStore";
 import { 
   BarChart3, 
@@ -26,7 +26,9 @@ import {
   ResponsiveContainer, 
   ReferenceLine, 
   ReferenceArea,
-  ReferenceDot
+  ReferenceDot,
+  Cell,
+  Legend
 } from 'recharts';
 
 const TerminalChart: React.FC = () => {
@@ -58,6 +60,21 @@ const TerminalChart: React.FC = () => {
     return mockData;
   };
 
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    return data.map((d, i) => {
+      const isBullish = d.close >= d.open;
+      return {
+        ...d,
+        bodyRange: [Math.min(d.open, d.close), Math.max(d.open, d.close)],
+        wickRange: [d.low, d.high],
+        color: isBullish ? '#00ffa3' : '#ff7162',
+        ema20: d.close * (1 + Math.sin(i / 10) * 0.002),
+        ema50: d.close * (1 - Math.cos(i / 15) * 0.005)
+      };
+    });
+  }, [data]);
+
   useEffect(() => {
     setLoading(true);
     const timeout = setTimeout(() => {
@@ -78,14 +95,14 @@ const TerminalChart: React.FC = () => {
 
       <div className="flex-1 min-h-0 p-4">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 10, bottom: 10, left: 0 }}>
             <defs>
               <linearGradient id="colorPriceMain" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.2}/>
+                <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.1}/>
                 <stop offset="95%" stopColor="#00ffa3" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.05} />
             <XAxis dataKey="time" hide />
             <YAxis 
               yAxisId="price"
@@ -98,36 +115,54 @@ const TerminalChart: React.FC = () => {
             />
             <YAxis yAxisId="volume" hide />
             <Tooltip 
-              contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
+              contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
               itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
               labelStyle={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}
+              cursor={{ stroke: '#333', strokeWidth: 1 }}
+            />
+            <Legend 
+              verticalAlign="top" 
+              align="right" 
+              iconType="circle"
+              wrapperStyle={{ fontSize: '9px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', paddingBottom: '10px' }}
             />
             
             {/* SMC Visualizations - Soft Colors */}
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               entry.isBOS && (
                 <ReferenceLine yAxisId="price" key={`bos-${index}`} x={entry.time} stroke="#00ffa3" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'BOS', fill: '#00ffa3', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
               )
             ))}
             
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               entry.isCHoCH && (
                 <ReferenceLine yAxisId="price" key={`choch-${index}`} x={entry.time} stroke="#ff7162" strokeDasharray="3 3" opacity={0.4} label={{ position: 'top', value: 'CHoCH', fill: '#ff7162', fontSize: 9, fontWeight: 'black', opacity: 0.6 }} />
               )
             ))}
 
             {/* Order Blocks - Soft Fills */}
-            {data.map((entry, index) => (
+            {chartData.map((entry, index) => (
               entry.isOB && (
-                <ReferenceArea yAxisId="price" key={`ob-${index}`} x1={entry.time} x2={data[index+2]?.time} y1={entry.close - 100} y2={entry.close + 100} fill="#00ffa3" fillOpacity={0.03} stroke="#00ffa3" strokeOpacity={0.1} />
+                <ReferenceArea yAxisId="price" key={`ob-${index}`} x1={entry.time} x2={chartData[index+2]?.time} y1={entry.close - 100} y2={entry.close + 100} fill="#00ffa3" fillOpacity={0.03} stroke="#00ffa3" strokeOpacity={0.1} />
               )
             ))}
 
-            <Area yAxisId="price" type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={2} fill="url(#colorPriceMain)" dot={false} animationDuration={1000} opacity={0.8} />
-            <Line yAxisId="price" type="monotone" dataKey="ema20" stroke="#ff7162" strokeWidth={1} dot={false} opacity={0.3} />
-            <Line yAxisId="price" type="monotone" dataKey="ema50" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.2} />
+            {/* Candlesticks */}
+            <Bar yAxisId="price" dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>
+              {chartData.map((entry, index) => (
+                <Cell key={`wick-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+            <Bar yAxisId="price" dataKey="bodyRange" name="Precio" barSize={8} animationDuration={1000}>
+              {chartData.map((entry, index) => (
+                <Cell key={`body-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+
+            <Line yAxisId="price" type="monotone" dataKey="ema20" name="EMA 20" stroke="#ff7162" strokeWidth={1} dot={false} opacity={0.4} />
+            <Line yAxisId="price" type="monotone" dataKey="ema50" name="EMA 50" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.3} />
             
-            <Bar yAxisId="volume" dataKey="volume" fill="#ffffff" opacity={0.03} />
+            <Bar yAxisId="volume" dataKey="volume" name="Volumen" fill="#ffffff" opacity={0.03} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>

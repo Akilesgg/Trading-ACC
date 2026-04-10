@@ -28,7 +28,9 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   ReferenceArea,
-  Area
+  Area,
+  Cell,
+  Legend
 } from 'recharts';
 
 interface IndicatorConfig {
@@ -65,16 +67,25 @@ const WyckoffAnalyzer: React.FC = () => {
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
-    return data.map((d, i) => ({
-      ...d,
-      macd: 50 + Math.sin(i / 5) * 40, // Centered in 0-100
-      rsi: 50 + Math.sin(i / 3) * 30,
-      upperBB: d.close * 1.01,
-      lowerBB: d.close * 0.99,
-      atr: 50 + Math.random() * 20,
-      ichimoku: d.close * 0.995,
-      stochRsi: 50 + Math.cos(i / 4) * 40
-    }));
+    return data.map((d, i) => {
+      const isBullish = d.close >= d.open;
+      return {
+        ...d,
+        // Candlestick Data
+        bodyRange: [Math.min(d.open, d.close), Math.max(d.open, d.close)],
+        wickRange: [d.low, d.high],
+        color: isBullish ? '#00ffa3' : '#ff7162',
+        
+        // Realistic Mock Indicators (Smoothed)
+        macd: 50 + Math.sin(i / 8) * 30 + Math.cos(i / 12) * 10,
+        rsi: 50 + Math.sin(i / 6) * 25 + (Math.random() - 0.5) * 5,
+        upperBB: d.close * (1.015 + Math.sin(i / 10) * 0.005),
+        lowerBB: d.close * (0.985 - Math.sin(i / 10) * 0.005),
+        atr: 40 + Math.sin(i / 15) * 10 + Math.random() * 5,
+        ichimoku: d.close * (0.995 + Math.cos(i / 20) * 0.01),
+        stochRsi: 50 + Math.cos(i / 5) * 45
+      };
+    });
   }, [data]);
 
   useEffect(() => {
@@ -211,18 +222,18 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         </div>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData}>
+          <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.3}/>
+                <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.1}/>
                 <stop offset="95%" stopColor="#00ffa3" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.05} />
             <XAxis dataKey="time" hide />
             <YAxis 
               yAxisId="price" 
-              domain={['dataMin - 100', 'dataMax + 100']} 
+              domain={['dataMin - 50', 'dataMax + 50']} 
               orientation="right" 
               tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} 
               axisLine={false} 
@@ -233,40 +244,64 @@ const WyckoffAnalyzer: React.FC = () => {
             <YAxis yAxisId="oscillator" domain={[0, 100]} hide />
             
             <Tooltip 
-              contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '12px' }}
+              contentStyle={{ 
+                backgroundColor: '#0b0f14', 
+                border: '1px solid #222', 
+                borderRadius: '12px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+              }}
               itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+              labelStyle={{ color: '#94a3b8', fontSize: '10px', marginBottom: '4px' }}
+              cursor={{ stroke: '#333', strokeWidth: 1 }}
+            />
+            
+            <Legend 
+              verticalAlign="top" 
+              align="right" 
+              iconType="circle"
+              wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', paddingBottom: '20px' }}
             />
             
             {wyckoffPhase.toLowerCase().includes("acumul") && chartData.length > 0 && (
-              <ReferenceArea yAxisId="price" y1={chartData[0].low} y2={chartData[0].high} fill="#00ffa3" fillOpacity={0.05} />
+              <ReferenceArea yAxisId="price" y1={chartData[0].low} y2={chartData[0].high} fill="#00ffa3" fillOpacity={0.03} />
             )}
             
-            <Area yAxisId="price" type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={3} fill="url(#colorPrice)" dot={false} animationDuration={1500} />
-            
+            {/* Candlesticks */}
+            <Bar yAxisId="price" dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>
+              {chartData.map((entry, index) => (
+                <Cell key={`wick-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+            <Bar yAxisId="price" dataKey="bodyRange" name="Precio" barSize={8} animationDuration={1000}>
+              {chartData.map((entry, index) => (
+                <Cell key={`body-${index}`} fill={entry.color} />
+              ))}
+            </Bar>
+
             {/* Indicators on Chart */}
             {indicators.find(i => i.id === "bollinger" && i.enabled) && (
               <>
-                <Line yAxisId="price" type="monotone" dataKey="upperBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.5} />
-                <Line yAxisId="price" type="monotone" dataKey="lowerBB" stroke="#00e0ff" strokeWidth={1} strokeDasharray="5 5" dot={false} opacity={0.5} />
+                <Line yAxisId="price" type="monotone" dataKey="upperBB" name="Bollinger Superior" stroke="#00e0ff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} opacity={0.6} />
+                <Line yAxisId="price" type="monotone" dataKey="lowerBB" name="Bollinger Inferior" stroke="#00e0ff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} opacity={0.6} />
               </>
             )}
             {indicators.find(i => i.id === "macd" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="macd" stroke="#ff7162" strokeWidth={2} dot={false} opacity={0.8} />
+              <Line yAxisId="oscillator" type="monotone" dataKey="macd" name="MACD" stroke="#ff7162" strokeWidth={2.5} dot={false} opacity={0.9} />
             )}
             {indicators.find(i => i.id === "rsi" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="rsi" stroke="#81e9ff" strokeWidth={2} dot={false} opacity={0.8} />
+              <Line yAxisId="oscillator" type="monotone" dataKey="rsi" name="RSI" stroke="#81e9ff" strokeWidth={2.5} dot={false} opacity={0.9} />
             )}
             {indicators.find(i => i.id === "atr" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="atr" stroke="#ffa8a3" strokeWidth={2} dot={false} opacity={0.8} />
+              <Line yAxisId="oscillator" type="monotone" dataKey="atr" name="ATR" stroke="#ffa8a3" strokeWidth={2.5} dot={false} opacity={0.9} />
             )}
             {indicators.find(i => i.id === "ichimoku" && i.enabled) && (
-              <Area yAxisId="price" type="monotone" dataKey="ichimoku" fill="#00ffa3" stroke="none" fillOpacity={0.15} />
+              <Area yAxisId="price" type="monotone" dataKey="ichimoku" name="Ichimoku Cloud" fill="#00ffa3" stroke="none" fillOpacity={0.1} />
             )}
             {indicators.find(i => i.id === "stochrsi" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="stochRsi" stroke="#ffc3bb" strokeWidth={2} dot={false} opacity={0.8} />
+              <Line yAxisId="oscillator" type="monotone" dataKey="stochRsi" name="Stoch RSI" stroke="#ffc3bb" strokeWidth={2.5} dot={false} opacity={0.9} />
             )}
             
-            <Bar yAxisId="volume" dataKey="volume" fill="#ffffff" opacity={0.05} />
+            <Bar yAxisId="volume" dataKey="volume" name="Volumen" fill="#ffffff" opacity={0.03} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
