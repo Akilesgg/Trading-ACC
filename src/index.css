@@ -6,29 +6,29 @@
   --font-body: "Manrope", sans-serif;
   --font-label: "Manrope", sans-serif;
 
-  --color-surface-container-highest: #2a2d31;
+  --color-surface-container-highest: #3a3d41;
   --color-error-container: #4a0006;
-  --color-surface-container-low: #1b1f24;
-  --color-surface: #1b1f24;
+  --color-surface-container-low: #2b2f34;
+  --color-surface: #2b2f34;
   --color-on-tertiary: #00363f;
-  --color-surface-bright: #2c3034;
+  --color-surface-bright: #3c4044;
   --color-inverse-primary: #006d43;
   --color-secondary-fixed: #ffc3bb;
-  --color-on-surface-variant: #a4b3c8;
-  --color-surface-container-lowest: #0f1114;
+  --color-on-surface-variant: #b4c3d8;
+  --color-surface-container-lowest: #1f2124;
   --color-on-secondary-container: #fff6f4;
   --color-secondary-dim: #ff7162;
   --color-on-error-container: #ffa8a3;
   --color-on-background: #f8f9fe;
-  --color-surface-container-high: #22262a;
+  --color-surface-container-high: #32363a;
   --color-on-error: #ffffff;
   --color-surface-tint: #00ffa3;
-  --color-surface-dim: #16181a;
+  --color-surface-dim: #26282a;
   --color-on-secondary-fixed: #700003;
   --color-on-primary-fixed: #00472a;
-  --color-inverse-on-surface: #1b1e21;
+  --color-inverse-on-surface: #2b2e31;
   --color-tertiary-fixed: #00e0ff;
-  --color-outline-variant: #32363b;
+  --color-outline-variant: #42464b;
   --color-tertiary-fixed-dim: #00d1ee;
   --color-secondary-fixed-dim: #ffb0a5;
   --color-primary-fixed-dim: #00ef99;
@@ -44,19 +44,19 @@
   --color-tertiary: #81e9ff;
   --color-primary-fixed: #00ffa3;
   --color-tertiary-container: #00e0ff;
-  --color-surface-variant: #2a2d31;
+  --color-surface-variant: #3a3d41;
   --color-primary: #00ffa3;
   --color-on-primary: #00331f;
   --color-primary-container: #00ffa3;
   --color-tertiary-dim: #00d1ee;
-  --color-surface-container: #1e2226;
+  --color-surface-container: #2e3236;
   --color-on-primary-container: #00331f;
   --color-on-secondary-fixed-variant: #a60007;
   --color-secondary-container: #c0000a;
-  --color-outline: #434a51;
+  --color-outline: #535a61;
   --color-error-dim: #d7383b;
   --color-on-primary-fixed-variant: #00673f;
-  --color-background: #1b1f24;
+  --color-background: #2b2f34;
 }
 
 @layer base {

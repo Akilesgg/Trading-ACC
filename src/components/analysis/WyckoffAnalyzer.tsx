@@ -153,18 +153,17 @@ const WyckoffAnalyzer: React.FC = () => {
 
   const selectedAsset = allAssets.find(a => a.id === selectedSymbol);
 
-  const toggleIndicator = (id: string) => {
+  const toggleIndicator = React.useCallback((id: string) => {
     setIndicators(prev => prev.map(i => i.id === id ? { ...i, enabled: !i.enabled } : i));
-  };
+  }, []);
 
-  const runAnalysis = async () => {
+  const runAnalysis = React.useCallback(async () => {
     setLoading(true);
     try {
       const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 50);
       setData(klines);
       const ticker = await fetchTicker(selectedSymbol);
       
-      const activeIndNames = indicators.filter(i => i.enabled).map(i => i.name).join(", ");
       const aiResponse = await analyzeMarket(selectedSymbol, ticker.price, ticker.priceChangePercent);
       
       // Parsing logic
@@ -203,7 +202,18 @@ const WyckoffAnalyzer: React.FC = () => {
 
       // Generate Strategy Signals for all
       const currentPrice = Number(ticker.price);
-      const volatility = currentPrice * 0.005;
+      
+      const timeframeMultipliers: Record<string, number> = {
+        "1m": 0.001,
+        "5m": 0.002,
+        "15m": 0.005,
+        "1h": 0.01,
+        "4h": 0.02,
+        "1d": 0.05
+      };
+      const multiplier = timeframeMultipliers[selectedTimeframe] || 0.005;
+      const volatility = currentPrice * multiplier;
+      
       const newSignals: Record<string, any> = {};
 
       strategies.forEach(strat => {
@@ -236,13 +246,13 @@ const WyckoffAnalyzer: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedSymbol, selectedTimeframe, indicators.filter(i => i.enabled).length]);
 
-  const toggleStrategy = (id: string) => {
+  const toggleStrategy = React.useCallback((id: string) => {
     setActiveStrategies(prev => 
       prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
     );
-  };
+  }, []);
 
   useEffect(() => {
     runAnalysis();
@@ -324,16 +334,23 @@ const WyckoffAnalyzer: React.FC = () => {
                         <div className="grid grid-cols-3 gap-1">
                           <div className="bg-primary/10 p-1 rounded text-center">
                             <span className="text-[7px] block opacity-60">TP1</span>
-                            <span className="font-black">${signal.tp1.toLocaleString()}</span>
+                            <span className="font-black text-[9px]">${signal.tp1.toLocaleString()}</span>
                           </div>
                           <div className="bg-primary/10 p-1 rounded text-center">
                             <span className="text-[7px] block opacity-60">TP2</span>
-                            <span className="font-black">${signal.tp2.toLocaleString()}</span>
+                            <span className="font-black text-[9px]">${signal.tp2.toLocaleString()}</span>
                           </div>
                           <div className="bg-primary/10 p-1 rounded text-center">
                             <span className="text-[7px] block opacity-60">TP3</span>
-                            <span className="font-black">${signal.tp3.toLocaleString()}</span>
+                            <span className="font-black text-[9px]">${signal.tp3.toLocaleString()}</span>
                           </div>
+                        </div>
+                        <div className="h-12 w-full mt-2 opacity-50">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={chartData.slice(-15)}>
+                              <Line type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={1} dot={false} />
+                            </ComposedChart>
+                          </ResponsiveContainer>
                         </div>
                       </div>
                     )}
