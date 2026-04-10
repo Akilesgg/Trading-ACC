@@ -37,6 +37,31 @@ export async function fetchTicker(symbol: string, timeframe: string = "1h"): Pro
     const isBullish = change > 0;
     const volatility = Math.abs(parseFloat(data.highPrice) - parseFloat(data.lowPrice)) / price;
     
+    // Dynamic TP/SL based on timeframe
+    let tp1 = 0.02, tp2 = 0.05, tp3 = 0.10;
+    let slPercent = 0.02;
+
+    switch(timeframe.toLowerCase()) {
+      case '1m':
+        tp1 = 0.003; tp2 = 0.006; tp3 = 0.01; slPercent = 0.005;
+        break;
+      case '5m':
+        tp1 = 0.005; tp2 = 0.01; tp3 = 0.02; slPercent = 0.01;
+        break;
+      case '15m':
+        tp1 = 0.01; tp2 = 0.025; tp3 = 0.05; slPercent = 0.015;
+        break;
+      case '1h':
+        tp1 = 0.02; tp2 = 0.05; tp3 = 0.10; slPercent = 0.03;
+        break;
+      case '4h':
+        tp1 = 0.05; tp2 = 0.10; tp3 = 0.20; slPercent = 0.05;
+        break;
+      case '1d':
+        tp1 = 0.10; tp2 = 0.20; tp3 = 0.40; slPercent = 0.10;
+        break;
+    }
+
     let leverage = 10;
     let riskLevel: "Bajo" | "Moderado" | "Alto" = "Moderado";
     if (volatility > 0.05) {
@@ -60,8 +85,10 @@ export async function fetchTicker(symbol: string, timeframe: string = "1h"): Pro
       winRate: Math.floor(Math.random() * 20) + 65,
       proximity: Math.random() * 0.5,
       direction: isBullish ? "LONG" : "SHORT",
-      stopLoss: isBullish ? price * 0.98 : price * 1.02,
-      takeProfits: isBullish ? [price * 1.02, price * 1.05, price * 1.1] : [price * 0.98, price * 0.95, price * 0.9],
+      stopLoss: isBullish ? price * (1 - slPercent) : price * (1 + slPercent),
+      takeProfits: isBullish 
+        ? [price * (1 + tp1), price * (1 + tp2), price * (1 + tp3)] 
+        : [price * (1 - tp1), price * (1 - tp2), price * (1 - tp3)],
       consensus: Math.floor(Math.random() * 30) + 60,
       funding: (Math.random() * 0.02 - 0.01).toFixed(4) + "%",
       oi: (parseFloat(data.volume) * 0.1).toFixed(2) + "M",

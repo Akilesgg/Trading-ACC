@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
 import { 
   ArrowLeft, 
@@ -40,6 +40,10 @@ import {
 const SignalDetail = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const tf = queryParams.get('tf') || '1h';
+  
   const [ticker, setTicker] = useState<CryptoData | null>(null);
   const [klines, setKlines] = useState<any[]>([]);
   const [analysis, setAnalysis] = useState<string>("Analizando estructura de mercado...");
@@ -68,9 +72,9 @@ const SignalDetail = () => {
     const loadData = async () => {
       if (!symbol) return;
       try {
-        const data = await fetchTicker(symbol);
+        const data = await fetchTicker(symbol, tf);
         setTicker(data);
-        const chartData = await fetchKlines(symbol, "1h", 50);
+        const chartData = await fetchKlines(symbol, tf, 50);
         setKlines(chartData);
         const aiAnalysis = await analyzeMarket(symbol, data.price, data.priceChangePercent);
         setAnalysis(aiAnalysis);
@@ -130,6 +134,9 @@ const SignalDetail = () => {
                   <h2 className="text-4xl font-black tracking-tighter uppercase text-on-surface">{ticker.symbol.replace("USDT", " / USDT")}</h2>
                   <div className="flex items-center gap-3 mt-2">
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60">Binance Spot</span>
+                    <div className="px-2 py-0.5 bg-primary/10 rounded border border-primary/20">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{ticker.timeframe}</span>
+                    </div>
                     <div className="flex h-2 w-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(0,255,163,0.8)]"></div>
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Señal en Vivo</span>
                   </div>
@@ -277,27 +284,34 @@ const SignalDetail = () => {
                   <span className="text-primary">Activa</span>
                 </div>
                 <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner">
-                  <span className="text-2xl font-black tracking-tighter text-on-surface">${(parseFloat(ticker.price) * 0.99).toFixed(2)}</span>
+                  <span className="text-2xl font-black tracking-tighter text-on-surface">${ticker.entry?.toFixed(2)}</span>
                   <ChevronRight className="w-6 h-6 text-on-surface-variant group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 ml-1">
-                  <span>Objetivo 1</span>
-                  <span className="text-primary">+15.4%</span>
-                </div>
-                <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner">
-                  <span className="text-2xl font-black tracking-tighter text-on-surface">${(parseFloat(ticker.price) * 1.15).toFixed(2)}</span>
-                  <Target className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
-                </div>
-              </div>
+
+              {ticker.takeProfits?.map((tp, index) => {
+                const profitPercent = Math.abs(((tp - (ticker.entry || 0)) / (ticker.entry || 1)) * 100).toFixed(1);
+                return (
+                  <div key={index} className="space-y-3">
+                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 ml-1">
+                      <span>Objetivo {index + 1}</span>
+                      <span className="text-primary">+{profitPercent}%</span>
+                    </div>
+                    <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-primary/50 transition-all shadow-inner">
+                      <span className="text-2xl font-black tracking-tighter text-on-surface">${tp.toFixed(2)}</span>
+                      <Target className="w-6 h-6 text-primary drop-shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
+                    </div>
+                  </div>
+                );
+              })}
+
               <div className="space-y-3">
                 <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 ml-1">
                   <span>Stop Loss</span>
-                  <span className="text-secondary">-5.2%</span>
+                  <span className="text-secondary">-{Math.abs(((ticker.stopLoss! - ticker.entry!) / ticker.entry!) * 100).toFixed(1)}%</span>
                 </div>
                 <div className="p-5 bg-surface-container rounded-2xl border border-outline-variant/20 flex justify-between items-center group cursor-pointer hover:border-secondary/50 transition-all shadow-inner">
-                  <span className="text-2xl font-black tracking-tighter text-on-surface">${(parseFloat(ticker.price) * 0.95).toFixed(2)}</span>
+                  <span className="text-2xl font-black tracking-tighter text-on-surface">${ticker.stopLoss?.toFixed(2)}</span>
                   <Shield className="w-6 h-6 text-secondary drop-shadow-[0_0_8px_rgba(255,107,107,0.5)]" />
                 </div>
               </div>
