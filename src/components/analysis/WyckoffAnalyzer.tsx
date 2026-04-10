@@ -388,6 +388,18 @@ const WyckoffAnalyzer: React.FC = () => {
                 {asset.id}
               </button>
             ))}
+            {searchQuery && !filteredAssets.find(a => a.id.toLowerCase() === searchQuery.toLowerCase()) && (
+              <div className="mt-2 pt-2 border-t border-outline-variant/10">
+                <p className="text-[8px] text-on-surface-variant uppercase font-black px-2 mb-1">No encontrado en lista</p>
+                <button
+                  onClick={() => { setSelectedSymbol(searchQuery.toUpperCase()); setIsSearchOpen(false); }}
+                  className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-black uppercase bg-primary/20 text-primary hover:bg-primary/30 flex items-center justify-between"
+                >
+                  <span>Analizar "{searchQuery.toUpperCase()}"</span>
+                  <Activity className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
