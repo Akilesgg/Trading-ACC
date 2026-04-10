@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { 
@@ -22,16 +22,20 @@ import { cn } from "@/lib/utils";
 import { fetchTicker, CryptoData, fetchKlines } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
 import { 
-  AreaChart, 
-  Area, 
+  ComposedChart, 
+  Line, 
+  Area,
+  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar
-} from "recharts";
+  ResponsiveContainer, 
+  ReferenceLine, 
+  ReferenceArea,
+  Cell,
+  Legend
+} from 'recharts';
 
 const SignalDetail = () => {
   const { symbol } = useParams<{ symbol: string }>();
@@ -41,13 +45,32 @@ const SignalDetail = () => {
   const [analysis, setAnalysis] = useState<string>("Analizando estructura de mercado...");
   const [loading, setLoading] = useState(true);
 
+  const trend = useMemo(() => {
+    if (klines.length < 2) return "lateral";
+    const startPrice = klines[0].close;
+    const endPrice = klines[klines.length - 1].close;
+    const change = ((endPrice - startPrice) / startPrice) * 100;
+    if (change > 0.5) return "bullish";
+    if (change < -0.5) return "bearish";
+    return "lateral";
+  }, [klines]);
+
+  const chartData = useMemo(() => {
+    return klines.map(d => ({
+      ...d,
+      bodyRange: [Math.min(d.open, d.close), Math.max(d.open, d.close)],
+      wickRange: [d.low, d.high],
+      color: d.close >= d.open ? '#00ffa3' : '#ff7162'
+    }));
+  }, [klines]);
+
   useEffect(() => {
     const loadData = async () => {
       if (!symbol) return;
       try {
         const data = await fetchTicker(symbol);
         setTicker(data);
-        const chartData = await fetchKlines(symbol, "1h", 24);
+        const chartData = await fetchKlines(symbol, "1h", 50);
         setKlines(chartData);
         const aiAnalysis = await analyzeMarket(symbol, data.price, data.priceChangePercent);
         setAnalysis(aiAnalysis);
@@ -125,28 +148,68 @@ const SignalDetail = () => {
             </div>
 
             {/* Chart */}
-            <div className="h-64 w-full mt-8">
+            <div className="h-80 w-full mt-8 relative">
+              <div className="absolute top-0 right-0 z-20 flex items-center gap-2 bg-surface-container-high/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-outline-variant/20 shadow-xl">
+                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Tendencia:</span>
+                <div className={cn(
+                  "flex items-center gap-2 font-black text-xs uppercase tracking-tighter",
+                  trend === "bullish" ? "text-primary" : trend === "bearish" ? "text-secondary" : "text-tertiary"
+                )}>
+                  {trend === "bullish" ? (
+                    <><ArrowUpRight className="w-4 h-4" /> Alcista</>
+                  ) : trend === "bearish" ? (
+                    <><ArrowDownRight className="w-4 h-4" /> Bajista</>
+                  ) : (
+                    <><Minus className="w-4 h-4" /> Lateral</>
+                  )}
+                </div>
+              </div>
+
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={klines}>
+                <ComposedChart data={chartData}>
                   <defs>
                     <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isPositive ? "#b1ffce" : "#ff7162"} stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor={isPositive ? "#b1ffce" : "#ff7162"} stopOpacity={0}/>
+                      <stop offset="5%" stopColor={isPositive ? "#00ffa3" : "#ff7162"} stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor={isPositive ? "#00ffa3" : "#ff7162"} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: "#1c2024", border: "none", borderRadius: "12px", color: "#f8f9fe" }}
-                    itemStyle={{ color: "#b1ffce" }}
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.05} />
+                  <XAxis dataKey="time" hide />
+                  <YAxis 
+                    domain={['dataMin - 10', 'dataMax + 10']} 
+                    orientation="right" 
+                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} 
+                    axisLine={false}
+                    tickLine={false}
+                    width={60}
                   />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: "#0b0f14", border: "1px solid #222", borderRadius: "12px", color: "#f8f9fe" }}
+                    itemStyle={{ color: "#00ffa3" }}
+                  />
+                  
+                  {/* Candlesticks */}
+                  <Bar dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`wick-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="bodyRange" name="Precio" barSize={8} animationDuration={1000}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={`body-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+
                   <Area 
                     type="monotone" 
                     dataKey="close" 
-                    stroke={isPositive ? "#b1ffce" : "#ff7162"} 
-                    strokeWidth={3}
+                    stroke={isPositive ? "#00ffa3" : "#ff7162"} 
+                    strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorPrice)" 
+                    opacity={0.3}
                   />
-                </AreaChart>
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           </div>

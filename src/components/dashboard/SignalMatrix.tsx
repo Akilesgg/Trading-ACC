@@ -16,8 +16,36 @@ import {
   Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CryptoData } from "@/services/cryptoService";
+import { CryptoData, fetchKlines } from "@/services/cryptoService";
 import { Link } from "react-router-dom";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
+
+const SparklineChart = ({ symbol, isBullish }: { symbol: string, isBullish: boolean }) => {
+  const [data, setData] = React.useState<any[]>([]);
+  React.useEffect(() => {
+    fetchKlines(symbol, "1h", 20).then(setData).catch(() => {});
+  }, [symbol]);
+
+  if (data.length === 0) return <div className="w-24 h-8 bg-surface-container-high/30 animate-pulse rounded-lg" />;
+
+  return (
+    <div className="w-24 h-8 opacity-50 group-hover:opacity-100 transition-opacity">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data}>
+          <Area 
+            type="monotone" 
+            dataKey="close" 
+            stroke={isBullish ? "#00ffa3" : "#ff7162"} 
+            fill={isBullish ? "#00ffa3" : "#ff7162"} 
+            fillOpacity={0.1} 
+            strokeWidth={1.5}
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
 
 interface SignalMatrixProps {
   tickers: CryptoData[];
@@ -118,6 +146,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                 <thead>
                   <tr className="bg-surface-container-high/50 border-b border-outline-variant/10">
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Activo</th>
+                    <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Tendencia</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('price')}>Precio</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant cursor-pointer hover:text-primary transition-colors" onClick={() => onSort('priceChangePercent')}>24h %</th>
                     <th className="p-6 text-[11px] font-black uppercase tracking-widest text-on-surface-variant">Entrada</th>
@@ -158,6 +187,17 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                             <div>
                               <p className="font-black text-sm tracking-tight uppercase">{ticker.symbol.replace("USDT", "")}</p>
                               <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{ticker.timeframe} | {ticker.market}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-6">
+                          <div className="flex items-center gap-3">
+                            <SparklineChart symbol={ticker.symbol} isBullish={isBullish} />
+                            <div className={cn(
+                              "p-1.5 rounded-lg border",
+                              isBullish ? "text-primary border-primary/20 bg-primary/5" : "text-secondary border-secondary/20 bg-secondary/5"
+                            )}>
+                              {isBullish ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                             </div>
                           </div>
                         </td>
@@ -369,9 +409,12 @@ const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, 
       </div>
 
       <div className="flex justify-between items-end relative z-10">
-        <div>
+        <div className="flex-1">
           <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-50">Precio Actual</p>
-          <p className="text-3xl font-black tracking-tighter text-on-surface">${parseFloat(ticker.price).toLocaleString()}</p>
+          <div className="flex items-center gap-4">
+            <p className="text-3xl font-black tracking-tighter text-on-surface">${parseFloat(ticker.price).toLocaleString()}</p>
+            <SparklineChart symbol={ticker.symbol} isBullish={isBullish} />
+          </div>
         </div>
         <div className={cn(
           "px-4 py-1.5 rounded-xl text-[11px] font-black flex items-center gap-2 border shadow-lg",

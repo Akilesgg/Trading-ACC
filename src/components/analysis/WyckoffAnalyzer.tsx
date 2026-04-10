@@ -13,7 +13,8 @@ import {
   Eye, 
   EyeOff,
   Search,
-  X
+  X,
+  Minus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
@@ -441,9 +442,26 @@ const WyckoffAnalyzer: React.FC = () => {
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
         )}
-        <div className="absolute top-2 left-2 z-10">
+        <div className="absolute top-2 left-2 z-10 flex items-center gap-3">
           <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-3 py-1 rounded-lg">
             <span className="text-[9px] font-black uppercase tracking-widest text-primary">Fase: {wyckoffPhase}</span>
+          </div>
+          <div className="bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 px-3 py-1 rounded-lg flex items-center gap-2">
+            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Tendencia:</span>
+            {chartData.length > 1 && (
+              <div className={cn(
+                "flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter",
+                chartData[chartData.length-1].close > chartData[0].close ? "text-primary" : chartData[chartData.length-1].close < chartData[0].close ? "text-secondary" : "text-tertiary"
+              )}>
+                {chartData[chartData.length-1].close > chartData[0].close ? (
+                  <><TrendingUp className="w-3 h-3" /> Alcista</>
+                ) : chartData[chartData.length-1].close < chartData[0].close ? (
+                  <><TrendingDown className="w-3 h-3" /> Bajista</>
+                ) : (
+                  <><Minus className="w-3 h-3" /> Lateral</>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <ResponsiveContainer width="100%" height="100%">
