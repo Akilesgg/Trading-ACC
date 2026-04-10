@@ -51,8 +51,8 @@ const WyckoffAnalyzer: React.FC = () => {
   const [allAssets, setAllAssets] = useState<any[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
-  const [selectedStrategy, setSelectedStrategy] = useState<string>("scalping");
-  const [strategySignal, setStrategySignal] = useState<{
+  const [activeStrategies, setActiveStrategies] = useState<string[]>(["scalping", "breakout", "trend_following"]);
+  const [strategySignals, setStrategySignals] = useState<Record<string, {
     entry: number;
     tp1: number;
     tp2: number;
@@ -60,7 +60,7 @@ const WyckoffAnalyzer: React.FC = () => {
     sl: number;
     viable: boolean;
     reason: string;
-  } | null>(null);
+  }>>({});
   
   const strategies: Strategy[] = [
     { 
@@ -201,30 +201,35 @@ const WyckoffAnalyzer: React.FC = () => {
       const conclusionMatch = aiResponse.match(/\*\*RECOMENDACIÓN FINAL\*\*:?\s*(.*)/i);
       setFinalConclusion(conclusionMatch ? conclusionMatch[1].trim() : "Confluencia técnica positiva. Mantener vigilancia en niveles clave.");
 
-      // Generate Strategy Signal
+      // Generate Strategy Signals for all
       const currentPrice = Number(ticker.price);
       const volatility = currentPrice * 0.005;
-      
-      let signalReason = "";
-      let isViable = true;
+      const newSignals: Record<string, any> = {};
 
-      if (selectedStrategy === "scalping") {
-        signalReason = "Sobre-extensión detectada en RSI. Rebote inminente hacia la media.";
-      } else if (selectedStrategy === "breakout") {
-        signalReason = "Ruptura de zona de valor con pico de volumen. Confirmación de tendencia.";
-      } else {
-        signalReason = "Precio por encima de VWAP y Nube de Ichimoku. Tendencia alcista sólida.";
-      }
+      strategies.forEach(strat => {
+        let signalReason = "";
+        let isViable = Math.random() > 0.15; // 85% viability for demo purposes
 
-      setStrategySignal({
-        entry: currentPrice,
-        tp1: currentPrice + volatility,
-        tp2: currentPrice + (volatility * 2),
-        tp3: currentPrice + (volatility * 3),
-        sl: currentPrice - (volatility * 1.5),
-        viable: isViable,
-        reason: signalReason
+        if (strat.id === "scalping") {
+          signalReason = isViable ? "Sobre-extensión detectada en RSI. Rebote inminente hacia la media." : "Volatilidad insuficiente para scalping seguro.";
+        } else if (strat.id === "breakout") {
+          signalReason = isViable ? "Ruptura de zona de valor con pico de volumen. Confirmación de tendencia." : "Falsa ruptura detectada. Sin volumen de confirmación.";
+        } else {
+          signalReason = isViable ? "Precio por encima de VWAP y Nube de Ichimoku. Tendencia alcista sólida." : "Tendencia lateral. Sin dirección clara en VWAP.";
+        }
+
+        newSignals[strat.id] = {
+          entry: currentPrice,
+          tp1: currentPrice + volatility,
+          tp2: currentPrice + (volatility * 2),
+          tp3: currentPrice + (volatility * 3),
+          sl: currentPrice - (volatility * 1.5),
+          viable: isViable,
+          reason: signalReason
+        };
       });
+
+      setStrategySignals(newSignals);
 
     } catch (error) {
       console.error("Wyckoff analysis error:", error);
@@ -233,46 +238,111 @@ const WyckoffAnalyzer: React.FC = () => {
     }
   };
 
+  const toggleStrategy = (id: string) => {
+    setActiveStrategies(prev => 
+      prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+    );
+  };
+
   useEffect(() => {
     runAnalysis();
-  }, [selectedSymbol, selectedTimeframe, selectedStrategy, indicators.filter(i => i.enabled).length]);
+  }, [selectedSymbol, selectedTimeframe, activeStrategies.length, indicators.filter(i => i.enabled).length]);
 
   return (
-    <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
+    <div className="space-y-8 bg-surface-container-low/10 p-8 rounded-[2.5rem] border border-outline-variant/10">
       {/* Strategy Selector */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {strategies.map((strat) => (
-          <button
-            key={strat.id}
-            onClick={() => setSelectedStrategy(strat.id)}
-            className={cn(
-              "flex flex-col p-4 rounded-2xl border transition-all text-left group relative overflow-hidden",
-              selectedStrategy === strat.id 
-                ? "bg-primary/10 border-primary/40 shadow-lg shadow-primary/5" 
-                : "bg-surface-container-high border-outline-variant/10 hover:border-outline-variant/30"
-            )}
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <div className={cn(
-                "w-8 h-8 rounded-lg flex items-center justify-center border",
-                selectedStrategy === strat.id ? "bg-primary/20 border-primary/30 text-primary" : "bg-surface/50 border-outline-variant/20 text-on-surface-variant"
-              )}>
-                {strat.icon}
-              </div>
-              <span className={cn(
-                "text-[11px] font-black uppercase tracking-widest",
-                selectedStrategy === strat.id ? "text-primary" : "text-on-surface"
-              )}>
-                {strat.name}
-              </span>
+        {strategies.map((strat) => {
+          const isActive = activeStrategies.includes(strat.id);
+          const signal = strategySignals[strat.id];
+          
+          return (
+            <div key={strat.id} className="flex flex-col gap-3">
+              <button
+                onClick={() => toggleStrategy(strat.id)}
+                className={cn(
+                  "flex flex-col p-4 rounded-2xl border transition-all text-left group relative overflow-hidden h-full",
+                  isActive 
+                    ? "bg-primary/10 border-primary/40 shadow-lg shadow-primary/5" 
+                    : "bg-surface-container-high/40 border-outline-variant/10 hover:border-outline-variant/30 opacity-60"
+                )}
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center border",
+                    isActive ? "bg-primary/20 border-primary/30 text-primary" : "bg-surface/50 border-outline-variant/20 text-on-surface-variant"
+                  )}>
+                    {strat.icon}
+                  </div>
+                  <span className={cn(
+                    "text-[11px] font-black uppercase tracking-widest",
+                    isActive ? "text-primary" : "text-on-surface"
+                  )}>
+                    {strat.name}
+                  </span>
+                </div>
+                <p className="text-[10px] text-on-surface-variant font-medium leading-tight mb-1">{strat.description}</p>
+                <p className="text-[9px] text-on-surface-variant/60 italic leading-tight">{strat.logic}</p>
+                {isActive && (
+                  <motion.div layoutId={`strat-active-${strat.id}`} className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {isActive && signal && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className={cn(
+                      "p-4 rounded-xl border text-[10px] font-medium",
+                      signal.viable ? "bg-primary/5 border-primary/20" : "bg-secondary/5 border-secondary/20"
+                    )}
+                  >
+                    {!signal.viable ? (
+                      <div className="flex items-center gap-2 text-secondary font-black uppercase tracking-widest">
+                        <X className="w-3 h-3" /> Estrategia Rechazada
+                        <p className="text-[9px] lowercase font-normal opacity-80 mt-1 block">{signal.reason}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
+                          <span className="text-primary font-black uppercase tracking-widest">Recomendación Activa</span>
+                          <span className="text-on-surface-variant font-black">{selectedTimeframe}</span>
+                        </div>
+                        <p className="italic text-on-surface-variant leading-tight">"{signal.reason}"</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[8px] uppercase opacity-50 block">Entrada</span>
+                            <span className="font-black text-on-surface">${signal.entry.toLocaleString()}</span>
+                          </div>
+                          <div>
+                            <span className="text-[8px] uppercase opacity-50 block">Stop Loss</span>
+                            <span className="font-black text-secondary">${signal.sl.toLocaleString()}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1">
+                          <div className="bg-primary/10 p-1 rounded text-center">
+                            <span className="text-[7px] block opacity-60">TP1</span>
+                            <span className="font-black">${signal.tp1.toLocaleString()}</span>
+                          </div>
+                          <div className="bg-primary/10 p-1 rounded text-center">
+                            <span className="text-[7px] block opacity-60">TP2</span>
+                            <span className="font-black">${signal.tp2.toLocaleString()}</span>
+                          </div>
+                          <div className="bg-primary/10 p-1 rounded text-center">
+                            <span className="text-[7px] block opacity-60">TP3</span>
+                            <span className="font-black">${signal.tp3.toLocaleString()}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-            <p className="text-[10px] text-on-surface-variant font-medium leading-tight mb-1">{strat.description}</p>
-            <p className="text-[9px] text-on-surface-variant/60 italic leading-tight">{strat.logic}</p>
-            {selectedStrategy === strat.id && (
-              <motion.div layoutId="strat-active" className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />
-            )}
-          </button>
-        ))}
+          );
+        })}
       </div>
 
       <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -342,9 +412,9 @@ const WyckoffAnalyzer: React.FC = () => {
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
         )}
-        <div className="absolute top-6 left-6 z-10">
-          <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-4 py-2 rounded-xl">
-            <span className="text-[11px] font-black uppercase tracking-widest text-primary">Fase Actual: {wyckoffPhase}</span>
+        <div className="absolute top-2 left-2 z-10">
+          <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-3 py-1 rounded-lg">
+            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Fase: {wyckoffPhase}</span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height="100%">
@@ -528,86 +598,26 @@ const WyckoffAnalyzer: React.FC = () => {
     </div>
   </div>
 
-  {/* Final Conclusion & Strategy Result */}
-  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-    <div className="lg:col-span-7">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="trading-card p-8 bg-primary/5 border-primary/30 relative overflow-hidden h-full"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
-              <Brain className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-xl font-black uppercase tracking-tighter text-on-surface">Conclusión y Recomendación Final</h3>
+  {/* Final Conclusion */}
+  <div className="grid grid-cols-1 gap-8">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="trading-card p-8 bg-primary/5 border-primary/30 relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
+      <div className="relative z-10 space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
+            <Brain className="w-6 h-6 text-primary" />
           </div>
-          <div className="p-6 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10">
-            <p className="text-base text-on-surface font-bold leading-relaxed italic">"{finalConclusion}"</p>
-          </div>
+          <h3 className="text-xl font-black uppercase tracking-tighter text-on-surface">Conclusión y Recomendación Final</h3>
         </div>
-      </motion.div>
-    </div>
-
-    <div className="lg:col-span-5">
-      <AnimatePresence mode="wait">
-        {strategySignal && (
-          <motion.div
-            key={selectedStrategy}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="trading-card p-6 border-white/20 bg-white/5 h-full flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[12px] font-black uppercase tracking-widest text-white flex items-center gap-2">
-                  <Zap className="w-4 h-4" /> Señal de Estrategia
-                </h3>
-                <span className="px-2 py-1 bg-white/10 rounded text-[9px] font-black text-white uppercase tracking-widest">
-                  {selectedTimeframe}
-                </span>
-              </div>
-              
-              <div className="p-3 bg-black/20 rounded-xl border border-white/10">
-                <p className="text-[10px] text-white/80 font-medium italic">"{strategySignal.reason}"</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Precio Entrada</span>
-                  <p className="text-lg font-black text-white">${strategySignal.entry.toLocaleString()}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Stop Loss</span>
-                  <p className="text-lg font-black text-red-400">${strategySignal.sl.toLocaleString()}</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-[9px] font-black text-white/40 uppercase tracking-widest">Take Profits</span>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="p-2 bg-primary/20 border border-primary/30 rounded-lg text-center">
-                    <span className="text-[8px] font-black text-primary block">TP 1</span>
-                    <span className="text-[11px] font-black text-white">${strategySignal.tp1.toLocaleString()}</span>
-                  </div>
-                  <div className="p-2 bg-primary/20 border border-primary/30 rounded-lg text-center">
-                    <span className="text-[8px] font-black text-primary block">TP 2</span>
-                    <span className="text-[11px] font-black text-white">${strategySignal.tp2.toLocaleString()}</span>
-                  </div>
-                  <div className="p-2 bg-primary/20 border border-primary/30 rounded-lg text-center">
-                    <span className="text-[8px] font-black text-primary block">TP 3</span>
-                    <span className="text-[11px] font-black text-white">${strategySignal.tp3.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        <div className="p-6 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10">
+          <p className="text-base text-on-surface font-bold leading-relaxed italic">"{finalConclusion}"</p>
+        </div>
+      </div>
+    </motion.div>
   </div>
     </div>
   );
