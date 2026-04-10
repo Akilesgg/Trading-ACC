@@ -7,6 +7,7 @@ import { cn } from "../../lib/utils";
 
 const SignalNotificationHandler: React.FC = () => {
   const activeSignals = useSignalStore(state => state.activeSignals);
+  const isMuted = useSignalStore(state => state.isMuted);
   const navigate = useNavigate();
   const shownSignalsRef = useRef<Set<string>>(new Set());
   const isInitialLoadRef = useRef(true);
@@ -49,13 +50,13 @@ const SignalNotificationHandler: React.FC = () => {
         shownSignalsRef.current.add(signal.id);
         showSignalNotification(signal);
         
-        // Play sound
-        if (audioRef.current) {
+        // Play sound if not muted
+        if (audioRef.current && !isMuted) {
           audioRef.current.play().catch(e => console.warn("Audio play blocked:", e));
         }
       }
     });
-  }, [activeSignals, navigate]);
+  }, [activeSignals, navigate, isMuted]);
 
   const showSignalNotification = (signal: Signal) => {
     toast.custom((t) => (

@@ -22,6 +22,8 @@ export interface Signal {
 interface SignalState {
   activeSignals: Signal[];
   loading: boolean;
+  isMuted: boolean;
+  toggleMute: () => void;
   addSignal: (signal: Omit<Signal, 'id' | 'timestamp'>) => Promise<void>;
   closeSignal: (id: string) => Promise<void>;
   init: () => () => void;
@@ -30,6 +32,12 @@ interface SignalState {
 export const useSignalStore = create<SignalState>((set, get) => ({
   activeSignals: [],
   loading: true,
+  isMuted: localStorage.getItem('isMuted') === 'true',
+  toggleMute: () => {
+    const newMuted = !get().isMuted;
+    localStorage.setItem('isMuted', String(newMuted));
+    set({ isMuted: newMuted });
+  },
   addSignal: async (signalData) => {
     try {
       console.log("Adding signal to Firestore:", signalData.activo);

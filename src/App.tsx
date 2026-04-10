@@ -10,6 +10,7 @@ import {
   Search, 
   Menu, 
   Bell, 
+  BellOff,
   User,
   TrendingUp,
   ArrowRight,
@@ -101,6 +102,8 @@ const TopAppBar = () => {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [isSending, setIsSending] = useState(false);
+  const isMuted = useSignalStore(state => state.isMuted);
+  const toggleMute = useSignalStore(state => state.toggleMute);
 
   const handleManualTelegram = async () => {
     setIsSending(true);
@@ -186,6 +189,13 @@ const TopAppBar = () => {
             >
               <Bell className={cn("w-4 h-4", isSending ? "animate-bounce" : "group-hover:animate-ring")} />
               <span className="text-[10px] font-black uppercase tracking-widest">Enviar a Telegram</span>
+            </button>
+            <button 
+              onClick={toggleMute}
+              className="hidden md:flex p-2 bg-surface-container-high rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all active:scale-90"
+              title={isMuted ? "Activar Sonido" : "Desactivar Sonido"}
+            >
+              {isMuted ? <BellOff className="w-3.5 h-3.5 text-secondary" /> : <Bell className="w-3.5 h-3.5 text-primary" />}
             </button>
             <button 
               onClick={async () => {
@@ -374,7 +384,6 @@ export default function App() {
     <ErrorBoundary>
       <Router>
         <Toaster position="top-right" theme="dark" richColors />
-        <GlobalSignalOverlay />
         <SignalMonitor />
         <MarketScanner />
         <SignalNotificationHandler />

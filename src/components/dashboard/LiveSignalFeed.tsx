@@ -1,22 +1,26 @@
 import React, { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Zap, ArrowRight, Activity } from "lucide-react";
+import { Zap, ArrowRight, Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useTerminalStore } from "../../store/useTerminalStore";
+import { useSignalStore } from "../../store/useSignalStore";
 import { cn } from "@/lib/utils";
 
 const LiveSignalFeed: React.FC = () => {
-  const { signals } = useTerminalStore();
+  const activeSignals = useSignalStore(state => state.activeSignals);
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const lastSignals = signals.slice(0, 10);
+  // Filter only active signals and sort by timestamp
+  const displaySignals = activeSignals
+    .filter(s => s.estado === 'activa')
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 10);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0;
     }
-  }, [signals]);
+  }, [activeSignals]);
 
   return (
     <div className="trading-card h-full flex flex-col p-0 overflow-hidden border-primary/20">
@@ -27,7 +31,7 @@ const LiveSignalFeed: React.FC = () => {
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-ping" />
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full" />
           </div>
-          <h3 className="text-xs font-black uppercase tracking-widest text-on-surface">Señales en Vivo</h3>
+          <h3 className="text-xs font-black uppercase tracking-widest text-on-surface">Señales Activas</h3>
         </div>
         <Activity className="w-4 h-4 text-on-surface-variant opacity-30" />
       </div>
@@ -37,31 +41,46 @@ const LiveSignalFeed: React.FC = () => {
         className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2"
       >
         <AnimatePresence initial={false}>
-          {lastSignals.length > 0 ? (
-            lastSignals.map((signal) => (
+          {displaySignals.length > 0 ? (
+            displaySignals.map((signal) => (
               <motion.div
                 key={signal.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                onClick={() => navigate(`/analysis?symbol=${signal.symbol}`)}
+                onClick={() => navigate(`/signal/${signal.activo}`)}
                 className="p-4 bg-surface-container-high/40 hover:bg-surface-container-highest rounded-2xl border border-outline-variant/5 hover:border-primary/30 transition-all cursor-pointer group"
               >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className={cn(
-                      "px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest",
-                      signal.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                    <div className={cn(
+                      "w-6 h-6 rounded-md flex items-center justify-center",
+                      signal.tipo === "LONG" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
                     )}>
-                      {signal.type}
-                    </span>
-                    <span className="text-[11px] font-black text-on-surface">{signal.symbol}</span>
+                      {signal.tipo === "LONG" ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                    </div>
+                    <span className="text-[11px] font-black text-on-surface">{signal.activo}</span>
                   </div>
-                  <span className="text-[10px] font-black text-primary">{signal.score}%</span>
+                  <span className="text-[10px] font-black text-primary">{signal.confidence || 90}%</span>
                 </div>
+                
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                  <div className="bg-surface-container-low/50 p-1.5 rounded-lg">
+                    <p className="text-[7px] font-black text-on-surface-variant uppercase tracking-widest">Precio</p>
+                    <p className="text-[10px] font-black text-on-surface">${signal.entry}</p>
+                  </div>
+                  <div className="bg-surface-container-low/50 p-1.5 rounded-lg">
+                    <p className="text-[7px] font-black text-on-surface-variant uppercase tracking-widest">SL</p>
+                    <p className="text-[10px] font-black text-secondary">${signal.sl}</p>
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">
                   <span>{new Date(signal.timestamp).toLocaleTimeString()}</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                  <div className="flex items-center gap-1 group-hover:text-primary transition-colors">
+                    VER ANÁLISIS
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                  </div>
                 </div>
               </motion.div>
             ))

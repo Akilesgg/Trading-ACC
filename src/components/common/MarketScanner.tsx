@@ -34,10 +34,13 @@ const MarketScanner: React.FC = () => {
           // Condition for automatic signal: Proximity < 2.0% OR Consensus > 90%
           const isSignal = proximity <= 2.0 || consensus >= 90;
           
-          // Check if we already have an active signal for this asset to avoid duplicates
-          const alreadyActive = activeSignals.some(s => s.activo === ticker.symbol && s.estado === 'activa');
+          // Check if we already have an active signal for this asset in the store
+          const alreadyActiveInStore = activeSignals.some(s => s.activo === ticker.symbol && s.estado === 'activa');
           
-          if (isSignal && !alreadyActive && !triggeredRef.current.has(ticker.symbol)) {
+          // Check if we already triggered it in this session
+          const alreadyTriggered = triggeredRef.current.has(ticker.symbol);
+
+          if (isSignal && !alreadyActiveInStore && !alreadyTriggered) {
             console.log(`🚀 MarketScanner: ¡SEÑAL DETECTADA para ${ticker.symbol}! Proximidad: ${proximity.toFixed(2)}%, Consenso: ${consensus}%`);
             const type = parseFloat(ticker.priceChangePercent) > 0 ? 'LONG' : 'SHORT';
             
@@ -67,7 +70,7 @@ const MarketScanner: React.FC = () => {
             } catch (addError) {
               console.error(`❌ MarketScanner: Error al añadir señal para ${ticker.symbol}:`, addError);
             }
-          } else if (isSignal && alreadyActive) {
+          } else if (isSignal && alreadyActiveInStore) {
             // console.log(`ℹ️ MarketScanner: Señal para ${ticker.symbol} ya está activa en Firestore.`);
           }
         }
