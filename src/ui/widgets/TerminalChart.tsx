@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { 
   ComposedChart, 
   Line, 
+  Area,
   Bar, 
   XAxis, 
   YAxis, 
@@ -78,21 +79,28 @@ const TerminalChart: React.FC = () => {
       <div className="flex-1 min-h-0 p-4">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={data}>
+            <defs>
+              <linearGradient id="colorPriceMain" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.2}/>
+                <stop offset="95%" stopColor="#00ffa3" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.1} />
             <XAxis dataKey="time" hide />
             <YAxis 
               yAxisId="price"
-              domain={['auto', 'auto']} 
+              domain={['dataMin - 100', 'dataMax + 100']} 
               orientation="right" 
-              tick={{ fontSize: 9, fill: '#94a3b8', fontWeight: 'bold' }} 
+              tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} 
               axisLine={false}
               tickLine={false}
+              width={60}
             />
             <YAxis yAxisId="volume" hide />
             <Tooltip 
               contentStyle={{ backgroundColor: '#0b0f14', border: '1px solid #222', borderRadius: '8px', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}
-              itemStyle={{ fontSize: '9px', fontWeight: 'black', textTransform: 'uppercase' }}
-              labelStyle={{ fontSize: '9px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'black' }}
+              itemStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+              labelStyle={{ fontSize: '10px', color: '#94a3b8', marginBottom: '4px', fontWeight: 'bold' }}
             />
             
             {/* SMC Visualizations - Soft Colors */}
@@ -115,7 +123,7 @@ const TerminalChart: React.FC = () => {
               )
             ))}
 
-            <Line yAxisId="price" type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={1.5} dot={false} animationDuration={1000} opacity={0.8} />
+            <Area yAxisId="price" type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={2} fill="url(#colorPriceMain)" dot={false} animationDuration={1000} opacity={0.8} />
             <Line yAxisId="price" type="monotone" dataKey="ema20" stroke="#ff7162" strokeWidth={1} dot={false} opacity={0.3} />
             <Line yAxisId="price" type="monotone" dataKey="ema50" stroke="#00e0ff" strokeWidth={1} dot={false} opacity={0.2} />
             
