@@ -13,7 +13,11 @@ const LiveSignalFeed: React.FC = () => {
   // Filter only active signals and sort by timestamp
   const displaySignals = activeSignals
     .filter(s => s.estado === 'activa')
-    .sort((a, b) => b.timestamp - a.timestamp)
+    .sort((a, b) => {
+      const timeA = a.timestamp?.seconds || 0;
+      const timeB = b.timestamp?.seconds || 0;
+      return timeB - timeA;
+    })
     .slice(0, 10);
 
   useEffect(() => {
@@ -21,6 +25,13 @@ const LiveSignalFeed: React.FC = () => {
       scrollRef.current.scrollTop = 0;
     }
   }, [activeSignals]);
+
+  const formatTime = (ts: any) => {
+    if (!ts) return "--:--";
+    if (ts.toDate) return ts.toDate().toLocaleTimeString();
+    if (ts.seconds) return new Date(ts.seconds * 1000).toLocaleTimeString();
+    return new Date(ts).toLocaleTimeString();
+  };
 
   return (
     <div className="trading-card h-full flex flex-col p-0 overflow-hidden border-primary/20">
@@ -76,7 +87,7 @@ const LiveSignalFeed: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-50">
-                  <span>{new Date(signal.timestamp).toLocaleTimeString()}</span>
+                  <span>{formatTime(signal.timestamp)}</span>
                   <div className="flex items-center gap-1 group-hover:text-primary transition-colors">
                     VER ANÁLISIS
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />

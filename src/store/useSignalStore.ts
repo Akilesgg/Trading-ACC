@@ -88,6 +88,9 @@ export const useSignalStore = create<SignalState>((set, get) => ({
         ...doc.data()
       })) as Signal[];
       set({ activeSignals: signals, loading: false });
+    }, (error) => {
+      console.error("Firestore onSnapshot error:", error);
+      set({ loading: false });
     });
 
     return unsubscribe;

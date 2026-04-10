@@ -133,6 +133,14 @@ const Dashboard = () => {
         return data.map(t => {
           const existing = prev.find(p => p.symbol === t.symbol);
           if (existing) {
+            const currentPrice = parseFloat(t.price);
+            const currentProximity = Math.abs((currentPrice - existing.entry) / existing.entry) * 100;
+            
+            // If price is more than 3% away from entry, treat it as a new signal/refresh
+            if (currentProximity > 3.0) {
+              return t;
+            }
+
             return {
               ...t,
               timeframe: existing.timeframe,
@@ -143,12 +151,15 @@ const Dashboard = () => {
               consensus: existing.consensus,
               leverage: existing.leverage,
               riskLevel: existing.riskLevel,
-              proximity: Math.abs((parseFloat(t.price) - existing.entry) / existing.entry) * 100
+              proximity: currentProximity
             };
           }
           return t;
         });
       });
+
+      // Set loading to false as soon as we have the primary data
+      setLoading(false);
 
       const [whales, traders, txs, events] = await Promise.all([
         fetchWhaleMovements(),

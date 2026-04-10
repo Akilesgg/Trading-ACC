@@ -129,7 +129,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/5">
-                  {tickers.map((ticker) => {
+                  {tickers.length > 0 ? tickers.map((ticker) => {
                     const isBullish = parseFloat(ticker.priceChangePercent) > 0;
                     const isWatchlisted = watchlist.includes(ticker.symbol);
                     const isAlertEnabled = enabledAlerts.has(ticker.symbol);
@@ -271,7 +271,17 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                         </td>
                       </motion.tr>
                     );
-                  })}
+                  }) : (
+                    <tr>
+                      <td colSpan={9} className="p-20 text-center">
+                        <div className="flex flex-col items-center gap-4 opacity-30">
+                          <Search className="w-12 h-12 text-on-surface-variant" />
+                          <p className="text-[11px] font-black uppercase tracking-[0.3em]">No se detectaron señales bajo este filtro</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-primary">Escaneando mercado en tiempo real...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -284,7 +294,7 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
           >
-            {tickers.map((ticker) => (
+            {tickers.length > 0 ? tickers.map((ticker) => (
               <SignalCard 
                 key={ticker.symbol} 
                 ticker={ticker} 
@@ -295,7 +305,15 @@ const SignalMatrix: React.FC<SignalMatrixProps> = ({
                 isTriggered={triggeredAlerts.has(ticker.symbol)}
                 onShowFundamentals={() => onShowFundamentals(ticker.symbol)}
               />
-            ))}
+            )) : (
+              <div className="col-span-full p-20 text-center trading-card">
+                <div className="flex flex-col items-center gap-4 opacity-30">
+                  <Search className="w-12 h-12 text-on-surface-variant" />
+                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">No se detectaron señales bajo este filtro</p>
+                  <p className="text-[9px] font-black uppercase tracking-widest text-primary">Escaneando mercado en tiempo real...</p>
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

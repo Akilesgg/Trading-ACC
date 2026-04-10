@@ -277,39 +277,40 @@ export async function fetchEconomicEvents() {
 export async function fetchWhaleMovements() {
   try {
     const symbols = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT"];
-    const allWhaleTrades: any[] = [];
+    
+    const results = await Promise.all(symbols.map(async (symbol) => {
+      try {
+        const response = await fetch(`https://api.binance.com/api/v3/trades?symbol=${symbol}&limit=500`);
+        if (!response.ok) return [];
+        const trades = await response.json();
+        
+        return trades.filter((t: any) => {
+          const price = parseFloat(t.p);
+          const qty = parseFloat(t.q);
+          return (price * qty) > 500000;
+        }).map((t: any) => {
+          const price = parseFloat(t.p);
+          const qty = parseFloat(t.q);
+          const amount = price * qty;
+          return {
+            symbol,
+            type: t.m ? "VENTA" : "COMPRA",
+            amount: `$${(amount / 1000000).toFixed(2)}M`,
+            impact: amount > 1000000 ? "CRÍTICA" : "ALTA",
+            exchange: "Binance",
+            time: new Date(t.T).toLocaleTimeString(),
+            sourceUrl: `https://www.binance.com/en/trade/${symbol}`,
+            recommendation: t.m ? "VENTA" : "COMPRA",
+            details: `Institución detectada en ${symbol}. Volumen: ${qty.toFixed(2)} ${symbol.replace("USDT", "")}.`
+          };
+        });
+      } catch (e) {
+        console.error(`Error fetching whale trades for ${symbol}:`, e);
+        return [];
+      }
+    }));
 
-    for (const symbol of symbols) {
-      const response = await fetch(`https://api.binance.com/api/v3/trades?symbol=${symbol}&limit=1000`);
-      if (!response.ok) continue;
-      const trades = await response.json();
-      
-      // Filter trades > $500k
-      const whaleTrades = trades.filter((t: any) => {
-        const price = parseFloat(t.p);
-        const qty = parseFloat(t.q);
-        return (price * qty) > 500000;
-      }).map((t: any) => {
-        const price = parseFloat(t.p);
-        const qty = parseFloat(t.q);
-        const amount = price * qty;
-        return {
-          symbol,
-          type: t.m ? "VENTA" : "COMPRA",
-          amount: `$${(amount / 1000000).toFixed(2)}M`,
-          impact: amount > 1000000 ? "CRÍTICA" : "ALTA",
-          exchange: "Binance",
-          time: new Date(t.T).toLocaleTimeString(),
-          sourceUrl: `https://www.binance.com/en/trade/${symbol}`,
-          recommendation: t.m ? "VENTA" : "COMPRA",
-          details: `Institución detectada en ${symbol}. Volumen: ${qty.toFixed(2)} ${symbol.replace("USDT", "")}.`
-        };
-      });
-      
-      allWhaleTrades.push(...whaleTrades);
-    }
-
-    return allWhaleTrades.sort((a, b) => b.amount.localeCompare(a.amount)).slice(0, 15);
+    return results.flat().sort((a, b) => b.amount.localeCompare(a.amount)).slice(0, 15);
   } catch (error) {
     console.error("Error fetching whale movements:", error);
     return [];

@@ -13,7 +13,12 @@ const SUPPORTED_SYMBOLS = [
 const MarketScanner: React.FC = () => {
   const addSignal = useSignalStore(state => state.addSignal);
   const activeSignals = useSignalStore(state => state.activeSignals);
+  const activeSignalsRef = useRef(activeSignals);
   const triggeredRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    activeSignalsRef.current = activeSignals;
+  }, [activeSignals]);
 
   useEffect(() => {
     const scan = async () => {
@@ -35,7 +40,7 @@ const MarketScanner: React.FC = () => {
           const isSignal = proximity <= 2.0 || consensus >= 90;
           
           // Check if we already have an active signal for this asset in the store
-          const alreadyActiveInStore = activeSignals.some(s => s.activo === ticker.symbol && s.estado === 'activa');
+          const alreadyActiveInStore = activeSignalsRef.current.some(s => s.activo === ticker.symbol && s.estado === 'activa');
           
           // Check if we already triggered it in this session
           const alreadyTriggered = triggeredRef.current.has(ticker.symbol);
@@ -90,7 +95,7 @@ const MarketScanner: React.FC = () => {
     scan();
     const interval = setInterval(scan, SCAN_INTERVAL);
     return () => clearInterval(interval);
-  }, [addSignal, activeSignals]);
+  }, [addSignal]);
 
   return null;
 };
