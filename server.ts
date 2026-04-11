@@ -201,6 +201,85 @@ async function startServer() {
     }
   });
 
+  app.post("/api/ai/intelligence", async (req, res) => {
+    try {
+      const { symbol } = req.body;
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        console.error("Intelligence Error: API Key missing");
+        return res.status(500).json({ error: "API Key missing" });
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      
+      const getIntelligence = async (useTools: boolean) => {
+        const modelConfig: any = { model: "gemini-2.0-flash" };
+        if (useTools) {
+          modelConfig.tools = [{ googleSearch: {} }];
+        }
+        
+        const model = genAI.getGenerativeModel(modelConfig);
+        const prompt = `Realiza un análisis de INTELIGENCIA DE MERCADO para el activo ${symbol} y el mercado cripto en general.
+          Busca información REAL Y RECIENTE de HOY en:
+          - Twitter (X): Cuentas de traders influyentes y hashtags como #${symbol}, #CryptoSignals.
+          - Reddit: r/CryptoCurrency, r/Bitcoin, r/CryptoMarkets.
+          - Telegram: Canales públicos populares de señales.
+          
+          OBJETIVOS:
+          1. Detectar señales externas recientes (formato: Activo, Tipo, Entrada, TP, SL).
+          2. Calcular el sentimiento (LONG vs SHORT) en porcentaje.
+          3. Identificar los TOP 5 activos más mencionados hoy.
+          4. Detectar alertas de sentimiento extremo.
+          
+          Responde estrictamente en formato JSON con esta estructura:
+          {
+            "sentiment": { "long": number, "short": number, "intensity": "LOW" | "MEDIUM" | "HIGH" },
+            "topAssets": string[],
+            "signals": [
+              { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string }
+            ],
+            "alerts": string[],
+            "consensus": "BULLISH" | "BEARISH" | "NEUTRAL"
+          }`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return response.text();
+      };
+
+      let text;
+      try {
+        text = await getIntelligence(true);
+      } catch (toolError: any) {
+        console.warn("Intelligence Tool Error, falling back to standard generation:", toolError.message);
+        text = await getIntelligence(false);
+      }
+      
+      console.log("Gemini Intelligence Raw Response:", text);
+
+      // Clean JSON response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error("No valid JSON found in Gemini response");
+      }
+      
+      const data = JSON.parse(jsonMatch[0]);
+      res.json(data);
+    } catch (error: any) {
+      console.error("Gemini Intelligence Error:", error);
+      res.status(500).json({ 
+        error: error.message,
+        fallback: {
+          sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
+          topAssets: ["BTC", "ETH", "SOL"],
+          signals: [],
+          alerts: ["Error en el servidor: " + error.message],
+          consensus: "NEUTRAL"
+        }
+      });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

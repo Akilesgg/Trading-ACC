@@ -104,38 +104,14 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
 
 export async function fetchMarketIntelligence(symbol: string) {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `Realiza un análisis de INTELIGENCIA DE MERCADO para el activo ${symbol} y el mercado cripto en general.
-        Busca en:
-        - Twitter (X): Cuentas de traders influyentes y hashtags como #${symbol}, #CryptoSignals.
-        - Reddit: r/CryptoCurrency, r/Bitcoin, r/CryptoMarkets.
-        - Telegram: Canales públicos como 'Crypto Signals', 'Binance Killers', 'Fed. Russian Insiders' y otros canales de señales populares.
-        
-        OBJETIVOS:
-        1. Detectar señales externas recientes (formato: Activo, Tipo, Entrada, TP, SL). Busca textos tipo "BTC LONG 42000 TP 44000 SL 41000".
-        2. Calcular el sentimiento (LONG vs SHORT) en porcentaje basado en el volumen de menciones y el tono.
-        3. Identificar los TOP 5 activos más mencionados hoy en estas redes.
-        4. Detectar alertas de sentimiento extremo (ej: "Exceso de LONG -> Posible Long Squeeze/Corrección").
-        
-        Responde estrictamente en formato JSON con esta estructura:
-        {
-          "sentiment": { "long": number, "short": number, "intensity": "LOW" | "MEDIUM" | "HIGH" },
-          "topAssets": string[],
-          "signals": [
-            { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string }
-          ],
-          "alerts": string[],
-          "consensus": "BULLISH" | "BEARISH" | "NEUTRAL"
-        }`,
-      config: {
-        responseMimeType: "application/json",
-        tools: [{ googleSearch: {} }]
-      }
+    const response = await fetch("/api/ai/intelligence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol })
     });
-
-    return JSON.parse(response.text);
+    
+    if (!response.ok) throw new Error("Backend error");
+    return await response.json();
   } catch (error) {
     console.error("Error fetching market intelligence:", error);
     return {
