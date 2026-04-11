@@ -98,7 +98,27 @@ const Analysis = () => {
   
   const [layout, setLayout] = useState<string[]>(() => {
     const saved = localStorage.getItem("analysis_layout_v3");
-    return saved ? JSON.parse(saved) : DEFAULT_LAYOUT;
+    const defaults = DEFAULT_LAYOUT;
+    
+    if (saved) {
+      let parsed = JSON.parse(saved);
+      // Ensure essential modules are always present
+      const essentials = ["comparator", "market_intelligence", "sentiment_gauges"];
+      let modified = false;
+      
+      essentials.forEach(module => {
+        if (!parsed.includes(module)) {
+          parsed.unshift(module);
+          modified = true;
+        }
+      });
+      
+      if (modified) {
+        localStorage.setItem("analysis_layout_v3", JSON.stringify(parsed));
+      }
+      return parsed;
+    }
+    return defaults;
   });
   const [savedLayouts, setSavedLayouts] = useState<Record<string, string[]>>(() => {
     const saved = localStorage.getItem("analysis_saved_layouts_v3");
@@ -407,51 +427,51 @@ const Analysis = () => {
         {/* Main Column: AI Detailed Analysis (LEFT) */}
         <div className="md:col-span-8 space-y-8">
           <ErrorBoundary>
-            {analysis ? (
-              <Reorder.Group 
-                axis="y" 
-                values={layout} 
-                onReorder={(newOrder) => {
-                  setLayout(newOrder);
-                  localStorage.setItem("analysis_layout_v3", JSON.stringify(newOrder));
-                }}
-                className="space-y-8"
-              >
-                {layout.map((moduleId) => (
-                  <AnalysisModule 
-                    key={moduleId}
-                    moduleId={moduleId}
-                    analysisSections={analysisSections}
-                    analysis={analysis}
-                    ticker={ticker}
-                    btcSentiment={btcSentiment}
-                    setBtcSentiment={setBtcSentiment}
-                    top100Sentiment={top100Sentiment}
-                    setTop100Sentiment={setTop100Sentiment}
-                    generalSentiment={generalSentiment}
-                    setGeneralSentiment={setGeneralSentiment}
-                    btcTF={btcTF}
-                    setBtcTF={setBtcTF}
-                    top100TF={top100TF}
-                    setTop100TF={setTop100TF}
-                    generalTF={generalTF}
-                    setGeneralTF={setGeneralTF}
-                    allAssets={allAssets}
-                    marketIntelligence={marketIntelligence}
-                    intelligenceLoading={intelligenceLoading}
-                  />
-                ))}
-              </Reorder.Group>
-            ) : (
-              <div className="h-full min-h-[600px] flex flex-col items-center justify-center bg-surface-container-high/20 rounded-[2.5rem] border-2 border-dashed border-outline-variant/10 p-12 text-center space-y-8">
-                <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center relative">
+            <Reorder.Group 
+              axis="y" 
+              values={layout} 
+              onReorder={(newOrder) => {
+                setLayout(newOrder);
+                localStorage.setItem("analysis_layout_v3", JSON.stringify(newOrder));
+              }}
+              className="space-y-8"
+            >
+              {layout.map((moduleId) => (
+                <AnalysisModule 
+                  key={moduleId}
+                  moduleId={moduleId}
+                  analysisSections={analysisSections}
+                  analysis={analysis}
+                  ticker={ticker}
+                  btcSentiment={btcSentiment}
+                  setBtcSentiment={setBtcSentiment}
+                  top100Sentiment={top100Sentiment}
+                  setTop100Sentiment={setTop100Sentiment}
+                  generalSentiment={generalSentiment}
+                  setGeneralSentiment={setGeneralSentiment}
+                  btcTF={btcTF}
+                  setBtcTF={setBtcTF}
+                  top100TF={top100TF}
+                  setTop100TF={setTop100TF}
+                  generalTF={generalTF}
+                  setGeneralTF={setGeneralTF}
+                  allAssets={allAssets}
+                  marketIntelligence={marketIntelligence}
+                  intelligenceLoading={intelligenceLoading}
+                />
+              ))}
+            </Reorder.Group>
+
+            {!analysis && !analyzing && (
+              <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-surface-container-high/20 rounded-[2.5rem] border-2 border-dashed border-outline-variant/10 p-12 text-center space-y-8">
+                <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center relative">
                   <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping"></div>
-                  <Brain className="w-16 h-16 text-primary relative z-10" />
+                  <Brain className="w-12 h-12 text-primary relative z-10" />
                 </div>
                 <div className="space-y-3">
-                  <h4 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Esperando Instrucciones</h4>
+                  <h4 className="text-2xl font-black text-on-surface uppercase tracking-tighter">Análisis IA Pendiente</h4>
                   <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest max-w-xs mx-auto leading-relaxed">
-                    Selecciona un activo y temporalidad arriba para que nuestra IA realice un análisis exhaustivo de mercado.
+                    Los módulos de tiempo real están activos. Pulsa "Ejecutar Análisis Profundo" para obtener el informe detallado de la IA.
                   </p>
                 </div>
                 <button 

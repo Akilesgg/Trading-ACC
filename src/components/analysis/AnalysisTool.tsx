@@ -239,6 +239,13 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
                   {mode.label}
                 </button>
               ))}
+              <button
+                onClick={onResetLayout}
+                className="p-4 bg-surface-container-high border border-outline-variant/10 rounded-2xl hover:border-secondary/30 hover:text-secondary transition-all text-on-surface-variant"
+                title="Restablecer Diseño"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
