@@ -16,8 +16,6 @@ const getApiKey = (attempt = 0) => {
     }
   }
 
-  // Fallback to a default key if provided in a safe way, 
-  // but for now we'll return null if no keys are found
   return null;
 };
 
@@ -103,25 +101,79 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
 }
 
 export async function fetchMarketIntelligence(symbol: string) {
-  try {
-    const response = await fetch("/api/ai/intelligence", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ symbol })
+  const apiKey = getApiKey();
+  
+  const tryModel = async (modelName: string, useTools: boolean) => {
+    if (!apiKey) throw new Error("API Key missing");
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
+      model: modelName,
+      contents: `Realiza un análisis de INTELIGENCIA DE MERCADO EXTREMO para el activo ${symbol} y el mercado cripto global.
+        Tu objetivo es actuar como un rastreador de datos en tiempo real que escanea:
+        - Twitter (X): Cuentas de traders institucionales, analistas top (ej: Glassnode, Willy Woo, PlanB) y hashtags virales.
+        - Telegram: Canales públicos de señales, grupos de ballenas y comunidades de trading.
+        - Reddit: r/CryptoCurrency, r/WallStreetBetsCrypto, r/Bitcoin.
+        - Instagram/TikTok: Tendencias de sentimiento retail y "hype" de mercado.
+        - Foros especializados y noticias de última hora.
+        
+        OBJETIVOS DE ESCANEO:
+        1. SEÑALES DE TRADING: Detectar señales con Entrada, TP y SL.
+        2. SENTIMIENTO: Analizar el volumen de menciones alcistas vs bajistas.
+        3. ACTIVOS HOT: Identificar los 5 activos con mayor incremento de volumen social.
+        4. ALERTAS: Detectar anomalías (ej: "Pánico en redes", "Euforia extrema", "Ballenas moviendo fondos a exchanges").
+        
+        Responde estrictamente en formato JSON con esta estructura:
+        {
+          "sentiment": { "long": number, "short": number, "intensity": "LOW" | "MEDIUM" | "HIGH" },
+          "topAssets": string[],
+          "signals": [
+            { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string }
+          ],
+          "alerts": string[],
+          "consensus": "BULLISH" | "BEARISH" | "NEUTRAL"
+        }`,
+      config: {
+        responseMimeType: "application/json",
+        tools: useTools ? [{ googleSearch: {} }] : undefined
+      }
     });
-    
-    if (!response.ok) throw new Error("Backend error");
-    return await response.json();
+
+    const text = response.text;
+    if (!text) throw new Error("Empty response");
+    return JSON.parse(text);
+  };
+
+  try {
+    // Try with latest model and tools
+    return await tryModel("gemini-3-flash-preview", true);
   } catch (error) {
-    console.error("Error fetching market intelligence:", error);
-    return {
-      sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
-      topAssets: ["BTC", "ETH", "SOL"],
-      signals: [],
-      alerts: ["No se pudo conectar con las fuentes externas"],
-      consensus: "NEUTRAL"
-    };
+    console.warn("First attempt failed, trying without tools:", error);
+    try {
+      // Try without tools
+      return await tryModel("gemini-3-flash-preview", false);
+    } catch (error2) {
+      console.warn("Second attempt failed, trying backend fallback:", error2);
+      // Fallback to backend
+      try {
+        const response = await fetch("/api/ai/intelligence", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol })
+        });
+        if (response.ok) return await response.json();
+      } catch (e) {
+        console.error("Backend fallback failed:", e);
+      }
+    }
   }
+
+  return {
+    sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
+    topAssets: ["BTC", "ETH", "SOL"],
+    signals: [],
+    alerts: ["No se pudo conectar con las fuentes de datos. Reintenta en unos momentos."],
+    consensus: "NEUTRAL"
+  };
 }
 
 export async function fetchRealTimeNews() {

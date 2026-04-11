@@ -357,28 +357,41 @@ export default function App() {
         <Toaster position="top-right" theme="dark" richColors />
         <SignalMonitor />
         <MarketScanner />
-        <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary">
-          {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
-          <TopAppBar />
-          <main className="flex-1 pt-20 pb-24">
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/market" element={<Market />} />
-                <Route path="/analysis" element={<Analysis />} />
-                <Route path="/signal/:symbol" element={<SignalDetail />} />
-                <Route path="/signals-history" element={<SignalHistory />} />
-                <Route path="/terminal" element={<Terminal />} />
-                <Route path="/copy-trading" element={<CopyTrading />} />
-                <Route path="/news" element={<News />} />
-                <Route path="/btc-comparison" element={<BTCComparison />} />
-                <Route path="/top-100" element={<CryptoBubbles />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </AnimatePresence>
-          </main>
-          <BottomNavBar />
+        <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary relative overflow-hidden">
+          {/* Global Thematic Background - Wall Street / Market Style */}
+          <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.05] grayscale contrast-125">
+            <img 
+              src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+              alt="Market Background" 
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="fixed inset-0 bg-gradient-to-b from-background/90 via-background/40 to-background/90 pointer-events-none z-[1]"></div>
+          
+          <div className="relative z-10 flex flex-col min-h-screen">
+            {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+            <TopAppBar />
+            <main className="flex-1 pt-20 pb-24">
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/market" element={<Market />} />
+                  <Route path="/analysis" element={<Analysis />} />
+                  <Route path="/signal/:symbol" element={<SignalDetail />} />
+                  <Route path="/signals-history" element={<SignalHistory />} />
+                  <Route path="/terminal" element={<Terminal />} />
+                  <Route path="/copy-trading" element={<CopyTrading />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/btc-comparison" element={<BTCComparison />} />
+                  <Route path="/top-100" element={<CryptoBubbles />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </AnimatePresence>
+            </main>
+            <BottomNavBar />
+          </div>
         </div>
       </Router>
     </ErrorBoundary>

@@ -213,12 +213,11 @@ async function startServer() {
       const genAI = new GoogleGenerativeAI(apiKey);
       
       const getIntelligence = async (useTools: boolean) => {
-        const modelConfig: any = { model: "gemini-2.0-flash" };
-        if (useTools) {
-          modelConfig.tools = [{ googleSearch: {} }];
-        }
+        const model = genAI.getGenerativeModel({ 
+          model: "gemini-3-flash-preview",
+          tools: useTools ? [{ googleSearch: {} }] as any : undefined
+        });
         
-        const model = genAI.getGenerativeModel(modelConfig);
         const prompt = `Realiza un análisis de INTELIGENCIA DE MERCADO EXTREMO para el activo ${symbol} y el mercado cripto global.
           Tu objetivo es actuar como un rastreador de datos en tiempo real que escanea:
           - Twitter (X): Cuentas de traders institucionales, analistas top (ej: Glassnode, Willy Woo, PlanB) y hashtags virales.

@@ -372,15 +372,16 @@ const Analysis = () => {
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
           {/* External Market Intelligence */}
-          <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group">
-            <div className="absolute inset-0 opacity-10 grayscale pointer-events-none">
+          <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl">
+            <div className="absolute inset-0 opacity-[0.07] grayscale contrast-150 pointer-events-none group-hover:scale-110 transition-transform duration-700">
               <img 
-                src="https://picsum.photos/seed/wallstreet/800/600?grayscale" 
-                alt="Wall Street" 
+                src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+                alt="Wall Street Bull" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-transparent to-background/80 pointer-events-none"></div>
             <div className="relative z-10">
               <MarketIntelligence 
                 data={marketIntelligence} 
@@ -391,23 +392,24 @@ const Analysis = () => {
           </div>
 
           {/* Asset Comparator */}
-          <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group">
-            <div className="absolute inset-0 opacity-10 grayscale pointer-events-none">
+          <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl">
+            <div className="absolute inset-0 opacity-[0.07] grayscale contrast-150 pointer-events-none group-hover:scale-110 transition-transform duration-700">
               <img 
-                src="https://picsum.photos/seed/trading-floor/800/600?grayscale" 
-                alt="Trading Floor" 
+                src="https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=2070&auto=format&fit=crop" 
+                alt="Trading Charts" 
                 className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
             </div>
+            <div className="absolute inset-0 bg-gradient-to-br from-background/80 via-transparent to-background/80 pointer-events-none"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-8">
-                <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center border border-secondary/20">
-                  <BarChart3 className="w-5 h-5 text-secondary" />
+                <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center border border-secondary/20">
+                  <BarChart3 className="w-6 h-6 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-on-surface uppercase tracking-tight">Comparador de Activos</h3>
-                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Rendimiento Relativo %</p>
+                  <h3 className="text-2xl font-black text-on-surface uppercase tracking-tight">Comparador de Activos</h3>
+                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Rendimiento Relativo %</p>
                 </div>
               </div>
               <ChartComparator 
