@@ -9,7 +9,8 @@ import {
   Zap,
   MessageSquare,
   Twitter,
-  Hash
+  Hash,
+  RefreshCw
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,9 +23,18 @@ interface MarketIntelligenceProps {
     consensus: string;
   };
   loading?: boolean;
+  onRefresh?: () => void;
 }
 
-const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ data, loading }) => {
+const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ data, loading, onRefresh }) => {
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      if (onRefresh) onRefresh();
+    }, 10 * 60 * 1000); // 10 minutes
+
+    return () => clearInterval(interval);
+  }, [onRefresh]);
+
   if (loading) {
     return (
       <div className="trading-card animate-pulse space-y-6">
@@ -50,13 +60,23 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ data, loading }
             <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Análisis de X, Reddit y Telegram</p>
           </div>
         </div>
-        <div className={cn(
-          "px-6 py-2 rounded-full border font-black text-[10px] uppercase tracking-widest",
-          data.consensus === "BULLISH" ? "bg-primary/10 text-primary border-primary/20" :
-          data.consensus === "BEARISH" ? "bg-secondary/10 text-secondary border-secondary/20" :
-          "bg-surface-container-high text-on-surface-variant border-outline-variant/10"
-        )}>
-          Consenso: {data.consensus}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onRefresh}
+            disabled={loading}
+            className="p-2 bg-surface-container-high rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all text-on-surface-variant hover:text-primary disabled:opacity-50"
+            title="Refrescar datos"
+          >
+            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
+          </button>
+          <div className={cn(
+            "px-6 py-2 rounded-full border font-black text-[10px] uppercase tracking-widest",
+            data.consensus === "BULLISH" ? "bg-primary/10 text-primary border-primary/20" :
+            data.consensus === "BEARISH" ? "bg-secondary/10 text-secondary border-secondary/20" :
+            "bg-surface-container-high text-on-surface-variant border-outline-variant/10"
+          )}>
+            Consenso: {data.consensus}
+          </div>
         </div>
       </div>
 

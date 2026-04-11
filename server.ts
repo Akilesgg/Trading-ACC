@@ -219,17 +219,19 @@ async function startServer() {
         }
         
         const model = genAI.getGenerativeModel(modelConfig);
-        const prompt = `Realiza un análisis de INTELIGENCIA DE MERCADO para el activo ${symbol} y el mercado cripto en general.
-          Busca información REAL Y RECIENTE de HOY en:
-          - Twitter (X): Cuentas de traders influyentes y hashtags como #${symbol}, #CryptoSignals.
-          - Reddit: r/CryptoCurrency, r/Bitcoin, r/CryptoMarkets.
-          - Telegram: Canales públicos populares de señales.
+        const prompt = `Realiza un análisis de INTELIGENCIA DE MERCADO EXTREMO para el activo ${symbol} y el mercado cripto global.
+          Tu objetivo es actuar como un rastreador de datos en tiempo real que escanea:
+          - Twitter (X): Cuentas de traders institucionales, analistas top (ej: Glassnode, Willy Woo, PlanB) y hashtags virales.
+          - Telegram: Canales públicos de señales, grupos de ballenas y comunidades de trading.
+          - Reddit: r/CryptoCurrency, r/WallStreetBetsCrypto, r/Bitcoin.
+          - Instagram/TikTok: Tendencias de sentimiento retail y "hype" de mercado.
+          - Foros especializados y noticias de última hora.
           
-          OBJETIVOS:
-          1. Detectar señales externas recientes (formato: Activo, Tipo, Entrada, TP, SL).
-          2. Calcular el sentimiento (LONG vs SHORT) en porcentaje.
-          3. Identificar los TOP 5 activos más mencionados hoy.
-          4. Detectar alertas de sentimiento extremo.
+          OBJETIVOS DE ESCANEO:
+          1. SEÑALES DE TRADING: Detectar señales con Entrada, TP y SL.
+          2. SENTIMIENTO: Analizar el volumen de menciones alcistas vs bajistas.
+          3. ACTIVOS HOT: Identificar los 5 activos con mayor incremento de volumen social.
+          4. ALERTAS: Detectar anomalías (ej: "Pánico en redes", "Euforia extrema", "Ballenas moviendo fondos a exchanges").
           
           Responde estrictamente en formato JSON con esta estructura:
           {
