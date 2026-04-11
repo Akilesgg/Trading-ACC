@@ -39,7 +39,7 @@ import {
   fetchAssetFundamentals,
   AssetFundamental
 } from "@/services/cryptoService";
-import { analyzeMarket, getMarketSentiment, fetchRealTimeNews } from "@/services/geminiService";
+import { analyzeMarket, getMarketSentiment, fetchRealTimeNews, fetchMarketIntelligence } from "@/services/geminiService";
 import { toast } from "sonner";
 import { useSignalStore } from "@/store/useSignalStore";
 import AnalysisTool from "@/components/analysis/AnalysisTool";
@@ -51,6 +51,7 @@ import WyckoffAnalyzer from "@/components/analysis/WyckoffAnalyzer";
 
 const DEFAULT_LAYOUT = [
   "comparator",
+  "market_intelligence",
   "sentiment_gauges",
   "strategy",
   "context",
@@ -86,6 +87,14 @@ const Analysis = () => {
   const [topTraders, setTopTraders] = useState<any[]>([]);
   const [largeTransactions, setLargeTransactions] = useState<any[]>([]);
   const [allAssets, setAllAssets] = useState<any[]>([]);
+  const [marketIntelligence, setMarketIntelligence] = useState<any>({
+    sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
+    topAssets: ["BTC", "ETH", "SOL"],
+    signals: [],
+    alerts: [],
+    consensus: "NEUTRAL"
+  });
+  const [intelligenceLoading, setIntelligenceLoading] = useState(false);
   
   const [layout, setLayout] = useState<string[]>(() => {
     const saved = localStorage.getItem("analysis_layout_v3");
@@ -128,18 +137,12 @@ const Analysis = () => {
         price: k.close
       })));
 
-      const [sentimentData, newsData, eventsData, whalesData, tradersData, txData] = await Promise.all([
-        getMarketSentiment(),
-        fetchRealTimeNews(),
-        fetchEconomicEvents(),
+      const [whalesData, tradersData, txData] = await Promise.all([
         fetchWhaleMovements(),
         fetchTopTraders(),
         fetchLargeTransactions()
       ]);
 
-      setSentiment(sentimentData);
-      setNews(newsData);
-      setEvents(eventsData);
       setWhales(whalesData);
       setTopTraders(tradersData);
       setLargeTransactions(txData);
@@ -147,6 +150,25 @@ const Analysis = () => {
       console.error("Error loading market data:", error);
     }
   }, [selectedSymbol, selectedTimeframe]);
+
+  const loadNewsData = useCallback(async () => {
+    try {
+      setIntelligenceLoading(true);
+      const [sentimentData, newsData, intelData] = await Promise.all([
+        getMarketSentiment(),
+        fetchRealTimeNews(),
+        fetchMarketIntelligence(selectedSymbol)
+      ]);
+      setSentiment(sentimentData);
+      setNews(newsData);
+      setEvents(newsData); // Use news as events for consistency
+      setMarketIntelligence(intelData);
+    } catch (error) {
+      console.error("Error loading news data:", error);
+    } finally {
+      setIntelligenceLoading(false);
+    }
+  }, [selectedSymbol]);
 
   useEffect(() => {
     if (urlSymbol && urlSymbol !== selectedSymbol) {
@@ -159,6 +181,12 @@ const Analysis = () => {
     const interval = setInterval(loadMarketData, 30000);
     return () => clearInterval(interval);
   }, [loadMarketData]);
+
+  useEffect(() => {
+    loadNewsData();
+    const interval = setInterval(loadNewsData, 600000); // 10 minutes
+    return () => clearInterval(interval);
+  }, [loadNewsData]);
 
   const parseAnalysis = (raw: string) => {
     const sections: Record<string, string> = {};
@@ -409,6 +437,8 @@ const Analysis = () => {
                     generalTF={generalTF}
                     setGeneralTF={setGeneralTF}
                     allAssets={allAssets}
+                    marketIntelligence={marketIntelligence}
+                    intelligenceLoading={intelligenceLoading}
                   />
                 ))}
               </Reorder.Group>

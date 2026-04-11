@@ -32,6 +32,7 @@ import {
   ReferenceDot 
 } from 'recharts';
 import ChartComparator from "./ChartComparator";
+import MarketIntelligence from "./MarketIntelligence";
 import { toast } from "sonner";
 
 const WyckoffArrow = (props: any) => {
@@ -167,6 +168,8 @@ interface AnalysisModuleProps {
   generalTF: string;
   setGeneralTF: (tf: string) => void;
   allAssets?: any[];
+  marketIntelligence?: any;
+  intelligenceLoading?: boolean;
 }
 
 const AnalysisModule: React.FC<AnalysisModuleProps> = ({ 
@@ -186,7 +189,9 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   setTop100TF, 
   generalTF, 
   setGeneralTF,
-  allAssets = []
+  allAssets = [],
+  marketIntelligence,
+  intelligenceLoading
 }) => {
   const controls = useDragControls();
   const [copied, setCopied] = useState(false);
@@ -217,6 +222,13 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           allAssets={allAssets} 
           defaultSymbol1={ticker?.symbol || "BTCUSDT"} 
           defaultSymbol2="ETHUSDT" 
+        />
+      )}
+
+      {moduleId === "market_intelligence" && (
+        <MarketIntelligence 
+          data={marketIntelligence} 
+          loading={intelligenceLoading} 
         />
       )}
 

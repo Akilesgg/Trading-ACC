@@ -13,24 +13,32 @@ import {
   Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchEconomicEvents } from "@/services/cryptoService";
+import { fetchRealTimeNews, getMarketSentiment } from "@/services/geminiService";
 
 const News: React.FC = () => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sentiment, setSentiment] = useState<string>("Cargando análisis de sentimiento...");
+
+  const loadData = async () => {
+    try {
+      const [newsData, sentimentData] = await Promise.all([
+        fetchRealTimeNews(),
+        getMarketSentiment()
+      ]);
+      setNews(newsData);
+      setSentiment(sentimentData);
+    } catch (error) {
+      console.error("Error loading news:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const data = await fetchEconomicEvents();
-        setNews(data);
-      } catch (error) {
-        console.error("Error loading news:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
+    const interval = setInterval(loadData, 600000); // 10 minutes
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -183,7 +191,7 @@ const News: React.FC = () => {
               </div>
             </div>
             <p className="text-[10px] text-on-surface-variant italic leading-relaxed">
-              "El mercado muestra un sesgo alcista moderado a pesar de la incertidumbre macroeconómica. La acumulación institucional continúa en niveles clave."
+              "{sentiment}"
             </p>
           </section>
 

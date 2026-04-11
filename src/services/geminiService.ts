@@ -102,6 +102,52 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
   }
 }
 
+export async function fetchMarketIntelligence(symbol: string) {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Realiza un análisis de INTELIGENCIA DE MERCADO para el activo ${symbol} y el mercado cripto en general.
+        Busca en:
+        - Twitter (X): Cuentas de traders influyentes y hashtags como #${symbol}, #CryptoSignals.
+        - Reddit: r/CryptoCurrency, r/Bitcoin, r/CryptoMarkets.
+        - Telegram: Canales públicos como 'Crypto Signals', 'Binance Killers', 'Fed. Russian Insiders' y otros canales de señales populares.
+        
+        OBJETIVOS:
+        1. Detectar señales externas recientes (formato: Activo, Tipo, Entrada, TP, SL). Busca textos tipo "BTC LONG 42000 TP 44000 SL 41000".
+        2. Calcular el sentimiento (LONG vs SHORT) en porcentaje basado en el volumen de menciones y el tono.
+        3. Identificar los TOP 5 activos más mencionados hoy en estas redes.
+        4. Detectar alertas de sentimiento extremo (ej: "Exceso de LONG -> Posible Long Squeeze/Corrección").
+        
+        Responde estrictamente en formato JSON con esta estructura:
+        {
+          "sentiment": { "long": number, "short": number, "intensity": "LOW" | "MEDIUM" | "HIGH" },
+          "topAssets": string[],
+          "signals": [
+            { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string }
+          ],
+          "alerts": string[],
+          "consensus": "BULLISH" | "BEARISH" | "NEUTRAL"
+        }`,
+      config: {
+        responseMimeType: "application/json",
+        tools: [{ googleSearch: {} }]
+      }
+    });
+
+    return JSON.parse(response.text);
+  } catch (error) {
+    console.error("Error fetching market intelligence:", error);
+    return {
+      sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
+      topAssets: ["BTC", "ETH", "SOL"],
+      signals: [],
+      alerts: ["No se pudo conectar con las fuentes externas"],
+      consensus: "NEUTRAL"
+    };
+  }
+}
+
 export async function fetchRealTimeNews() {
   const fallbackNews = [
     {
@@ -127,7 +173,20 @@ export async function fetchRealTimeNews() {
   try {
     const response = await fetch("/api/ai/news");
     if (!response.ok) throw new Error("Backend error");
-    return await response.json();
+    const data = await response.json();
+    
+    // Client-side filter to ensure only today's news are shown
+    // We look for keywords that indicate previous days in the "time" field
+    const filteredData = data.filter((item: any) => {
+      const timeStr = item.time?.toLowerCase() || "";
+      const isPastDay = timeStr.includes("ayer") || 
+                        timeStr.includes("día") || 
+                        timeStr.includes("semana") ||
+                        timeStr.includes("mes");
+      return !isPastDay;
+    });
+
+    return filteredData;
   } catch (error) {
     console.error("Error fetching real-time news:", error);
     return fallbackNews;
