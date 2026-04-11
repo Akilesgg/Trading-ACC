@@ -16,11 +16,10 @@ import {
   fetchWhaleMovements, 
   fetchTopTraders, 
   fetchLargeTransactions, 
-  fetchEconomicEvents,
   fetchAssetFundamentals,
   AssetFundamental
 } from "@/services/cryptoService";
-import { getMarketSentiment } from "@/services/geminiService";
+import { getMarketSentiment, fetchRealTimeNews } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import { sendTelegramAlert } from "@/services/telegramService";
 import { detectMarketRegime } from "@/services/signalEngine";
@@ -167,16 +166,14 @@ const Dashboard = () => {
       // Set loading to false as soon as we have the primary data
       setLoading(false);
 
-      const [whales, traders, txs, events] = await Promise.all([
+      const [whales, traders, txs] = await Promise.all([
         fetchWhaleMovements(),
         fetchTopTraders(),
-        fetchLargeTransactions(),
-        fetchEconomicEvents()
+        fetchLargeTransactions()
       ]);
       setWhaleMovements(whales);
       setTopTraders(traders);
       setLargeTransactions(txs);
-      setEconomicEvents(events);
 
       const aiSentiment = await getMarketSentiment();
       setSentiment(aiSentiment);
@@ -185,14 +182,34 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
+  }, [currentTimeframe]);
+
+  const loadNews = useCallback(async () => {
+    try {
+      const news = await fetchRealTimeNews();
+      // Filter news from previous day if they have a date property or just trust Gemini
+      // The user specifically asked to remove news from previous day.
+      setEconomicEvents(news);
+    } catch (error) {
+      console.error("News load error:", error);
+    }
   }, []);
 
   useEffect(() => {
-    setAllTickers([]); // Clear current signals when timeframe changes
     loadData();
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, [loadData, currentTimeframe]);
+
+  useEffect(() => {
+    loadNews();
+    const interval = setInterval(loadNews, 600000); // 10 minutes
+    return () => clearInterval(interval);
+  }, [loadNews]);
+
+  useEffect(() => {
+    setAllTickers([]); // Clear current signals when timeframe changes
+  }, [currentTimeframe]);
 
   useEffect(() => {
     audioRef.current = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");

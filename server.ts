@@ -148,7 +148,8 @@ async function startServer() {
         generationConfig: { responseMimeType: "application/json" }
       });
 
-      const prompt = `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas hoy ${new Date().toLocaleDateString()}.
+      const prompt = `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas EXCLUSIVAMENTE de HOY ${new Date().toLocaleDateString()}.
+        Es CRÍTICO que no incluyas noticias de días anteriores.
         Para cada noticia, proporciona:
         1. Título de la noticia.
         2. Un breve resumen (2 frases).
@@ -156,6 +157,8 @@ async function startServer() {
         4. Una puntuación de impacto de la IA (0-100).
         5. El efecto esperado (ej: Volatilidad, Tendencia Alcista, etc.).
         6. Una URL de fuente real y válida (Reuters, Bloomberg, CNBC, etc.).
+        7. Un análisis detallado (campo "details").
+        8. Una recomendación (COMPRA, VENTA, MANTENER).
         
         Responde estrictamente en formato JSON con esta estructura:
         [
@@ -166,7 +169,9 @@ async function startServer() {
             "aiScore": 85,
             "effect": "Efecto",
             "time": "Hace X min",
-            "sourceUrl": "URL"
+            "sourceUrl": "URL",
+            "details": "Análisis detallado",
+            "recommendation": "COMPRA"
           }
         ]`;
 
