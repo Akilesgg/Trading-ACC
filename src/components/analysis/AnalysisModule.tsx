@@ -217,21 +217,6 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         <GripVertical className="w-4 h-4" />
       </div>
       
-      {moduleId === "comparator" && (
-        <ChartComparator 
-          allAssets={allAssets} 
-          defaultSymbol1={ticker?.symbol || "BTCUSDT"} 
-          defaultSymbol2="ETHUSDT" 
-        />
-      )}
-
-      {moduleId === "market_intelligence" && (
-        <MarketIntelligence 
-          data={marketIntelligence} 
-          loading={intelligenceLoading} 
-        />
-      )}
-
       {moduleId === "sentiment_gauges" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <SentimentGauge 

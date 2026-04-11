@@ -48,10 +48,10 @@ import AnalysisModule from "@/components/analysis/AnalysisModule";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import FundamentalModal from "@/components/common/FundamentalModal";
 import WyckoffAnalyzer from "@/components/analysis/WyckoffAnalyzer";
+import ChartComparator from "@/components/analysis/ChartComparator";
+import MarketIntelligence from "@/components/analysis/MarketIntelligence";
 
 const DEFAULT_LAYOUT = [
-  "comparator",
-  "market_intelligence",
   "sentiment_gauges",
   "strategy",
   "context",
@@ -342,6 +342,56 @@ const Analysis = () => {
       
       {/* Wyckoff Analyzer Section */}
       <WyckoffAnalyzer />
+
+      {/* Real-Time Intelligence & External Analysis Section */}
+      <section className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-primary/10 rounded-[2rem] flex items-center justify-center border border-primary/20 shadow-2xl shadow-primary/10">
+              <Zap className="w-7 h-7 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-4xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Externa & Comparativa</h2>
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.3em] opacity-50">Análisis de Redes Sociales y Correlación de Activos</p>
+            </div>
+          </div>
+          <button 
+            onClick={loadNewsData}
+            className="flex items-center gap-2 px-6 py-3 bg-surface-container-high rounded-2xl border border-outline-variant/10 hover:border-primary/30 transition-all text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary"
+          >
+            <RefreshCw className={cn("w-4 h-4", intelligenceLoading && "animate-spin")} />
+            Actualizar Datos
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          {/* External Market Intelligence */}
+          <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl">
+            <MarketIntelligence 
+              data={marketIntelligence} 
+              loading={intelligenceLoading} 
+            />
+          </div>
+
+          {/* Asset Comparator */}
+          <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center border border-secondary/20">
+                <BarChart3 className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-on-surface uppercase tracking-tight">Comparador de Activos</h3>
+                <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Rendimiento Relativo %</p>
+              </div>
+            </div>
+            <ChartComparator 
+              allAssets={allAssets} 
+              defaultSymbol1={ticker?.symbol || "BTCUSDT"} 
+              defaultSymbol2="ETHUSDT" 
+            />
+          </div>
+        </div>
+      </section>
 
       {/* Analysis Tool */}
       <AnalysisTool 
