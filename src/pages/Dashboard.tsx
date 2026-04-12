@@ -17,7 +17,9 @@ import {
   fetchTopTraders, 
   fetchLargeTransactions, 
   fetchAssetFundamentals,
-  AssetFundamental
+  AssetFundamental,
+  fetchFearGreedIndex,
+  FearGreedData
 } from "@/services/cryptoService";
 import { getMarketSentiment, fetchRealTimeNews } from "@/services/geminiService";
 import { useWatchlist } from "@/hooks/useWatchlist";
@@ -70,6 +72,7 @@ const Dashboard = () => {
 
   const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
   const [marketRegime, setMarketRegime] = useState<string>("CARGANDO...");
+  const [fearGreedHistory, setFearGreedHistory] = useState<FearGreedData[]>([]);
 
   useEffect(() => {
     const getRegime = async () => {
@@ -177,6 +180,9 @@ const Dashboard = () => {
 
       const aiSentiment = await getMarketSentiment();
       setSentiment(aiSentiment);
+
+      const fngData = await fetchFearGreedIndex(30);
+      setFearGreedHistory(fngData);
     } catch (error) {
       console.error("Dashboard data load error:", error);
     } finally {
@@ -426,6 +432,7 @@ const Dashboard = () => {
             sentiment={sentiment} 
             onShowSettings={() => setShowNotifSettings(true)} 
             marketRegime={marketRegime}
+            fearGreedHistory={fearGreedHistory}
           />
           <PriceAlerts currentPrices={currentPricesMap} />
         </div>

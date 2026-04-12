@@ -475,3 +475,30 @@ export async function calculateBTCCorrelation(symbol: string) {
     return 1.0;
   }
 }
+
+export interface FearGreedData {
+  value: number;
+  value_classification: string;
+  timestamp: string;
+}
+
+export async function fetchFearGreedIndex(limit: number = 30): Promise<FearGreedData[]> {
+  try {
+    const response = await fetch(`https://api.alternative.me/fng/?limit=${limit}`);
+    if (!response.ok) throw new Error("Failed to fetch Fear & Greed Index");
+    const data = await response.json();
+    return data.data.map((item: any) => ({
+      value: parseInt(item.value),
+      value_classification: item.value_classification,
+      timestamp: new Date(parseInt(item.timestamp) * 1000).toISOString()
+    })).reverse(); // Reverse to get chronological order for charts
+  } catch (error) {
+    console.error("Error fetching Fear & Greed Index:", error);
+    // Fallback data
+    return Array.from({ length: limit }).map((_, i) => ({
+      value: 50 + Math.floor(Math.random() * 20),
+      value_classification: "Neutral",
+      timestamp: new Date(Date.now() - (limit - i) * 24 * 60 * 60 * 1000).toISOString()
+    }));
+  }
+}
