@@ -70,7 +70,7 @@
 }
 
 .trading-card {
-  @apply bg-surface-container-high/40 backdrop-blur-md border border-outline-variant/10 rounded-xl p-6 transition-all duration-300 hover:border-primary/20;
+  @apply bg-surface-container-high/90 backdrop-blur-3xl border border-outline-variant/10 rounded-xl p-6 transition-all duration-300 hover:border-primary/20;
 }
 
 .trading-grid {

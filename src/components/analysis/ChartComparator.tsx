@@ -190,7 +190,6 @@ const ChartComparator: React.FC<ChartComparatorProps> = ({ allAssets, defaultSym
       </div>
 
       <div className="h-80 w-full bg-surface-container-high/20 rounded-[2rem] p-6 border border-outline-variant/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm z-10 rounded-[2rem]">
             <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>

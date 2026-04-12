@@ -44,9 +44,9 @@ const News: React.FC = () => {
   return (
     <div className="min-h-screen bg-background text-on-surface p-4 md:p-8 space-y-8 relative overflow-hidden">
       {/* Page Specific Background */}
-      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+      <div className="fixed inset-0 opacity-[0.06] grayscale contrast-150 pointer-events-none z-0">
         <img 
-          src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop" 
           alt="News Background" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"

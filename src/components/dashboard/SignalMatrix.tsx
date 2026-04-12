@@ -377,8 +377,6 @@ const SignalCard = ({ ticker, isWatchlisted, onToggleWatchlist, isAlertEnabled, 
         isTriggered && "border-secondary shadow-[0_0_40px_rgba(255,107,107,0.3)] animate-pulse"
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
-      
       <div className="flex justify-between items-start relative z-10">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center p-3 shadow-inner border border-outline-variant/10 group-hover/card:scale-110 transition-transform">

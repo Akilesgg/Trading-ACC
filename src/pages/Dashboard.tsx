@@ -352,9 +352,9 @@ const Dashboard = () => {
   return (
     <div className="relative min-h-screen">
       {/* Page Specific Background */}
-      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+      <div className="fixed inset-0 opacity-[0.06] grayscale contrast-150 pointer-events-none z-0">
         <img 
-          src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1534481909716-9a482087f27d?q=80&w=2070&auto=format&fit=crop" 
           alt="Dashboard Background" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"

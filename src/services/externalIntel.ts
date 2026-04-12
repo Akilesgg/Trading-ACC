@@ -6,7 +6,13 @@ export interface ExternalIntelData {
     short: number;
     intensity: "LOW" | "MEDIUM" | "HIGH";
   };
-  topAssets: string[];
+  narrative: string;
+  trendingTopics: string[];
+  whaleActivity: string;
+  keyLevels: {
+    support: number[];
+    resistance: number[];
+  };
   signals: Array<{
     asset: string;
     type: "LONG" | "SHORT";
@@ -14,6 +20,7 @@ export interface ExternalIntelData {
     tp: number;
     sl: number;
     source: string;
+    reasoning?: string;
   }>;
   alerts: string[];
   consensus: "BULLISH" | "BEARISH" | "NEUTRAL";
@@ -38,7 +45,10 @@ class ExternalIntelService {
       // Ensure data structure is correct
       const intelData: ExternalIntelData = {
         sentiment: data.sentiment || { long: 50, short: 50, intensity: "MEDIUM" },
-        topAssets: data.topAssets || ["BTC", "ETH", "SOL"],
+        narrative: data.narrative || "Análisis no disponible en este momento.",
+        trendingTopics: data.trendingTopics || data.topAssets || ["BTC", "ETH", "SOL"],
+        whaleActivity: data.whaleActivity || "No se detectó actividad inusual.",
+        keyLevels: data.keyLevels || { support: [], resistance: [] },
         signals: data.signals || [],
         alerts: data.alerts || [],
         consensus: data.consensus || "NEUTRAL",

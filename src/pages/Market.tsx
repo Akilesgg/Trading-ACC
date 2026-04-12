@@ -62,9 +62,9 @@ const MarketPage = () => {
   return (
     <div className="relative min-h-screen">
       {/* Page Specific Background */}
-      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+      <div className="fixed inset-0 opacity-[0.06] grayscale contrast-150 pointer-events-none z-0">
         <img 
-          src="https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=2070&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1605792657660-596af9039e20?q=80&w=2070&auto=format&fit=crop" 
           alt="Market Page Background" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"

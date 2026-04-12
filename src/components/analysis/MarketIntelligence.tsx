@@ -60,7 +60,10 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
 
   const data = intel || {
     sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
-    topAssets: ["BTC", "ETH", "SOL"],
+    narrative: "Análisis en curso...",
+    trendingTopics: ["BTC", "ETH", "SOL"],
+    whaleActivity: "Escaneando movimientos...",
+    keyLevels: { support: [], resistance: [] },
     signals: [],
     alerts: [],
     consensus: "NEUTRAL",
@@ -78,7 +81,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
           <div>
             <h3 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Externa</h3>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">X, Telegram, Reddit, Instagram</span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Fuentes: X, Reddit, Telegram, Foros, On-Chain</span>
               <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
               <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Live Scan</span>
             </div>
@@ -101,80 +104,120 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Sentiment Analysis Card */}
-        <div className="lg:col-span-5 bg-surface-container-high/40 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-8 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-          
-          <div className="flex items-center justify-between">
-            <h4 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" /> Sentimiento Social
-            </h4>
-            <span className={cn(
-              "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
-              data.consensus === "BULLISH" ? "bg-primary/10 text-primary border-primary/20" :
-              data.consensus === "BEARISH" ? "bg-secondary/10 text-secondary border-secondary/20" :
-              "bg-surface-container-high text-on-surface-variant border-outline-variant/10"
-            )}>
-              {data.consensus}
-            </span>
+        {/* Sentiment & Narrative Card */}
+        <div className="lg:col-span-5 space-y-6">
+          <div className="bg-surface-container-high/60 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+            
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" /> Sentimiento Social
+              </h4>
+              <span className={cn(
+                "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                data.consensus === "BULLISH" ? "bg-primary/10 text-primary border-primary/20" :
+                data.consensus === "BEARISH" ? "bg-secondary/10 text-secondary border-secondary/20" :
+                "bg-surface-container-high text-on-surface-variant border-outline-variant/10"
+              )}>
+                {data.consensus}
+              </span>
+            </div>
+
+            <div className="space-y-10">
+              {/* Dynamic Sentiment Bar */}
+              <div className="space-y-4">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
+                  <span className="text-primary">LONG {data.sentiment.long}%</span>
+                  <span className="text-secondary">SHORT {data.sentiment.short}%</span>
+                </div>
+                <div className="h-6 bg-surface-container rounded-3xl overflow-hidden flex p-1 border border-outline-variant/5">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${data.sentiment.long}%` }}
+                    className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-2xl relative group"
+                  >
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </motion.div>
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${data.sentiment.short}%` }}
+                    className="h-full bg-gradient-to-l from-secondary to-secondary/80 rounded-2xl relative group"
+                  >
+                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </motion.div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 text-center">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Intensidad</p>
+                  <p className={cn(
+                    "text-lg font-black uppercase",
+                    data.sentiment.intensity === "HIGH" ? "text-secondary" : "text-primary"
+                  )}>{data.sentiment.intensity}</p>
+                </div>
+                <div className="p-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 text-center">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Menciones</p>
+                  <p className="text-lg font-black text-on-surface uppercase">Alta Vol.</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-10">
-            {/* Dynamic Sentiment Bar */}
+          {/* Narrative & Whale Activity */}
+          <div className="bg-surface-container-high/60 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-6">
             <div className="space-y-4">
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest">
-                <span className="text-primary">LONG {data.sentiment.long}%</span>
-                <span className="text-secondary">SHORT {data.sentiment.short}%</span>
-              </div>
-              <div className="h-6 bg-surface-container rounded-3xl overflow-hidden flex p-1 border border-outline-variant/5">
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${data.sentiment.long}%` }}
-                  className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-2xl relative group"
-                >
-                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </motion.div>
-                <motion.div 
-                  initial={{ width: 0 }}
-                  animate={{ width: `${data.sentiment.short}%` }}
-                  className="h-full bg-gradient-to-l from-secondary to-secondary/80 rounded-2xl relative group"
-                >
-                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </motion.div>
-              </div>
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">Narrativa del Mercado</h4>
+              <p className="text-[11px] font-medium text-on-surface leading-relaxed opacity-80">
+                {data.narrative}
+              </p>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 text-center">
-                <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Intensidad</p>
-                <p className={cn(
-                  "text-lg font-black uppercase",
-                  data.sentiment.intensity === "HIGH" ? "text-secondary" : "text-primary"
-                )}>{data.sentiment.intensity}</p>
-              </div>
-              <div className="p-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 text-center">
-                <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-1">Menciones</p>
-                <p className="text-lg font-black text-on-surface uppercase">Alta Vol.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-4 pt-6 border-t border-outline-variant/5">
-            <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest flex items-center gap-2">
-              <BarChart3 className="w-3 h-3" /> Activos más mencionados
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {data.topAssets.map((asset, i) => (
-                <span key={i} className="px-4 py-2 bg-surface-container-high rounded-xl border border-outline-variant/10 text-[10px] font-black text-on-surface uppercase tracking-widest flex items-center gap-2 hover:border-primary/30 transition-all cursor-default">
-                  <Hash className="w-3 h-3 text-primary" /> {asset}
-                </span>
-              ))}
+            
+            <div className="pt-6 border-t border-outline-variant/5 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-secondary">Actividad de Ballenas</h4>
+              <p className="text-[11px] font-medium text-on-surface leading-relaxed opacity-80">
+                {data.whaleActivity}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Signals & Alerts Card */}
+        {/* Signals, Levels & Trending Card */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Key Levels & Trending */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-surface-container-high/60 p-6 rounded-[2rem] border border-outline-variant/10 backdrop-blur-xl space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant">Niveles Clave Detectados</h4>
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {data.keyLevels?.resistance?.map((level: number, i: number) => (
+                    <span key={i} className="px-3 py-1 bg-secondary/10 text-secondary border border-secondary/20 rounded-lg text-[10px] font-black">
+                      RES: ${level.toLocaleString()}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {data.keyLevels?.support?.map((level: number, i: number) => (
+                    <span key={i} className="px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-lg text-[10px] font-black">
+                      SUP: ${level.toLocaleString()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-surface-container-high/60 p-6 rounded-[2rem] border border-outline-variant/10 backdrop-blur-xl space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant">Trending Topics</h4>
+              <div className="flex flex-wrap gap-2">
+                {data.trendingTopics?.map((topic: string, i: number) => (
+                  <span key={i} className="px-3 py-1 bg-surface-container-highest rounded-lg text-[9px] font-black text-on-surface uppercase tracking-widest border border-outline-variant/5">
+                    #{topic}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Alerts */}
           {data.alerts.length > 0 && (
             <div className="space-y-3">
@@ -195,7 +238,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
           )}
 
           {/* External Signals */}
-          <div className="bg-surface-container-high/40 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-6">
+          <div className="bg-surface-container-high/60 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-6">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
                 <Zap className="w-4 h-4 text-primary" /> Señales Detectadas (Social)
@@ -203,7 +246,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
               <Clock className="w-4 h-4 text-on-surface-variant opacity-30" />
             </div>
             
-            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {data.signals.length > 0 ? (
                 data.signals.map((signal, i) => (
                   <motion.div 
@@ -211,38 +254,51 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
                     key={i} 
-                    className="p-5 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 flex items-center justify-between group hover:border-primary/30 transition-all"
+                    className="p-5 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 flex flex-col gap-4 group hover:border-primary/30 transition-all"
                   >
-                    <div className="flex items-center gap-5">
-                      <div className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center border shadow-lg",
-                        signal.type === "LONG" ? "bg-primary/10 border-primary/20 text-primary" : "bg-secondary/10 border-secondary/20 text-secondary"
-                      )}>
-                        {signal.type === "LONG" ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-black text-on-surface uppercase tracking-tighter">{signal.asset}</p>
-                          <span className={cn(
-                            "text-[8px] font-black px-2 py-0.5 rounded uppercase",
-                            signal.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                          )}>{signal.type}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-5">
+                        <div className={cn(
+                          "w-12 h-12 rounded-2xl flex items-center justify-center border shadow-lg",
+                          signal.type === "LONG" ? "bg-primary/10 border-primary/20 text-primary" : "bg-secondary/10 border-secondary/20 text-secondary"
+                        )}>
+                          {signal.type === "LONG" ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
                         </div>
-                        <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50 mt-1">Fuente: {signal.source}</p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-black text-on-surface uppercase tracking-tighter">{signal.asset}</p>
+                            <span className={cn(
+                              "text-[8px] font-black px-2 py-0.5 rounded uppercase",
+                              signal.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                            )}>{signal.type}</span>
+                          </div>
+                          <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50 mt-1">Fuente: {signal.source}</p>
+                        </div>
+                      </div>
+                      <div className="text-right space-y-1">
+                        <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">Entry: <span className="text-primary">${signal.entry}</span></p>
+                        <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">TP: ${signal.tp}</p>
                       </div>
                     </div>
-                    <div className="text-right space-y-1">
-                      <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">Entry: <span className="text-primary">${signal.entry}</span></p>
-                      <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">TP: ${signal.tp}</p>
-                    </div>
+                    {signal.reasoning && (
+                      <div className="pt-3 border-t border-outline-variant/5">
+                        <p className="text-[10px] font-medium text-on-surface-variant leading-relaxed italic opacity-70">
+                          "{signal.reasoning}"
+                        </p>
+                      </div>
+                    )}
                   </motion.div>
                 ))
               ) : (
-                <div className="text-center py-16 space-y-4 bg-surface-container-low/20 rounded-3xl border border-dashed border-outline-variant/10">
-                  <div className="w-16 h-16 bg-surface-container-high rounded-full flex items-center justify-center mx-auto">
-                    <MessageSquare className="w-8 h-8 text-on-surface-variant/20" />
+                <div className="relative h-[300px] rounded-3xl border border-dashed border-outline-variant/10 overflow-hidden bg-surface-container-low/30">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 space-y-4">
+                    <div className="w-16 h-16 bg-surface-container-high rounded-full flex items-center justify-center shadow-2xl">
+                      <MessageSquare className="w-8 h-8 text-primary/40 animate-pulse" />
+                    </div>
+                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50 max-w-[200px] mx-auto leading-relaxed">
+                      Escaneando redes sociales, foros y datos on-chain en busca de inteligencia operativa...
+                    </p>
                   </div>
-                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50 max-w-[200px] mx-auto">Escaneando redes sociales en busca de señales operativas...</p>
                 </div>
               )}
             </div>

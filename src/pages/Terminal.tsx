@@ -61,9 +61,9 @@ const Terminal: React.FC = () => {
   return (
     <div className="flex flex-col bg-background min-h-screen pt-20 pb-24 overflow-hidden relative">
       {/* Page Specific Background */}
-      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+      <div className="fixed inset-0 opacity-[0.06] grayscale contrast-150 pointer-events-none z-0">
         <img 
-          src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1516116216624-53e697fedbea?q=80&w=2070&auto=format&fit=crop" 
           alt="Terminal Background" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"

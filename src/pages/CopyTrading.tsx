@@ -69,9 +69,9 @@ const CopyTrading: React.FC = () => {
   return (
     <div className="relative min-h-screen">
       {/* Page Specific Background */}
-      <div className="fixed inset-0 opacity-[0.05] grayscale contrast-125 pointer-events-none z-0">
+      <div className="fixed inset-0 opacity-[0.06] grayscale contrast-150 pointer-events-none z-0">
         <img 
-          src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1560523182-7fe448d75219?q=80&w=2070&auto=format&fit=crop" 
           alt="Copy Trading Background" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"

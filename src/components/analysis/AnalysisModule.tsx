@@ -337,7 +337,6 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             </div>
             
             <div className="h-56 w-full bg-surface-container-high/20 rounded-[2rem] p-6 border border-outline-variant/10 relative overflow-hidden group">
-              <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />

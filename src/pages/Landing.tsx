@@ -31,7 +31,7 @@ const LandingPage = () => {
       {/* Page Specific Background */}
       <div className="fixed inset-0 opacity-[0.08] grayscale contrast-150 pointer-events-none z-0">
         <img 
-          src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+          src="https://images.unsplash.com/photo-1605792657660-596af9039e20?q=80&w=2070&auto=format&fit=crop" 
           alt="Landing Background" 
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
