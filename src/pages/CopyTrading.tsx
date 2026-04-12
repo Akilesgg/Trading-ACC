@@ -67,7 +67,18 @@ const CopyTrading: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface p-4 md:p-8 space-y-8">
+    <div className="relative min-h-screen">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.05] grayscale contrast-125 pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+          alt="Copy Trading Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <div className="relative z-10 min-h-screen bg-background/20 text-on-surface p-4 md:p-8 space-y-8">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-8">
         <div className="space-y-3">
@@ -360,6 +371,7 @@ const CopyTrading: React.FC = () => {
             </div>
           </section>
         </div>
+      </div>
       </div>
     </div>
   );

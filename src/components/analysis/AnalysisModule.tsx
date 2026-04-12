@@ -532,6 +532,25 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         </div>
       )}
 
+      {moduleId === "market_intelligence" && (
+        <MarketIntelligence 
+          symbol={ticker?.symbol || "BTCUSDT"}
+        />
+      )}
+
+      {moduleId === "comparator" && (
+        <div className="trading-card p-8 space-y-6">
+          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Scale className="w-4 h-4" /> COMPARADOR DE ACTIVOS
+          </h4>
+          <ChartComparator 
+            allAssets={allAssets} 
+            defaultSymbol1={ticker?.symbol || "BTCUSDT"} 
+            defaultSymbol2="ETHUSDT" 
+          />
+        </div>
+      )}
+
       {moduleId === "raw" && (
         <div className="bg-neutral-950 rounded-3xl border border-white/10 overflow-hidden shadow-2xl group/terminal">
           {/* Terminal Header */}

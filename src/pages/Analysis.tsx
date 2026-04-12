@@ -284,7 +284,18 @@ const Analysis = () => {
   };
 
   return (
-    <div className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-12">
+    <div className="relative min-h-screen">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.05] grayscale contrast-125 pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+          alt="Analysis Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <div className="relative z-10 pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-12">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="space-y-3">
@@ -384,9 +395,7 @@ const Analysis = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-transparent to-background/90 pointer-events-none"></div>
             <div className="relative z-10">
               <MarketIntelligence 
-                data={marketIntelligence} 
-                loading={intelligenceLoading} 
-                onRefresh={loadNewsData}
+                symbol={selectedSymbol}
               />
             </div>
           </div>
@@ -815,6 +824,7 @@ const Analysis = () => {
         data={selectedFundamental} 
         onClose={() => setSelectedFundamental(null)} 
       />
+    </div>
     </div>
   );
 };

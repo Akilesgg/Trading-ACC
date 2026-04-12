@@ -370,11 +370,11 @@ export default function App() {
         <MarketScanner />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary relative overflow-hidden">
           {/* Global Thematic Background - Wall Street / Market Style */}
-          <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.12] grayscale contrast-150 brightness-50">
+          <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.18] grayscale contrast-[1.8] brightness-[0.6]">
             <img 
               src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
               alt="Market Background" 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover scale-110"
               referrerPolicy="no-referrer"
             />
           </div>

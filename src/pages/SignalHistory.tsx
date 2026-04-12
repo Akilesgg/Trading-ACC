@@ -42,7 +42,18 @@ const SignalHistory: React.FC = () => {
   }, [signals]);
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8">
+    <div className="relative min-h-screen">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.05] grayscale contrast-125 pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+          alt="Signal History Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <div className="relative z-10 min-h-screen bg-background/20 pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-surface-container-low/40 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-3xl shadow-2xl">
         <div className="flex items-center gap-5">
@@ -198,6 +209,7 @@ const SignalHistory: React.FC = () => {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </div>
   );

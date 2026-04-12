@@ -27,8 +27,19 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="bg-background min-h-screen overflow-x-hidden">
-      {/* Hero Section */}
+    <div className="bg-background min-h-screen overflow-x-hidden relative">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.08] grayscale contrast-150 pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+          alt="Landing Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <div className="relative z-10">
+        {/* Hero Section */}
       <section className="relative pt-40 pb-32 px-8 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[1000px] bg-primary/5 rounded-full blur-[120px] -z-10 animate-pulse" />
         
@@ -173,6 +184,7 @@ const LandingPage = () => {
           </p>
         </div>
       </footer>
+    </div>
     </div>
   );
 };
