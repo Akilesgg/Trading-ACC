@@ -59,8 +59,19 @@ const Terminal: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-background min-h-screen pt-20 pb-24 overflow-hidden">
-      {/* 4. HEADER DEL ANALIZADOR (Single Line, Clean) */}
+    <div className="flex flex-col bg-background min-h-screen pt-20 pb-24 overflow-hidden relative">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+          alt="Terminal Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <div className="relative z-10 flex flex-col flex-1">
+        {/* 4. HEADER DEL ANALIZADOR (Single Line, Clean) */}
       <div className="h-auto md:h-20 bg-surface-container-low/50 backdrop-blur-2xl border-b border-outline-variant/10 flex flex-col md:flex-row items-center justify-between px-4 md:px-10 py-4 md:py-0 z-40 shadow-2xl gap-4 md:gap-0">
         <div className="flex items-center gap-4 md:gap-10 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-3 md:gap-5">
@@ -218,6 +229,7 @@ const Terminal: React.FC = () => {
             <span className="text-primary font-black tracking-[0.3em]">LIVE MONITORING</span>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

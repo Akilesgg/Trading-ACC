@@ -61,6 +61,17 @@ const LoginScreen = () => {
   const { login } = useAuth();
   return (
     <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 opacity-20 grayscale contrast-125 pointer-events-none">
+        <img 
+          src="https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=2070&auto=format&fit=crop" 
+          alt="Login Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-br from-background via-transparent to-background pointer-events-none"></div>
+      
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(0,255,163,0.1),transparent_70%)]"></div>
       <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full"></div>
       <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-secondary/10 blur-[120px] rounded-full"></div>
@@ -359,15 +370,15 @@ export default function App() {
         <MarketScanner />
         <div className="min-h-screen flex flex-col bg-background text-on-background selection:bg-primary/30 selection:text-primary relative overflow-hidden">
           {/* Global Thematic Background - Wall Street / Market Style */}
-          <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.05] grayscale contrast-125">
+          <div className="fixed inset-0 pointer-events-none z-0 opacity-[0.12] grayscale contrast-150 brightness-50">
             <img 
-              src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+              src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
               alt="Market Background" 
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
           </div>
-          <div className="fixed inset-0 bg-gradient-to-b from-background/90 via-background/40 to-background/90 pointer-events-none z-[1]"></div>
+          <div className="fixed inset-0 bg-gradient-to-b from-background/80 via-transparent to-background/80 pointer-events-none z-[1]"></div>
           
           <div className="relative z-10 flex flex-col min-h-screen">
             {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}

@@ -42,8 +42,19 @@ const News: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface p-4 md:p-8 space-y-8">
-      {/* Header */}
+    <div className="min-h-screen bg-background text-on-surface p-4 md:p-8 space-y-8 relative overflow-hidden">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
+          alt="News Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <div className="relative z-10 space-y-8">
+        {/* Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -221,6 +232,7 @@ const News: React.FC = () => {
               ))}
             </div>
           </section>
+        </div>
         </div>
       </div>
     </div>

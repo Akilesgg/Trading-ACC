@@ -101,10 +101,30 @@ export async function analyzeMarket(symbol: string, price: string, change: strin
 }
 
 export async function fetchMarketIntelligence(symbol: string) {
+  // Try backend first as it's more reliable for search tools in this environment
+  try {
+    const response = await fetch("/api/ai/intelligence", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ symbol })
+    });
+    if (response.ok) return await response.json();
+  } catch (e) {
+    console.warn("Backend intelligence failed, trying frontend fallback:", e);
+  }
+
   const apiKey = getApiKey();
-  
+  if (!apiKey) {
+    return {
+      sentiment: { long: 50, short: 50, intensity: "MEDIUM" },
+      topAssets: ["BTC", "ETH", "SOL"],
+      signals: [],
+      alerts: ["Error de conexión: API Key no configurada."],
+      consensus: "NEUTRAL"
+    };
+  }
+
   const tryModel = async (modelName: string, useTools: boolean) => {
-    if (!apiKey) throw new Error("API Key missing");
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: modelName,
@@ -147,23 +167,12 @@ export async function fetchMarketIntelligence(symbol: string) {
     // Try with latest model and tools
     return await tryModel("gemini-3-flash-preview", true);
   } catch (error) {
-    console.warn("First attempt failed, trying without tools:", error);
+    console.warn("Frontend attempt failed, trying without tools:", error);
     try {
       // Try without tools
       return await tryModel("gemini-3-flash-preview", false);
     } catch (error2) {
-      console.warn("Second attempt failed, trying backend fallback:", error2);
-      // Fallback to backend
-      try {
-        const response = await fetch("/api/ai/intelligence", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol })
-        });
-        if (response.ok) return await response.json();
-      } catch (e) {
-        console.error("Backend fallback failed:", e);
-      }
+      console.error("All intelligence attempts failed:", error2);
     }
   }
 

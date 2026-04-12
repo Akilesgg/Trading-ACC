@@ -350,12 +350,23 @@ const Dashboard = () => {
   }
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8"
-    >
+    <div className="relative min-h-screen">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1611974717482-4828c9fd6273?q=80&w=2070&auto=format&fit=crop" 
+          alt="Dashboard Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="relative z-10 pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-8"
+      >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-surface-container-high/40 p-6 rounded-[2rem] border border-outline-variant/10 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
@@ -506,6 +517,7 @@ const Dashboard = () => {
         onClose={() => setSelectedFundamental(null)} 
       />
     </motion.div>
+    </div>
   );
 };
 

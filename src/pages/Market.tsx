@@ -60,12 +60,23 @@ const MarketPage = () => {
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="pt-24 pb-32 px-8 max-w-[1600px] mx-auto space-y-10"
-    >
+    <div className="relative min-h-screen">
+      {/* Page Specific Background */}
+      <div className="fixed inset-0 opacity-[0.03] grayscale pointer-events-none z-0">
+        <img 
+          src="https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=2070&auto=format&fit=crop" 
+          alt="Market Page Background" 
+          className="w-full h-full object-cover"
+          referrerPolicy="no-referrer"
+        />
+      </div>
+      
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="relative z-10 pt-24 pb-32 px-8 max-w-[1600px] mx-auto space-y-10"
+      >
       {/* Market Summary & Spot vs Futures */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 trading-card p-10 flex flex-col md:flex-row items-center gap-10 bg-primary/5 border-primary/20">
@@ -327,6 +338,7 @@ const MarketPage = () => {
         </div>
       </div>
     </motion.div>
+    </div>
   );
 };
 
