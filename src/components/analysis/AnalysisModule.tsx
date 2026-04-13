@@ -479,14 +479,14 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="p-6 bg-surface-container-high rounded-2xl border-l-4 border-primary shadow-lg group hover:scale-[1.02] transition-all">
-              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Entrada Sugerida</p>
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-70">Entrada Sugerida</p>
               <p className="text-3xl font-black text-on-surface tracking-tighter">
                 {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
                  analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
               </p>
             </div>
             <div className="p-6 bg-surface-container-high rounded-2xl border-l-4 border-secondary shadow-lg group hover:scale-[1.02] transition-all">
-              <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">Stop Loss</p>
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-70">Stop Loss</p>
               <p className="text-3xl font-black text-secondary tracking-tighter">
                 {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
                  analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
@@ -504,7 +504,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
               <div key={i} className="flex flex-col p-5 bg-surface-container-high rounded-2xl border border-outline-variant/10 group hover:border-primary/30 transition-all shadow-lg">
-                <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mb-2">TP {i}</span>
+                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-70">TP {i}</span>
                 <span className="text-lg font-black text-primary tracking-tighter">
                   {analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\$?\\d+([,.]\d+)*)`, 'i'))?.[1] || 
                    analysisSections["NIVELES OPERATIVOS"]?.match(new RegExp(`TAKE PROFIT ${i}:\\s*(\\d+([,.]\d+)*)`, 'i'))?.[1] || "---"}

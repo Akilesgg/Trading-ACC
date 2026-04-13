@@ -88,17 +88,17 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
           <div>
             <h3 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Externa</h3>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Fuentes: X, Reddit, Telegram, Foros, On-Chain</span>
+              <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-70">Fuentes: X, Reddit, Telegram, Foros, On-Chain</span>
               <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Live Scan</span>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Live Scan</span>
             </div>
           </div>
         </div>
         
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-end mr-2">
-            <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Última actualización</p>
-            <p className="text-[10px] font-bold text-on-surface uppercase">{new Date(data.lastUpdate).toLocaleTimeString()}</p>
+            <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-70">Última actualización</p>
+            <p className="text-[11px] font-bold text-on-surface uppercase">{new Date(data.lastUpdate).toLocaleTimeString()}</p>
           </div>
           <button 
             onClick={() => loadIntel(true)}
@@ -124,7 +124,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
             </div>
             <div>
               <h4 className="text-2xl font-black text-on-surface uppercase tracking-tighter">Consenso Global de Inteligencia</h4>
-              <p className="text-[10px] font-black text-primary uppercase tracking-widest">Veredicto Final Unificado</p>
+              <p className="text-[11px] font-black text-primary uppercase tracking-widest">Veredicto Final Unificado</p>
             </div>
           </div>
 
