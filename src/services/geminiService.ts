@@ -165,12 +165,12 @@ export async function fetchMarketIntelligence(symbol: string) {
 
   try {
     // Try with latest model and tools
-    return await tryModel("gemini-3-flash-preview", true);
+    return await tryModel("gemini-1.5-flash", true);
   } catch (error) {
     console.warn("Frontend attempt failed, trying without tools:", error);
     try {
       // Try without tools
-      return await tryModel("gemini-3-flash-preview", false);
+      return await tryModel("gemini-1.5-flash", false);
     } catch (error2) {
       console.error("All intelligence attempts failed:", error2);
     }

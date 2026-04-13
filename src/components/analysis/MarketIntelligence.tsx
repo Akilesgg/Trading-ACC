@@ -354,7 +354,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
 
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-4">
-            {data.stockMarket?.indices.map((index: any, i: number) => (
+            {data.stockMarket?.indices?.map((index: any, i: number) => (
               <div key={i} className="p-3 bg-surface-container-low/50 rounded-xl border border-outline-variant/5 text-center">
                 <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">{index.name}</p>
                 <p className="text-xs font-black text-on-surface">{index.value}</p>

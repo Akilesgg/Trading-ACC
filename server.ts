@@ -26,7 +26,7 @@ async function startServer() {
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       let modePrompt = "";
       if (mode === "Scalping") {
@@ -99,7 +99,7 @@ async function startServer() {
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         generationConfig: { responseMimeType: "application/json" }
       });
 
@@ -144,7 +144,7 @@ async function startServer() {
 
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ 
-        model: "gemini-3-flash-preview",
+        model: "gemini-1.5-flash",
         generationConfig: { responseMimeType: "application/json" }
       });
 
@@ -190,7 +190,7 @@ async function startServer() {
       if (!apiKey) return res.status(500).json({ error: "API Key missing" });
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const result = await model.generateContent("Analiza el sentimiento actual del mercado cripto global en una frase corta y profesional en ESPAÑOL. Incluye una estimación del índice Fear & Greed.");
       const response = await result.response;
@@ -214,7 +214,7 @@ async function startServer() {
       
       const getIntelligence = async (useTools: boolean) => {
         const model = genAI.getGenerativeModel({ 
-          model: "gemini-2.0-flash",
+          model: "gemini-1.5-flash",
           tools: useTools ? [{ googleSearch: {} }] as any : undefined
         });
         

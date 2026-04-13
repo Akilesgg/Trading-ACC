@@ -94,7 +94,14 @@ const Analysis = () => {
     topAssets: ["BTC", "ETH", "SOL"],
     signals: [],
     alerts: [],
-    consensus: "NEUTRAL"
+    consensus: "NEUTRAL",
+    trendingTopics: [],
+    narrative: "",
+    globalConsensus: {
+      verdict: "Analizando convergencia de datos...",
+      reasoning: "Nuestro motor está cruzando señales de Polymarket, sentimiento social y análisis técnico para generar un veredicto unificado.",
+      suggestedEntries: []
+    }
   });
   const [intelligenceLoading, setIntelligenceLoading] = useState(false);
   
@@ -700,7 +707,7 @@ const Analysis = () => {
                 "{marketIntelligence?.narrative || "Escaneando narrativa global en redes y foros..."}"
               </p>
               <div className="flex flex-wrap gap-2">
-                {marketIntelligence?.trendingTopics.slice(0, 4).map((topic: string, i: number) => (
+                {marketIntelligence?.trendingTopics?.slice(0, 4).map((topic: string, i: number) => (
                   <span key={i} className="px-2 py-1 bg-surface-container-highest text-[8px] font-black text-on-surface-variant rounded-lg border border-outline-variant/10 uppercase tracking-widest">
                     #{topic}
                   </span>
