@@ -23,8 +23,10 @@ export interface ExternalIntelData {
     reasoning?: string;
   }>;
   polymarket?: {
-    cryptoBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE" }>;
-    popularBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE" }>;
+    cryptoBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE"; detail?: string }>;
+    popularBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE"; detail?: string }>;
+    cryptoSummary?: string;
+    betSuggestions?: string[];
     conclusion?: string;
     recommendation?: string;
   };

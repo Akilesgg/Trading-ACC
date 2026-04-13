@@ -25,7 +25,8 @@ import {
   AlertTriangle, 
   RefreshCw,
   Info,
-  Search
+  Search,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -286,16 +287,8 @@ const Analysis = () => {
   return (
     <div className="relative min-h-screen">
       {/* Page Specific Background */}
-      <div className="fixed inset-0 opacity-[0.06] grayscale contrast-150 pointer-events-none z-0">
-        <img 
-          src="https://images.unsplash.com/photo-1550565118-3d1432d23840?q=80&w=2070&auto=format&fit=crop" 
-          alt="Analysis Background" 
-          className="w-full h-full object-cover"
-          referrerPolicy="no-referrer"
-        />
-      </div>
       
-      <div className="relative z-10 pt-24 pb-32 px-6 max-w-7xl mx-auto space-y-12">
+      <div className="relative z-10 pt-24 pb-32 px-6 max-w-none mx-auto space-y-12">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="space-y-3">
@@ -511,77 +504,124 @@ const Analysis = () => {
         </div>
       </div>
 
-      <div className="trading-grid">
-        {/* Main Column: AI Detailed Analysis (LEFT) */}
-        <div className="md:col-span-8 space-y-8">
-          <ErrorBoundary>
-            <Reorder.Group 
-              axis="y" 
-              values={layout} 
-              onReorder={(newOrder) => {
-                setLayout(newOrder);
-                localStorage.setItem("analysis_layout_v3", JSON.stringify(newOrder));
-              }}
-              className="space-y-8"
-            >
-              {layout.map((moduleId) => (
-                <AnalysisModule 
-                  key={moduleId}
-                  moduleId={moduleId}
-                  analysisSections={analysisSections}
-                  analysis={analysis}
-                  ticker={ticker}
-                  btcSentiment={btcSentiment}
-                  setBtcSentiment={setBtcSentiment}
-                  top100Sentiment={top100Sentiment}
-                  setTop100Sentiment={setTop100Sentiment}
-                  generalSentiment={generalSentiment}
-                  setGeneralSentiment={setGeneralSentiment}
-                  btcTF={btcTF}
-                  setBtcTF={setBtcTF}
-                  top100TF={top100TF}
-                  setTop100TF={setTop100TF}
-                  generalTF={generalTF}
-                  setGeneralTF={setGeneralTF}
-                  allAssets={allAssets}
-                  marketIntelligence={marketIntelligence}
-                  intelligenceLoading={intelligenceLoading}
-                />
-              ))}
-            </Reorder.Group>
-
-            {!analysis && !analyzing && (
-              <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-surface-container-high/20 rounded-[2.5rem] border-2 border-dashed border-outline-variant/10 p-12 text-center space-y-8">
-                <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center relative">
-                  <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping"></div>
-                  <Brain className="w-12 h-12 text-primary relative z-10" />
+      <div className="space-y-12">
+        {/* Top Section: Market Overview & Global Intelligence */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-4">
+            <MarketOverview 
+              ticker={ticker}
+              selectedSymbol={selectedSymbol}
+              chartData={chartData}
+              timeframe={selectedTimeframe}
+            />
+          </div>
+          <div className="lg:col-span-8">
+            <div className="trading-card p-10 h-full border-2 border-primary/30 bg-primary/5 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 group-hover:bg-primary/20 transition-all duration-1000"></div>
+              <div className="relative z-10 space-y-8">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary flex items-center gap-4">
+                    <Brain className="w-6 h-6 animate-pulse" /> VEREDICTO GLOBAL DE INTELIGENCIA
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-primary rounded-full animate-ping"></div>
+                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronizado</span>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <h4 className="text-2xl font-black text-on-surface uppercase tracking-tighter">Análisis IA Pendiente</h4>
-                  <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest max-w-xs mx-auto leading-relaxed">
-                    Los módulos de tiempo real están activos. Pulsa "Ejecutar Análisis Profundo" para obtener el informe detallado de la IA.
+                
+                <div className="space-y-6">
+                  <p className="text-3xl font-black text-on-surface tracking-tighter leading-tight">
+                    {marketIntelligence?.globalConsensus?.verdict || "Analizando convergencia de datos..."}
+                  </p>
+                  <p className="text-base text-on-surface-variant leading-relaxed font-medium max-w-4xl">
+                    {marketIntelligence?.globalConsensus?.reasoning || "Nuestro motor está cruzando señales de Polymarket, sentimiento social y análisis técnico para generar un veredicto unificado."}
                   </p>
                 </div>
-                <button 
-                  onClick={handleRunAnalysis}
-                  className="btn-primary px-10 py-4 text-[10px]"
-                >
-                  Comenzar Análisis Ahora
-                </button>
+
+                {marketIntelligence?.globalConsensus?.suggestedEntries && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                    {marketIntelligence.globalConsensus.suggestedEntries.map((entry: any, i: number) => (
+                      <div key={i} className="p-5 bg-surface-container-highest/50 rounded-2xl border border-primary/20 backdrop-blur-xl group hover:border-primary transition-all">
+                        <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">{entry.asset}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xl font-black text-on-surface tracking-tighter">${entry.price.toLocaleString()}</span>
+                          <span className={cn(
+                            "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
+                            entry.type === 'LONG' ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                          )}>
+                            {entry.type}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </ErrorBoundary>
+            </div>
+          </div>
         </div>
 
-        {/* Sidebar: Market Overview & Secondary Data (RIGHT) */}
-        <div className="md:col-span-4 space-y-8">
-          <MarketOverview 
-            ticker={ticker}
-            selectedSymbol={selectedSymbol}
-            chartData={chartData}
-            timeframe={selectedTimeframe}
-          />
+        {/* Main Analysis Modules - Full Width Grid */}
+        <ErrorBoundary>
+          <Reorder.Group 
+            axis="y" 
+            values={layout} 
+            onReorder={(newOrder) => {
+              setLayout(newOrder);
+              localStorage.setItem("analysis_layout_v3", JSON.stringify(newOrder));
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {layout.map((moduleId) => (
+              <AnalysisModule 
+                key={moduleId}
+                moduleId={moduleId}
+                analysisSections={analysisSections}
+                analysis={analysis}
+                ticker={ticker}
+                btcSentiment={btcSentiment}
+                setBtcSentiment={setBtcSentiment}
+                top100Sentiment={top100Sentiment}
+                setTop100Sentiment={setTop100Sentiment}
+                generalSentiment={generalSentiment}
+                setGeneralSentiment={setGeneralSentiment}
+                btcTF={btcTF}
+                setBtcTF={setBtcTF}
+                top100TF={top100TF}
+                setTop100TF={setTop100TF}
+                generalTF={generalTF}
+                setGeneralTF={setGeneralTF}
+                allAssets={allAssets}
+                marketIntelligence={marketIntelligence}
+                intelligenceLoading={intelligenceLoading}
+              />
+            ))}
+          </Reorder.Group>
 
+          {!analysis && !analyzing && (
+            <div className="h-full min-h-[400px] flex flex-col items-center justify-center bg-surface-container-high/20 rounded-[2.5rem] border-2 border-dashed border-outline-variant/10 p-12 text-center space-y-8">
+              <div className="w-24 h-24 bg-primary/5 rounded-full flex items-center justify-center relative">
+                <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping"></div>
+                <Brain className="w-12 h-12 text-primary relative z-10" />
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-2xl font-black text-on-surface uppercase tracking-tighter">Análisis IA Pendiente</h4>
+                <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest max-w-xs mx-auto leading-relaxed">
+                  Los módulos de tiempo real están activos. Pulsa "Ejecutar Análisis Profundo" para obtener el informe detallado de la IA.
+                </p>
+              </div>
+              <button 
+                onClick={handleRunAnalysis}
+                className="btn-primary px-10 py-4 text-[10px]"
+              >
+                Comenzar Análisis Ahora
+              </button>
+            </div>
+          )}
+        </ErrorBoundary>
+
+        {/* Bottom Section: Secondary Data Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Whale Movements */}
           <div className="trading-card space-y-6">
             <h4 className="section-title mb-0 flex items-center gap-2">
@@ -597,12 +637,6 @@ const Analysis = () => {
                   <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">{whale.time}</span>
                 </div>
               ))}
-            </div>
-            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
-              <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-1">RECOMENDACIÓN IA</p>
-              <p className="text-[10px] text-on-surface-variant font-medium leading-relaxed">
-                Acumulación detectada en zonas de soporte. Las ballenas están posicionándose para una ruptura alcista.
-              </p>
             </div>
           </div>
 
@@ -626,18 +660,12 @@ const Analysis = () => {
                 </div>
               ))}
             </div>
-            <div className="p-4 bg-secondary/5 border border-secondary/20 rounded-2xl">
-              <p className="text-[8px] font-black text-secondary uppercase tracking-widest mb-1">RECOMENDACIÓN IA</p>
-              <p className="text-[10px] text-on-surface-variant font-medium leading-relaxed">
-                Alta volatilidad esperada. Evitar apalancamiento excesivo durante la publicación de datos del IPC.
-              </p>
-            </div>
           </div>
 
-          {/* Top Traders Copy */}
+          {/* Top Traders */}
           <div className="trading-card space-y-6">
             <h4 className="section-title mb-0 flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" /> TOP TRADERS (COPIAR)
+              <Users className="w-4 h-4 text-primary" /> TOP TRADERS
             </h4>
             <div className="space-y-3">
               {topTraders.slice(0, 3).map((trader, idx) => (
@@ -660,11 +688,24 @@ const Analysis = () => {
                 </div>
               ))}
             </div>
-            <div className="p-4 bg-primary/5 border border-primary/20 rounded-2xl">
-              <p className="text-[8px] font-black text-primary uppercase tracking-widest mb-1">RECOMENDACIÓN IA</p>
-              <p className="text-[10px] text-on-surface-variant font-medium leading-relaxed">
-                El 80% de los traders rentables están en posiciones LONG. El sentimiento institucional es fuertemente alcista.
+          </div>
+
+          {/* Global Narrative */}
+          <div className="trading-card space-y-6">
+            <h4 className="section-title mb-0 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-primary" /> NARRATIVA GLOBAL
+            </h4>
+            <div className="space-y-4">
+              <p className="text-[11px] font-medium text-on-surface-variant leading-relaxed opacity-80 italic">
+                "{marketIntelligence?.narrative || "Escaneando narrativa global en redes y foros..."}"
               </p>
+              <div className="flex flex-wrap gap-2">
+                {marketIntelligence?.trendingTopics.slice(0, 4).map((topic: string, i: number) => (
+                  <span key={i} className="px-2 py-1 bg-surface-container-highest text-[8px] font-black text-on-surface-variant rounded-lg border border-outline-variant/10 uppercase tracking-widest">
+                    #{topic}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -171,9 +171,19 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
               <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Predicciones en Tiempo Real y Apuestas de Mercado</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-surface-container rounded-xl border border-outline-variant/5">
-            <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Estado:</span>
-            <span className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">Sincronizado</span>
+          <div className="flex items-center gap-4">
+            <a 
+              href="https://polymarket.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-[9px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-primary/20"
+            >
+              Acceder a Polymarket <ArrowUpRight className="w-3 h-3" />
+            </a>
+            <div className="flex items-center gap-2 px-4 py-2 bg-surface-container rounded-xl border border-outline-variant/5">
+              <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Estado:</span>
+              <span className="text-[9px] font-black text-primary uppercase tracking-widest animate-pulse">Sincronizado</span>
+            </div>
           </div>
         </div>
 
@@ -205,6 +215,11 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                           <span className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/10">{item.odds}</span>
                           <span className="text-[9px] font-medium text-on-surface-variant opacity-50 uppercase">{item.volume} Vol.</span>
                         </div>
+                        {item.detail && (
+                          <p className="text-[9px] font-medium text-on-surface-variant/70 leading-relaxed mt-1 line-clamp-2">
+                            {item.detail}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className={cn(
@@ -251,6 +266,11 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                           <span className="text-[9px] font-bold text-secondary bg-secondary/5 px-2 py-0.5 rounded border border-secondary/10">{item.odds}</span>
                           <span className="text-[9px] font-medium text-on-surface-variant opacity-50 uppercase">{item.volume} Vol.</span>
                         </div>
+                        {item.detail && (
+                          <p className="text-[9px] font-medium text-on-surface-variant/70 leading-relaxed mt-1 line-clamp-2">
+                            {item.detail}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className={cn(
@@ -270,6 +290,35 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
             </div>
           </div>
         </div>
+
+        {/* Polymarket Summary & Suggestions */}
+        {(data.polymarket?.cryptoSummary || data.polymarket?.betSuggestions) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-outline-variant/10">
+            <div className="space-y-4">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Resumen Cripto (Polymarket)</h5>
+              <div className="p-6 bg-surface-container-low/30 rounded-3xl border border-outline-variant/5">
+                <p className="text-sm font-medium text-on-surface/90 leading-relaxed">
+                  {data.polymarket.cryptoSummary}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-primary">Sugerencias de Apuestas</h5>
+              <div className="space-y-3">
+                {data.polymarket.betSuggestions?.map((suggestion: string, i: number) => (
+                  <div key={i} className="p-4 bg-primary/5 rounded-2xl border border-primary/20 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Zap className="w-4 h-4 text-primary" />
+                    </div>
+                    <p className="text-[11px] font-black text-primary uppercase tracking-tight">
+                      {suggestion}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Polymarket Conclusions & Recommendations */}
         {(data.polymarket?.conclusion || data.polymarket?.recommendation) && (

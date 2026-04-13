@@ -207,7 +207,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
                 className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 appearance-none focus:outline-none focus:border-primary transition-all text-[10px] font-black uppercase tracking-widest text-on-surface cursor-pointer"
               >
-                {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
+                {["1m", "3m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
                   <option key={tf} value={tf} className="bg-surface-container-high">{tf.toUpperCase()}</option>
                 ))}
               </select>

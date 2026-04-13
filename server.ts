@@ -234,9 +234,11 @@ async function startServer() {
           - DATOS ON-CHAIN: Menciona movimientos de ballenas detectados o flujos de exchanges si están disponibles.
           - NIVELES CLAVE: Identifica soportes y resistencias mencionados por analistas en foros.
           - TRENDING TOPICS: Lista los 5 temas o activos más calientes del momento.
-          - POLYMARKET: Extrae dos listas detalladas:
-            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas (precios, aprobaciones, etc.).
-            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales de cualquier categoría (política, deportes, ciencia, etc.).
+          - POLYMARKET: Extrae información extremadamente detallada:
+            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas. Incluye un campo "detail" con una explicación de por qué es relevante.
+            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales de cualquier categoría. Incluye un campo "detail" con contexto.
+            3. CRYPTO SUMMARY: Un resumen de cómo están las criptomonedas según el sentimiento y apuestas en Polymarket.
+            4. BET SUGGESTIONS: Una lista de 3-5 sugerencias de apuestas basadas en el análisis de probabilidades y tendencias.
           - BOLSA: Resumen de índices clave y narrativa macroeconómica actual.
           
           Responde estrictamente en formato JSON con esta estructura:
@@ -251,11 +253,13 @@ async function startServer() {
             ],
             "polymarket": {
               "cryptoBets": [
-                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE" }
+                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE", "detail": string }
               ],
               "popularBets": [
-                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE" }
+                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE", "detail": string }
               ],
+              "cryptoSummary": string,
+              "betSuggestions": string[],
               "conclusion": string,
               "recommendation": string
             },

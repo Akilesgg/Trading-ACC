@@ -196,6 +196,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   const controls = useDragControls();
   const [copied, setCopied] = useState(false);
   const [showPatterns, setShowPatterns] = useState(false);
+  const [showCandles, setShowCandles] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(analysis);
@@ -449,6 +450,28 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 {showPatterns ? "ACTIVO" : "INACTIVO"}
               </span>
             </button>
+
+            {/* Nuevo Indicador de Velas Japonesas */}
+            <button 
+              onClick={() => setShowCandles(!showCandles)}
+              className={cn(
+                "p-4 rounded-2xl border transition-all flex items-center justify-between group",
+                showCandles 
+                  ? "bg-secondary/10 border-secondary/50 shadow-lg shadow-secondary/10" 
+                  : "bg-surface-container-high border-outline-variant/10 hover:border-secondary/30"
+              )}
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest">VELAS JAPONESAS</span>
+                <span className="text-[8px] font-bold text-on-surface-variant/50 uppercase tracking-widest mt-0.5">Acción del Precio</span>
+              </div>
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-widest",
+                showCandles ? "text-secondary" : "text-on-surface-variant/30"
+              )}>
+                {showCandles ? "ACTIVO" : "INACTIVO"}
+              </span>
+            </button>
           </div>
 
           {showPatterns && (
@@ -462,10 +485,31 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 <h5 className="text-[10px] font-black uppercase tracking-widest">Patrón Detectado: Hombro-Cabeza-Hombro Invertido</h5>
               </div>
               <p className="text-[11px] font-medium text-on-surface/80 leading-relaxed">
-                Se identifica una estructura de acumulación con un patrón de reversión alcista. La línea de cuello se sitúa cerca del nivel de resistencia actual.
+                Se identifica una estructura de acumulación con un patrón de reversión alcista. La línea de cuello se sitúa cerca del nivel de resistencia actual. Este patrón sugiere un cambio de tendencia inminente.
               </p>
               <div className="pt-2 border-t border-primary/10">
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Recomendación: ENTRADA EN RUPTURA DE CUELLO</p>
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Explicación: Acumulación de órdenes institucionales superando la oferta.</p>
+                <p className="text-[10px] font-black text-on-surface uppercase tracking-widest mt-1">Consejo: Entrada sugerida en ruptura confirmada con volumen.</p>
+              </div>
+            </motion.div>
+          )}
+
+          {showCandles && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 bg-secondary/5 border border-secondary/20 rounded-2xl space-y-3 mt-4"
+            >
+              <div className="flex items-center gap-2 text-secondary">
+                <Flame className="w-4 h-4" />
+                <h5 className="text-[10px] font-black uppercase tracking-widest">Patrón de Velas: Pin Bar Alcista + Envolvente</h5>
+              </div>
+              <p className="text-[11px] font-medium text-on-surface/80 leading-relaxed">
+                Se observa un rechazo contundente en niveles de soporte con una vela Pin Bar seguida de una envolvente alcista. Este patrón es altamente efectivo en temporalidades bajas (1m, 3m, 5m).
+              </p>
+              <div className="pt-2 border-t border-secondary/10">
+                <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Explicación: Agotamiento de la presión vendedora y entrada agresiva de compradores.</p>
+                <p className="text-[10px] font-black text-on-surface uppercase tracking-widest mt-1">Consejo: Entrada inmediata tras cierre de vela envolvente.</p>
               </div>
             </motion.div>
           )}
