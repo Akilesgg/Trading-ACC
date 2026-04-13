@@ -12,7 +12,11 @@ import {
   Hash,
   RefreshCw,
   Clock,
-  BarChart3
+  BarChart3,
+  Dices,
+  LineChart,
+  ArrowUpRight,
+  ArrowDownRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { externalIntelService, ExternalIntelData } from "@/services/externalIntel";
@@ -65,6 +69,8 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
     whaleActivity: "Escaneando movimientos...",
     keyLevels: { support: [], resistance: [] },
     signals: [],
+    polymarket: [],
+    stockMarket: null,
     alerts: [],
     consensus: "NEUTRAL",
     lastUpdate: new Date().toISOString()
@@ -100,6 +106,78 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
           >
             <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
           </button>
+        </div>
+      </div>
+
+      {/* Polymarket & Stock Market Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Polymarket */}
+        <div className="bg-surface-container-high/60 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+              <Dices className="w-4 h-4 text-primary" /> Polymarket Insights
+            </h4>
+            <span className="text-[9px] font-bold text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-lg">Predicciones Públicas</span>
+          </div>
+          
+          <div className="space-y-4">
+            {data.polymarket && data.polymarket.length > 0 ? (
+              data.polymarket.map((item: any, i: number) => (
+                <div key={i} className="p-4 bg-surface-container-low/50 rounded-2xl border border-outline-variant/5 flex items-center justify-between group hover:border-primary/30 transition-all">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">{item.market}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-bold text-on-surface-variant uppercase opacity-50">Probabilidades:</span>
+                      <span className="text-[10px] font-black text-primary">{item.odds}</span>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                    item.trend === "UP" ? "bg-primary/10 text-primary" : item.trend === "DOWN" ? "bg-secondary/10 text-secondary" : "bg-surface-container text-on-surface-variant"
+                  )}>
+                    {item.trend === "UP" ? <ArrowUpRight className="w-4 h-4" /> : item.trend === "DOWN" ? <ArrowDownRight className="w-4 h-4" /> : <RefreshCw className="w-4 h-4" />}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50 text-center py-4">No se detectaron apuestas relevantes.</p>
+            )}
+          </div>
+        </div>
+
+        {/* Stock Market */}
+        <div className="bg-surface-container-high/60 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-6">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+              <LineChart className="w-4 h-4 text-secondary" /> Mercado de Valores (Bolsa)
+            </h4>
+            <span className="text-[9px] font-bold text-secondary uppercase tracking-widest bg-secondary/10 px-3 py-1 rounded-lg">Correlación Macro</span>
+          </div>
+
+          <div className="space-y-6">
+            <div className="grid grid-cols-3 gap-4">
+              {data.stockMarket?.indices.map((index: any, i: number) => (
+                <div key={i} className="p-3 bg-surface-container-low/50 rounded-xl border border-outline-variant/5 text-center">
+                  <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest mb-1">{index.name}</p>
+                  <p className="text-xs font-black text-on-surface">{index.value}</p>
+                  <p className={cn(
+                    "text-[9px] font-bold mt-1",
+                    index.change.includes("+") ? "text-primary" : "text-secondary"
+                  )}>{index.change}</p>
+                </div>
+              )) || (
+                <div className="col-span-3 text-center py-4 opacity-50 text-[10px] font-black uppercase tracking-widest">Cargando índices...</div>
+              )}
+            </div>
+            
+            {data.stockMarket?.narrative && (
+              <div className="p-4 bg-surface-container-low/30 rounded-2xl border border-outline-variant/5">
+                <p className="text-[10px] font-medium text-on-surface leading-relaxed opacity-80 italic">
+                  "{data.stockMarket.narrative}"
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

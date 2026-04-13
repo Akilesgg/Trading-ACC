@@ -225,6 +225,8 @@ async function startServer() {
           1. REDES SOCIALES: X (Twitter), Reddit (r/CryptoCurrency, r/Bitcoin, r/WallStreetBetsCrypto), Telegram (canales públicos de ballenas y señales).
           2. FOROS Y COMUNIDADES: Bitcointalk, Discord (servidores públicos de trading).
           3. NOTICIAS Y ON-CHAIN: Coindesk, Cointelegraph, Whale Alert, Glassnode (datos públicos recientes).
+          4. MERCADOS DE PREDICCIÓN: Polymarket (investiga apuestas actuales sobre cripto, política y economía que afecten al mercado).
+          5. MERCADO DE VALORES (BOLSA): Investiga índices principales (S&P 500, Nasdaq, DXY) y su correlación actual con cripto.
           
           REQUERIMIENTOS DE INFORMACIÓN (MUCHO MÁS QUE TESTIMONIOS):
           - SENTIMIENTO: Cuantifica el sentimiento social con precisión.
@@ -232,6 +234,8 @@ async function startServer() {
           - DATOS ON-CHAIN: Menciona movimientos de ballenas detectados o flujos de exchanges si están disponibles.
           - NIVELES CLAVE: Identifica soportes y resistencias mencionados por analistas en foros.
           - TRENDING TOPICS: Lista los 5 temas o activos más calientes del momento.
+          - POLYMARKET: Extrae datos de apuestas públicas relevantes (mercado, probabilidades/odds, tendencia).
+          - BOLSA: Resumen de índices clave y narrativa macroeconómica actual.
           
           Responde estrictamente en formato JSON con esta estructura:
           {
@@ -243,6 +247,13 @@ async function startServer() {
             "signals": [
               { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string, "reasoning": string }
             ],
+            "polymarket": [
+              { "market": string, "odds": string, "trend": "UP" | "DOWN" | "STABLE" }
+            ],
+            "stockMarket": {
+              "indices": [ { "name": string, "value": string, "change": string } ],
+              "narrative": string
+            },
             "alerts": string[],
             "consensus": "BULLISH" | "BEARISH" | "NEUTRAL"
           }`;
@@ -296,6 +307,18 @@ async function startServer() {
             reasoning: "Soporte estructural sólido identificado en el gráfico diario con divergencia alcista en RSI."
           }
         ],
+        polymarket: [
+          { market: "BTC por encima de $70k en Abril", odds: "45%", trend: "UP" },
+          { market: "Aprobación de ETF de ETH en Mayo", odds: "65%", trend: "STABLE" }
+        ],
+        stockMarket: {
+          indices: [
+            { name: "S&P 500", value: "5,200", change: "+0.5%" },
+            { name: "Nasdaq", value: "16,400", change: "+0.8%" },
+            { name: "DXY", value: "104.2", change: "-0.2%" }
+          ],
+          narrative: "Los mercados de renta variable muestran fortaleza ante expectativas de pivote de la FED, lo que favorece el apetito por el riesgo en cripto."
+        },
         alerts: ["Datos en tiempo real limitados. Mostrando análisis basado en tendencias históricas recientes."],
         consensus: "NEUTRAL"
       });

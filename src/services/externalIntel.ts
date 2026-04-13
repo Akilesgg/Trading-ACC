@@ -22,6 +22,15 @@ export interface ExternalIntelData {
     source: string;
     reasoning?: string;
   }>;
+  polymarket?: Array<{
+    market: string;
+    odds: string;
+    trend: "UP" | "DOWN" | "STABLE";
+  }>;
+  stockMarket?: {
+    indices: Array<{ name: string; value: string; change: string }>;
+    narrative: string;
+  };
   alerts: string[];
   consensus: "BULLISH" | "BEARISH" | "NEUTRAL";
   lastUpdate: string;
@@ -50,6 +59,8 @@ class ExternalIntelService {
         whaleActivity: data.whaleActivity || "No se detectó actividad inusual.",
         keyLevels: data.keyLevels || { support: [], resistance: [] },
         signals: data.signals || [],
+        polymarket: data.polymarket || [],
+        stockMarket: data.stockMarket || null,
         alerts: data.alerts || [],
         consensus: data.consensus || "NEUTRAL",
         lastUpdate: new Date().toISOString()
