@@ -47,40 +47,44 @@ async function startServer() {
         1. Responde SIEMPRE en ESPAÑOL.
         2. Mantén un tono profesional, analítico, directo y profundamente involucrado.
         3. Involúcrate en los resultados: proporciona niveles de precios REALES y COHERENTES con el precio actual. La ENTRADA debe estar muy cerca del precio actual (máximo 1-2% de diferencia).
-        4. ES OBLIGATORIO usar EXACTAMENTE estos encabezados en negrita y mayúsculas para que el sistema pueda parsear tu respuesta:
+        4. ES OBLIGATORIO que cada sección de análisis siga esta estructura lógica:
+           - SITUACIÓN: Qué está pasando ahora mismo.
+           - ANÁLISIS: Por qué ocurre (causas técnicas/fundamentales).
+           - ACCIÓN: Qué hacer exactamente (decisión clara).
+        5. ES OBLIGATORIO usar EXACTAMENTE estos encabezados en negrita y mayúsculas:
         
-        **CONTEXTO Y EXPLICACIÓN BREVE**: Resumen ejecutivo de la situación actual. Sé específico y técnico.
+        **CONTEXTO Y EXPLICACIÓN BREVE**: Resumen ejecutivo.
         
-        **COMENTARIOS Y OBSERVACIONES**: Tus observaciones personales sobre anomalías, volumen y patrones ocultos.
+        **COMENTARIOS Y OBSERVACIONES**: Observaciones sobre anomalías y volumen.
         
-        **PREDICCIONES DE MERCADO**: Predicciones fundamentadas a corto y mediano plazo con objetivos específicos.
+        **PREDICCIONES DE MERCADO**: Objetivos específicos.
         
-        **RECOMENDACIÓN IA**: Recomendación final clara: ENTRAR AHORA, ESPERAR o MANTENERSE AL MARGEN.
+        **RECOMENDACIÓN IA**: ENTRAR AHORA, ESPERAR o MANTENERSE AL MARGEN.
         
-        **ESTRATEGIA**: Indica claramente si la postura es ALCISTA o BAJISTA.
+        **ESTRATEGIA**: ALCISTA o BAJISTA.
         
-        **DOMINANCIA BTC**: Evaluación de la dominancia de BTC y su impacto en ${symbol}.
+        **DOMINANCIA BTC**: Impacto en ${symbol}.
         
-        **FASE WYCKOFF**: Identifica la fase (ACUMULACIÓN, MARKUP, DISTRIBUCIÓN o MARKDOWN) y explica la estructura.
+        **FASE WYCKOFF**: Identificación y explicación.
         
-        **INDICADORES TÉCNICOS (TOP 2026)**: Lista de 8-10 indicadores clave con su estado actual (ej: RSI: 65 - Sobrecompra leve).
+        **INDICADORES TÉCNICOS (TOP 2026)**: Lista de 8-10 indicadores.
         
-        **JUSTIFICACIÓN TÉCNICA**: Explicación detallada de los niveles operativos basados en liquidez, FVG (Fair Value Gaps) y Order Blocks.
+        **JUSTIFICACIÓN TÉCNICA**: Liquidez, FVG y Order Blocks.
         
-        **ANÁLISIS DE ESTRUCTURA**: Justificación de la estructura de mercado (BOS, CHoCH).
+        **ANÁLISIS DE ESTRUCTURA**: BOS, CHoCH.
         
         **NIVELES OPERATIVOS**: 
-        ENTRADA: [precio numérico]
-        STOP LOSS: [precio numérico]
-        TAKE PROFIT 1: [precio numérico]
-        TAKE PROFIT 2: [precio numérico]
-        TAKE PROFIT 3: [precio numérico]
+        ENTRADA: [precio]
+        STOP LOSS: [precio]
+        TAKE PROFIT 1: [precio]
+        TAKE PROFIT 2: [precio]
+        TAKE PROFIT 3: [precio]
         
-        **NIVEL DE CONFIANZA**: [Número del 1 al 100]
+        **NIVEL DE CONFIANZA**: [1-100]
         
-        **RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO**: Apalancamiento sugerido (ej: x10) y riesgo (BAJO, MODERADO, ALTO).
+        **RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO**: Sugerencia x10 y riesgo.
         
-        **METÁFORA TÉCNICA**: Una breve comparación creativa de los indicadores con elementos químicos o biológicos que impulsan el precio.`;
+        **METÁFORA TÉCNICA**: Comparación creativa.`;
 
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -235,8 +239,8 @@ async function startServer() {
           - NIVELES CLAVE: Identifica soportes y resistencias mencionados por analistas en foros.
           - TRENDING TOPICS: Lista los 5 temas o activos más calientes del momento.
           - POLYMARKET: Extrae información extremadamente detallada:
-            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas. Incluye un campo "detail" con una explicación de por qué es relevante.
-            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales de cualquier categoría. Incluye un campo "detail" con contexto.
+            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas. Para cada una incluye: "market", "odds", "volume", "trend", "probability" (%), "direction" (ALCISTA/BAJISTA), "confidence" (0-100), "context" (explicación breve).
+            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales. Incluye los mismos campos que las crypto bets.
             3. CRYPTO SUMMARY: Un resumen de cómo están las criptomonedas según el sentimiento y apuestas en Polymarket.
             4. BET SUGGESTIONS: Una lista de 3-5 sugerencias de apuestas basadas en el análisis de probabilidades y tendencias.
           - BOLSA: Resumen de índices clave y narrativa macroeconómica actual.
@@ -249,14 +253,14 @@ async function startServer() {
             "whaleActivity": string,
             "keyLevels": { "support": number[], "resistance": number[] },
             "signals": [
-              { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string, "reasoning": string }
+              { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string, "reasoning": string, "probability": number, "confidence": number, "context": string }
             ],
             "polymarket": {
               "cryptoBets": [
-                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE", "detail": string }
+                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE", "detail": string, "probability": number, "direction": "ALCISTA" | "BAJISTA", "confidence": number, "context": string }
               ],
               "popularBets": [
-                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE", "detail": string }
+                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE", "detail": string, "probability": number, "direction": "ALCISTA" | "BAJISTA", "confidence": number, "context": string }
               ],
               "cryptoSummary": string,
               "betSuggestions": string[],

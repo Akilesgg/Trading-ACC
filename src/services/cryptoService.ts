@@ -43,6 +43,7 @@ export async function fetchTicker(symbol: string, timeframe: string = "1h"): Pro
 
     switch(timeframe.toLowerCase()) {
       case '1m':
+      case '3m':
         tp1 = 0.003; tp2 = 0.006; tp3 = 0.01; slPercent = 0.005;
         break;
       case '5m':

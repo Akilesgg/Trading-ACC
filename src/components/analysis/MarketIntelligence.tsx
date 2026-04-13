@@ -7,6 +7,7 @@ import {
   AlertTriangle, 
   Users, 
   Zap,
+  Brain,
   MessageSquare,
   Twitter,
   Hash,
@@ -86,7 +87,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
             <Globe className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <h3 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Externa</h3>
+            <h3 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Polymarket</h3>
             <div className="flex items-center gap-2 mt-1">
               <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-70">Fuentes: X, Reddit, Telegram, Foros, On-Chain</span>
               <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
@@ -96,14 +97,18 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
         </div>
         
         <div className="flex items-center gap-3">
-          <div className="flex flex-col items-end mr-2">
-            <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-70">Última actualización</p>
-            <p className="text-[11px] font-bold text-on-surface uppercase">{new Date(data.lastUpdate).toLocaleTimeString()}</p>
-          </div>
+          <a 
+            href="https://polymarket.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="px-6 py-3 bg-primary text-on-primary rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 hover:scale-105 transition-all flex items-center gap-2"
+          >
+            Abrir Polymarket
+          </a>
           <button 
             onClick={() => loadIntel(true)}
             disabled={loading}
-            className="p-4 bg-primary text-on-primary rounded-2xl shadow-xl shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 group"
+            className="p-4 bg-surface-container-high text-on-surface rounded-2xl shadow-xl hover:scale-105 transition-all disabled:opacity-50 group border border-outline-variant/10"
           >
             <RefreshCw className={cn("w-5 h-5", loading && "animate-spin")} />
           </button>
@@ -214,10 +219,20 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                         <div className="flex items-center gap-3">
                           <span className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/10">{item.odds}</span>
                           <span className="text-[9px] font-medium text-on-surface-variant opacity-50 uppercase">{item.volume} Vol.</span>
+                          {item.probability && (
+                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">Prob: {item.probability}%</span>
+                          )}
+                          {item.direction && (
+                            <span className={cn(
+                              "text-[8px] font-black px-2 py-0.5 rounded uppercase",
+                              item.direction === "ALCISTA" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                            )}>{item.direction}</span>
+                          )}
                         </div>
-                        {item.detail && (
+                        {(item.context || item.detail) && (
                           <p className="text-[9px] font-medium text-on-surface-variant/70 leading-relaxed mt-1 line-clamp-2">
-                            {item.detail}
+                            <span className="font-black text-primary uppercase mr-1">Contexto:</span>
+                            {item.context || item.detail}
                           </p>
                         )}
                       </div>
@@ -295,22 +310,26 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
         {(data.polymarket?.cryptoSummary || data.polymarket?.betSuggestions) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-outline-variant/10">
             <div className="space-y-4">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Resumen Cripto (Polymarket)</h5>
-              <div className="p-6 bg-surface-container-low/30 rounded-3xl border border-outline-variant/5">
-                <p className="text-sm font-medium text-on-surface/90 leading-relaxed">
-                  {data.polymarket.cryptoSummary}
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                <Brain className="w-4 h-4" /> Resumen del mercado según Polymarket
+              </h5>
+              <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20">
+                <p className="text-sm font-medium text-on-surface/90 leading-relaxed italic">
+                  "{data.polymarket.cryptoSummary}"
                 </p>
               </div>
             </div>
             <div className="space-y-4">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-primary">Sugerencias de Apuestas</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                <Zap className="w-4 h-4" /> Sugerencias basadas en apuestas
+              </h5>
               <div className="space-y-3">
                 {data.polymarket.betSuggestions?.map((suggestion: string, i: number) => (
-                  <div key={i} className="p-4 bg-primary/5 rounded-2xl border border-primary/20 flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Zap className="w-4 h-4 text-primary" />
+                  <div key={i} className="p-4 bg-secondary/5 rounded-2xl border border-secondary/20 flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
+                      <Zap className="w-4 h-4 text-secondary" />
                     </div>
-                    <p className="text-[11px] font-black text-primary uppercase tracking-tight">
+                    <p className="text-[11px] font-black text-secondary uppercase tracking-tight">
                       {suggestion}
                     </p>
                   </div>

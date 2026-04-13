@@ -154,7 +154,7 @@ const Analysis = () => {
   const loadMarketData = useCallback(async () => {
     try {
       const [tickerData, assets] = await Promise.all([
-        fetchTicker(selectedSymbol),
+        fetchTicker(selectedSymbol, selectedTimeframe),
         fetchCryptoData()
       ]);
       setTicker(tickerData);
@@ -219,18 +219,43 @@ const Analysis = () => {
 
   const parseAnalysis = (raw: string) => {
     const sections: Record<string, string> = {};
-    const parts = raw.split(/\[(.*?)\]/);
     
-    for (let i = 1; i < parts.length; i += 2) {
-      const title = parts[i].trim().toUpperCase();
-      const content = parts[i + 1]?.trim();
-      if (title && content) {
-        sections[title] = content;
+    // Handle **TITLE**: content format
+    const lines = raw.split('\n');
+    let currentTitle = "";
+    let currentContent = "";
+
+    lines.forEach(line => {
+      const match = line.match(/^\*\*(.*?)\*\*:\s*(.*)/);
+      if (match) {
+        if (currentTitle) {
+          sections[currentTitle] = currentContent.trim();
+        }
+        currentTitle = match[1].trim().toUpperCase();
+        currentContent = match[2] || "";
+      } else if (currentTitle) {
+        currentContent += "\n" + line;
+      }
+    });
+
+    if (currentTitle) {
+      sections[currentTitle] = currentContent.trim();
+    }
+    
+    // Fallback for [TITLE] format
+    if (Object.keys(sections).length === 0) {
+      const parts = raw.split(/\[(.*?)\]/);
+      for (let i = 1; i < parts.length; i += 2) {
+        const title = parts[i].trim().toUpperCase();
+        const content = parts[i + 1]?.trim();
+        if (title && content) {
+          sections[title] = content;
+        }
       }
     }
     
     if (!sections["NIVEL DE CONFIANZA"]) {
-      const confidenceMatch = raw.match(/CONFIANZA:\s*(\d+)%/i);
+      const confidenceMatch = raw.match(/CONFIANZA:\s*(\d+)%/i) || raw.match(/CONFIANZA:\s*\[?(\d+)\]?%/i);
       if (confidenceMatch) sections["NIVEL DE CONFIANZA"] = confidenceMatch[1];
     }
     
@@ -381,18 +406,9 @@ const Analysis = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8">
           {/* External Market Intelligence */}
           <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl">
-            <div className="absolute inset-0 opacity-[0.15] grayscale contrast-150 pointer-events-none group-hover:scale-110 transition-transform duration-700">
-              <img 
-                src="https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=2070&auto=format&fit=crop" 
-                alt="Wall Street Bull" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-transparent to-background/90 pointer-events-none"></div>
             <div className="relative z-10">
               <MarketIntelligence 
                 symbol={selectedSymbol}
@@ -402,15 +418,6 @@ const Analysis = () => {
 
           {/* Asset Comparator */}
           <div className="bg-surface-container-low/40 p-8 rounded-[3rem] border border-outline-variant/10 backdrop-blur-3xl relative overflow-hidden group shadow-2xl">
-            <div className="absolute inset-0 opacity-[0.15] grayscale contrast-150 pointer-events-none group-hover:scale-110 transition-transform duration-700">
-              <img 
-                src="https://images.unsplash.com/photo-1535320903710-d993d3d77d29?q=80&w=2070&auto=format&fit=crop" 
-                alt="Trading Charts" 
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-transparent to-background/90 pointer-events-none"></div>
             <div className="relative z-10">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-secondary/10 rounded-2xl flex items-center justify-center border border-secondary/20">

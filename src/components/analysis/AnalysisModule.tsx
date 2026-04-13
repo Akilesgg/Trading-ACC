@@ -478,18 +478,41 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-3"
+              className="space-y-4 mt-6"
             >
-              <div className="flex items-center gap-2 text-primary">
+              <div className="flex items-center gap-2 text-primary mb-2">
                 <Zap className="w-4 h-4" />
-                <h5 className="text-[10px] font-black uppercase tracking-widest">Patrón Detectado: Hombro-Cabeza-Hombro Invertido</h5>
+                <h5 className="text-[10px] font-black uppercase tracking-widest">Analizador de Patrones de Gráfico</h5>
               </div>
-              <p className="text-[11px] font-medium text-on-surface/80 leading-relaxed">
-                Se identifica una estructura de acumulación con un patrón de reversión alcista. La línea de cuello se sitúa cerca del nivel de resistencia actual. Este patrón sugiere un cambio de tendencia inminente.
-              </p>
-              <div className="pt-2 border-t border-primary/10">
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Explicación: Acumulación de órdenes institucionales superando la oferta.</p>
-                <p className="text-[10px] font-black text-on-surface uppercase tracking-widest mt-1">Consejo: Entrada sugerida en ruptura confirmada con volumen.</p>
+              
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { name: "Doble Suelo", type: "ALCISTA", reliability: 85, location: "Soporte Mayor", action: "LONG en ruptura de cuello" },
+                  { name: "Triángulo Ascendente", type: "ALCISTA", reliability: 72, location: "Fase de Acumulación", action: "LONG en breakout con volumen" },
+                  { name: "Breakout de Rango", type: "ALCISTA", reliability: 90, location: "Consolidación Lateral", action: "ENTRADA INMEDIATA" }
+                ].map((pattern, i) => (
+                  <div key={i} className="p-4 bg-primary/5 border border-primary/20 rounded-2xl space-y-2 group hover:bg-primary/10 transition-all">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-on-surface uppercase tracking-tight">{pattern.name}</span>
+                      <span className="px-2 py-0.5 bg-primary/20 text-primary text-[8px] font-black rounded uppercase tracking-widest">{pattern.type}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Fiabilidad</p>
+                        <p className="text-xs font-black text-primary">{pattern.reliability}%</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Ubicación</p>
+                        <p className="text-xs font-black text-on-surface">{pattern.location}</p>
+                      </div>
+                    </div>
+                    <div className="pt-2 border-t border-primary/10">
+                      <p className="text-[9px] font-black text-on-surface uppercase tracking-widest">
+                        <span className="text-primary mr-2">ACCIÓN:</span> {pattern.action}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}
@@ -498,18 +521,39 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-6 bg-secondary/5 border border-secondary/20 rounded-2xl space-y-3 mt-4"
+              className="space-y-4 mt-6"
             >
-              <div className="flex items-center gap-2 text-secondary">
-                <Flame className="w-4 h-4" />
-                <h5 className="text-[10px] font-black uppercase tracking-widest">Patrón de Velas: Pin Bar Alcista + Envolvente</h5>
+              <div className="flex items-center gap-2 text-secondary mb-2">
+                <Zap className="w-4 h-4" />
+                <h5 className="text-[10px] font-black uppercase tracking-widest">Analizador de Velas Japonesas (Scalping)</h5>
               </div>
-              <p className="text-[11px] font-medium text-on-surface/80 leading-relaxed">
-                Se observa un rechazo contundente en niveles de soporte con una vela Pin Bar seguida de una envolvente alcista. Este patrón es altamente efectivo en temporalidades bajas (1m, 3m, 5m).
-              </p>
-              <div className="pt-2 border-t border-secondary/10">
-                <p className="text-[10px] font-black text-secondary uppercase tracking-widest">Explicación: Agotamiento de la presión vendedora y entrada agresiva de compradores.</p>
-                <p className="text-[10px] font-black text-on-surface uppercase tracking-widest mt-1">Consejo: Entrada inmediata tras cierre de vela envolvente.</p>
+
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { name: "Engulfing Alcista", explanation: "Vela verde envuelve completamente a la anterior roja", context: "Zona de Soporte / FVG", action: "LONG con confirmación" },
+                  { name: "Martillo (Hammer)", explanation: "Cuerpo pequeño con mecha inferior larga", context: "Agotamiento de Vendedores", action: "ENTRADA EN RECHAZO" },
+                  { name: "Pin Bar", explanation: "Rechazo fuerte de un nivel de precio", context: "Nivel de Resistencia / OB", action: "SHORT si es bajista" }
+                ].map((candle, i) => (
+                  <div key={i} className="p-4 bg-secondary/5 border border-secondary/20 rounded-2xl space-y-2 group hover:bg-secondary/10 transition-all">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-black text-on-surface uppercase tracking-tight">{candle.name}</span>
+                      <div className="w-2 h-2 bg-secondary rounded-full animate-pulse" />
+                    </div>
+                    <p className="text-[10px] font-medium text-on-surface-variant leading-relaxed italic">
+                      {candle.explanation}
+                    </p>
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-secondary/10">
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Contexto</p>
+                        <p className="text-[9px] font-black text-on-surface">{candle.context}</p>
+                      </div>
+                      <div>
+                        <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">Recomendación</p>
+                        <p className="text-[9px] font-black text-secondary">{candle.action}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </motion.div>
           )}
