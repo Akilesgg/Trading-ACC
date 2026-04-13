@@ -22,11 +22,10 @@ export interface ExternalIntelData {
     source: string;
     reasoning?: string;
   }>;
-  polymarket?: Array<{
-    market: string;
-    odds: string;
-    trend: "UP" | "DOWN" | "STABLE";
-  }>;
+  polymarket?: {
+    cryptoBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE" }>;
+    popularBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE" }>;
+  };
   stockMarket?: {
     indices: Array<{ name: string; value: string; change: string }>;
     narrative: string;
@@ -59,7 +58,7 @@ class ExternalIntelService {
         whaleActivity: data.whaleActivity || "No se detectó actividad inusual.",
         keyLevels: data.keyLevels || { support: [], resistance: [] },
         signals: data.signals || [],
-        polymarket: data.polymarket || [],
+        polymarket: data.polymarket || { cryptoBets: [], popularBets: [] },
         stockMarket: data.stockMarket || null,
         alerts: data.alerts || [],
         consensus: data.consensus || "NEUTRAL",

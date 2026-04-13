@@ -234,7 +234,9 @@ async function startServer() {
           - DATOS ON-CHAIN: Menciona movimientos de ballenas detectados o flujos de exchanges si están disponibles.
           - NIVELES CLAVE: Identifica soportes y resistencias mencionados por analistas en foros.
           - TRENDING TOPICS: Lista los 5 temas o activos más calientes del momento.
-          - POLYMARKET: Extrae datos de apuestas públicas relevantes (mercado, probabilidades/odds, tendencia).
+          - POLYMARKET: Extrae dos listas detalladas:
+            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas (precios, aprobaciones, etc.).
+            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales de cualquier categoría (política, deportes, ciencia, etc.).
           - BOLSA: Resumen de índices clave y narrativa macroeconómica actual.
           
           Responde estrictamente en formato JSON con esta estructura:
@@ -247,9 +249,14 @@ async function startServer() {
             "signals": [
               { "asset": string, "type": "LONG" | "SHORT", "entry": number, "tp": number, "sl": number, "source": string, "reasoning": string }
             ],
-            "polymarket": [
-              { "market": string, "odds": string, "trend": "UP" | "DOWN" | "STABLE" }
-            ],
+            "polymarket": {
+              "cryptoBets": [
+                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE" }
+              ],
+              "popularBets": [
+                { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE" }
+              ]
+            },
             "stockMarket": {
               "indices": [ { "name": string, "value": string, "change": string } ],
               "narrative": string
@@ -307,10 +314,32 @@ async function startServer() {
             reasoning: "Soporte estructural sólido identificado en el gráfico diario con divergencia alcista en RSI."
           }
         ],
-        polymarket: [
-          { market: "BTC por encima de $70k en Abril", odds: "45%", trend: "UP" },
-          { market: "Aprobación de ETF de ETH en Mayo", odds: "65%", trend: "STABLE" }
-        ],
+        polymarket: {
+          cryptoBets: [
+            { market: "BTC > $70k en Abril", odds: "45%", volume: "$1.2M", trend: "UP" },
+            { market: "ETH ETF aprobado en Mayo", odds: "65%", volume: "$800k", trend: "STABLE" },
+            { market: "SOL > $200 en Mayo", odds: "30%", volume: "$500k", trend: "DOWN" },
+            { market: "BTC ATH antes de Junio", odds: "55%", volume: "$2.1M", trend: "UP" },
+            { market: "Binance lista nuevo token AI", odds: "20%", volume: "$150k", trend: "STABLE" },
+            { market: "Dominancia BTC > 55%", odds: "70%", volume: "$400k", trend: "UP" },
+            { market: "L2 TVL > $50B", odds: "40%", volume: "$300k", trend: "STABLE" },
+            { market: "Stablecoin cap > $160B", odds: "85%", volume: "$600k", trend: "UP" },
+            { market: "NFT volume > $1B", odds: "15%", volume: "$100k", trend: "DOWN" },
+            { market: "Crypto regulation US 2026", odds: "50%", volume: "$900k", trend: "STABLE" }
+          ],
+          popularBets: [
+            { market: "Elecciones US 2024 Ganador", odds: "52% Rep", volume: "$150M", trend: "UP" },
+            { market: "Corte de tasas FED Junio", odds: "60%", volume: "$12M", trend: "DOWN" },
+            { market: "Guerra comercial US-China", odds: "40%", volume: "$5M", trend: "STABLE" },
+            { market: "Próximo CEO de OpenAI", odds: "Sam Altman", volume: "$2M", trend: "STABLE" },
+            { market: "Misión Marte 2026 éxito", odds: "25%", volume: "$1M", trend: "DOWN" },
+            { market: "Campeón Champions League", odds: "Real Madrid", volume: "$10M", trend: "UP" },
+            { market: "Premio Nobel de la Paz", odds: "Variable", volume: "$500k", trend: "STABLE" },
+            { market: "Inflación US < 2.5%", odds: "35%", volume: "$8M", trend: "DOWN" },
+            { market: "Aceptación de pagos X", odds: "45%", volume: "$3M", trend: "UP" },
+            { market: "Lanzamiento GTA VI 2025", odds: "90%", volume: "$15M", trend: "STABLE" }
+          ]
+        },
         stockMarket: {
           indices: [
             { name: "S&P 500", value: "5,200", change: "+0.5%" },
