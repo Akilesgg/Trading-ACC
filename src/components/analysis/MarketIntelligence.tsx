@@ -16,7 +16,8 @@ import {
   Dices,
   LineChart,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { externalIntelService, ExternalIntelData } from "@/services/externalIntel";
@@ -109,6 +110,53 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
         </div>
       </div>
 
+      {/* Global Consensus Section */}
+      {data.globalConsensus && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-primary/10 p-8 rounded-[2.5rem] border border-primary/30 backdrop-blur-xl space-y-6 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="w-14 h-14 bg-primary text-on-primary rounded-[2rem] flex items-center justify-center shadow-2xl shadow-primary/40">
+              <Shield className="w-7 h-7" />
+            </div>
+            <div>
+              <h4 className="text-2xl font-black text-on-surface uppercase tracking-tighter">Consenso Global de Inteligencia</h4>
+              <p className="text-[10px] font-black text-primary uppercase tracking-widest">Veredicto Final Unificado</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="px-4 py-1.5 bg-primary text-on-primary rounded-full text-xs font-black uppercase tracking-widest">
+                  {data.globalConsensus.verdict}
+                </span>
+              </div>
+              <p className="text-sm font-medium text-on-surface leading-relaxed">
+                {data.globalConsensus.reasoning}
+              </p>
+            </div>
+            <div className="lg:col-span-4 space-y-4">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Entradas Sugeridas</h5>
+              <div className="space-y-3">
+                {data.globalConsensus.suggestedEntries.map((entry: any, i: number) => (
+                  <div key={i} className="p-4 bg-surface-container-high/80 rounded-2xl border border-outline-variant/10 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-black text-on-surface uppercase">{entry.asset}</p>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{entry.type}</p>
+                    </div>
+                    <p className="text-sm font-black text-on-surface">${entry.price.toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* Polymarket Intelligence - Expanded Section */}
       <div className="bg-surface-container-high/60 p-8 rounded-[2.5rem] border border-outline-variant/10 backdrop-blur-xl space-y-8 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-primary/50 to-primary"></div>
@@ -119,7 +167,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
               <Dices className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h4 className="text-xl font-black text-on-surface uppercase tracking-tight">PolyMarket Intelligence</h4>
+              <h4 className="text-xl font-black text-on-surface uppercase tracking-tight">Inteligencia de PolyMarket</h4>
               <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Predicciones en Tiempo Real y Apuestas de Mercado</p>
             </div>
           </div>
@@ -134,7 +182,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
               <h5 className="text-xs font-black uppercase tracking-[0.2em] text-on-surface flex items-center gap-2">
-                <Zap className="w-4 h-4 text-primary" /> Top 10 Crypto Bets
+                <Zap className="w-4 h-4 text-primary" /> Top 10 Apuestas Cripto
               </h5>
               <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-50">Basado en Volumen</span>
             </div>
@@ -180,7 +228,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
           <div className="space-y-6">
             <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
               <h5 className="text-xs font-black uppercase tracking-[0.2em] text-on-surface flex items-center gap-2">
-                <Globe className="w-4 h-4 text-secondary" /> Top 10 Popular Bets
+                <Globe className="w-4 h-4 text-secondary" /> Top 10 Apuestas Populares
               </h5>
               <span className="text-[8px] font-black text-on-surface-variant uppercase opacity-50">Tendencia Global</span>
             </div>
@@ -222,6 +270,28 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
             </div>
           </div>
         </div>
+
+        {/* Polymarket Conclusions & Recommendations */}
+        {(data.polymarket?.conclusion || data.polymarket?.recommendation) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-outline-variant/10">
+            <div className="space-y-3">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Conclusión de Polymarket</h5>
+              <div className="p-4 bg-surface-container-low/30 rounded-2xl border border-outline-variant/5">
+                <p className="text-[11px] font-medium text-on-surface/80 leading-relaxed italic">
+                  "{data.polymarket.conclusion}"
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-primary">Recomendación de Polymarket</h5>
+              <div className="p-4 bg-primary/5 rounded-2xl border border-primary/20">
+                <p className="text-[11px] font-black text-primary uppercase tracking-tight leading-relaxed">
+                  {data.polymarket.recommendation}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stock Market Section */}
@@ -271,8 +341,8 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
               </h4>
               <span className={cn(
                 "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                data.consensus === "BULLISH" ? "bg-primary/10 text-primary border-primary/20" :
-                data.consensus === "BEARISH" ? "bg-secondary/10 text-secondary border-secondary/20" :
+                data.consensus === "ALCISTA" ? "bg-primary/10 text-primary border-primary/20" :
+                data.consensus === "BAJISTA" ? "bg-secondary/10 text-secondary border-secondary/20" :
                 "bg-surface-container-high text-on-surface-variant border-outline-variant/10"
               )}>
                 {data.consensus}
@@ -335,6 +405,26 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                 {data.whaleActivity}
               </p>
             </div>
+
+            {/* External Intel Conclusions & Recommendations */}
+            {(data.externalIntelConclusion || data.externalIntelRecommendation) && (
+              <div className="pt-6 border-t border-outline-variant/5 space-y-4">
+                <div className="space-y-2">
+                  <h5 className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant">Conclusión de Inteligencia</h5>
+                  <p className="text-[10px] font-medium text-on-surface/70 leading-relaxed italic">
+                    "{data.externalIntelConclusion}"
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h5 className="text-[9px] font-black uppercase tracking-widest text-primary">Recomendación de Inteligencia</h5>
+                  <div className="p-3 bg-primary/5 rounded-xl border border-primary/10">
+                    <p className="text-[10px] font-black text-primary uppercase tracking-tight">
+                      {data.externalIntelRecommendation}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -426,13 +516,13 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                             <span className={cn(
                               "text-[8px] font-black px-2 py-0.5 rounded uppercase",
                               signal.type === "LONG" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                            )}>{signal.type}</span>
+                            )}>{signal.type === "LONG" ? "COMPRA" : "VENTA"}</span>
                           </div>
                           <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest opacity-50 mt-1">Fuente: {signal.source}</p>
                         </div>
                       </div>
                       <div className="text-right space-y-1">
-                        <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">Entry: <span className="text-primary">${signal.entry}</span></p>
+                        <p className="text-[11px] font-black text-on-surface uppercase tracking-tight">Entrada: <span className="text-primary">${signal.entry}</span></p>
                         <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">TP: ${signal.tp}</p>
                       </div>
                     </div>

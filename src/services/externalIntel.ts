@@ -25,13 +25,22 @@ export interface ExternalIntelData {
   polymarket?: {
     cryptoBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE" }>;
     popularBets: Array<{ market: string; odds: string; volume: string; trend: "UP" | "DOWN" | "STABLE" }>;
+    conclusion?: string;
+    recommendation?: string;
   };
   stockMarket?: {
     indices: Array<{ name: string; value: string; change: string }>;
     narrative: string;
   };
+  externalIntelConclusion?: string;
+  externalIntelRecommendation?: string;
+  globalConsensus?: {
+    verdict: string;
+    reasoning: string;
+    suggestedEntries: Array<{ asset: string; price: number; type: "LONG" | "SHORT" }>;
+  };
   alerts: string[];
-  consensus: "BULLISH" | "BEARISH" | "NEUTRAL";
+  consensus: "ALCISTA" | "BAJISTA" | "NEUTRAL";
   lastUpdate: string;
 }
 
@@ -58,8 +67,11 @@ class ExternalIntelService {
         whaleActivity: data.whaleActivity || "No se detectó actividad inusual.",
         keyLevels: data.keyLevels || { support: [], resistance: [] },
         signals: data.signals || [],
-        polymarket: data.polymarket || { cryptoBets: [], popularBets: [] },
+        polymarket: data.polymarket || { cryptoBets: [], popularBets: [], conclusion: "", recommendation: "" },
         stockMarket: data.stockMarket || null,
+        externalIntelConclusion: data.externalIntelConclusion || "",
+        externalIntelRecommendation: data.externalIntelRecommendation || "",
+        globalConsensus: data.globalConsensus || null,
         alerts: data.alerts || [],
         consensus: data.consensus || "NEUTRAL",
         lastUpdate: new Date().toISOString()

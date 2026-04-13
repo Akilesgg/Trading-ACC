@@ -255,15 +255,29 @@ async function startServer() {
               ],
               "popularBets": [
                 { "market": string, "odds": string, "volume": string, "trend": "UP" | "DOWN" | "STABLE" }
-              ]
+              ],
+              "conclusion": string,
+              "recommendation": string
             },
             "stockMarket": {
               "indices": [ { "name": string, "value": string, "change": string } ],
               "narrative": string
             },
+            "externalIntelConclusion": string,
+            "externalIntelRecommendation": string,
+            "globalConsensus": {
+              "verdict": string,
+              "reasoning": string,
+              "suggestedEntries": [ { "asset": string, "price": number, "type": "LONG" | "SHORT" } ]
+            },
             "alerts": string[],
-            "consensus": "BULLISH" | "BEARISH" | "NEUTRAL"
-          }`;
+            "consensus": "ALCISTA" | "BAJISTA" | "NEUTRAL"
+          }
+          
+          INSTRUCCIONES ADICIONALES:
+          - TODA LA RESPUESTA DEBE ESTAR EN ESPAÑOL. No uses palabras en inglés como "BULLISH", "BEARISH", "LONG", "SHORT" en los campos de texto descriptivo.
+          - En "globalConsensus", proporciona una síntesis de todas las fuentes.
+          - Incluye niveles de "tope" (máximos y mínimos esperados) en la narrativa.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;

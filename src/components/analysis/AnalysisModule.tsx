@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Reorder, useDragControls } from "motion/react";
+import { Reorder, useDragControls, motion } from "motion/react";
 import Markdown from "react-markdown";
 import { 
   Brain, 
@@ -195,6 +195,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
 }) => {
   const controls = useDragControls();
   const [copied, setCopied] = useState(false);
+  const [showPatterns, setShowPatterns] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(analysis);
@@ -353,6 +354,18 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                   <ReferenceDot x="5" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[5]?.price} r={8} shape={<WyckoffArrow />} />
                   <ReferenceDot x="15" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[15]?.price} r={8} shape={<WyckoffArrow />} />
                   <ReferenceDot x="25" y={getWyckoffData(ticker?.price || "0", analysisSections["FASE WYCKOFF"] || "")[25]?.price} r={8} shape={<WyckoffArrow />} />
+                  
+                  {showPatterns && (
+                    <Line 
+                      type="monotone" 
+                      dataKey="price" 
+                      stroke="white" 
+                      strokeWidth={2} 
+                      strokeDasharray="5 5" 
+                      dot={false}
+                      className="drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                    />
+                  )}
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -414,7 +427,48 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
                 <span className="text-[10px] font-black text-primary text-right uppercase tracking-widest">{line.split(":")[1] || "ACTIVO"}</span>
               </div>
             ))}
+            
+            {/* Nuevo Indicador de Patrones */}
+            <button 
+              onClick={() => setShowPatterns(!showPatterns)}
+              className={cn(
+                "p-4 rounded-2xl border transition-all flex items-center justify-between group",
+                showPatterns 
+                  ? "bg-primary/10 border-primary/50 shadow-lg shadow-primary/10" 
+                  : "bg-surface-container-high border-outline-variant/10 hover:border-primary/30"
+              )}
+            >
+              <div className="flex flex-col items-start">
+                <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest">PATRONES</span>
+                <span className="text-[8px] font-bold text-on-surface-variant/50 uppercase tracking-widest mt-0.5">Detectar Estructuras</span>
+              </div>
+              <span className={cn(
+                "text-[10px] font-black uppercase tracking-widest",
+                showPatterns ? "text-primary" : "text-on-surface-variant/30"
+              )}>
+                {showPatterns ? "ACTIVO" : "INACTIVO"}
+              </span>
+            </button>
           </div>
+
+          {showPatterns && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-6 bg-primary/5 border border-primary/20 rounded-2xl space-y-3"
+            >
+              <div className="flex items-center gap-2 text-primary">
+                <Zap className="w-4 h-4" />
+                <h5 className="text-[10px] font-black uppercase tracking-widest">Patrón Detectado: Hombro-Cabeza-Hombro Invertido</h5>
+              </div>
+              <p className="text-[11px] font-medium text-on-surface/80 leading-relaxed">
+                Se identifica una estructura de acumulación con un patrón de reversión alcista. La línea de cuello se sitúa cerca del nivel de resistencia actual.
+              </p>
+              <div className="pt-2 border-t border-primary/10">
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest">Recomendación: ENTRADA EN RUPTURA DE CUELLO</p>
+              </div>
+            </motion.div>
+          )}
         </div>
       )}
 
