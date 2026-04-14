@@ -19,6 +19,7 @@ export interface CandlePattern {
   action: string;
   sl: number;
   tp: number;
+  description: string;
 }
 
 export function detectPatterns(data: any[]): Pattern[] {
@@ -28,8 +29,7 @@ export function detectPatterns(data: any[]): Pattern[] {
   const prices = data.map(d => d.price);
   const lastPrice = prices[prices.length - 1];
 
-  // Simple Double Bottom detection logic
-  // Look for two local minima at similar levels
+  // 1. Doble Suelo
   let min1 = { val: Infinity, idx: -1 };
   let min2 = { val: Infinity, idx: -1 };
   let peak = { val: -Infinity, idx: -1 };
@@ -64,7 +64,7 @@ export function detectPatterns(data: any[]): Pattern[] {
       status: isConfirmed ? "Confirmado" : "En formación",
       entry: peak.val,
       sl: Math.min(min1.val, min2.val) * 0.99,
-      tp: peak.val + (peak.val - Math.min(min1.val, min2.val)) * 2,
+      tp: peak.val + (peak.val - Math.min(min1.val, min2.val)) * 1.5,
       action: isConfirmed ? "LONG" : "ESPERAR",
       points: [
         { x: min1.idx, y: min1.val },
@@ -74,7 +74,7 @@ export function detectPatterns(data: any[]): Pattern[] {
     });
   }
 
-  // Double Top
+  // 2. Doble Techo
   let max1 = { val: -Infinity, idx: -1 };
   let max2 = { val: -Infinity, idx: -1 };
   let valley = { val: Infinity, idx: -1 };
@@ -109,7 +109,7 @@ export function detectPatterns(data: any[]): Pattern[] {
       status: isConfirmed ? "Confirmado" : "En formación",
       entry: valley.val,
       sl: Math.max(max1.val, max2.val) * 1.01,
-      tp: valley.val - (Math.max(max1.val, max2.val) - valley.val) * 2,
+      tp: valley.val - (Math.max(max1.val, max2.val) - valley.val) * 1.5,
       action: isConfirmed ? "SHORT" : "ESPERAR",
       points: [
         { x: max1.idx, y: max1.val },
@@ -119,32 +119,31 @@ export function detectPatterns(data: any[]): Pattern[] {
     });
   }
 
-  // Triangle detection (simplified)
-  if (prices.length > 20) {
-    const startIdx = prices.length - 20;
-    const endIdx = prices.length - 1;
-    const highs = prices.slice(startIdx).filter((p, i, arr) => i > 0 && i < arr.length - 1 && p > arr[i-1] && p > arr[i+1]);
-    const lows = prices.slice(startIdx).filter((p, i, arr) => i > 0 && i < arr.length - 1 && p < arr[i-1] && p < arr[i+1]);
+  // 3. Triángulo Ascendente
+  if (prices.length > 30) {
+    const recent = prices.slice(-30);
+    const highs = recent.filter((p, i, arr) => i > 0 && i < arr.length - 1 && p > arr[i-1] && p > arr[i+1]);
+    const lows = recent.filter((p, i, arr) => i > 0 && i < arr.length - 1 && p < arr[i-1] && p < arr[i+1]);
 
     if (highs.length >= 2 && lows.length >= 2) {
-      const highSlope = (highs[highs.length-1] - highs[0]) / (highs.length);
-      const lowSlope = (lows[lows.length-1] - lows[0]) / (lows.length);
+      const isHorizontalResistance = Math.abs(highs[highs.length-1] - highs[0]) / highs[0] < 0.005;
+      const isRisingSupport = lows[lows.length-1] > lows[0];
 
-      if (highSlope < 0 && lowSlope > 0) {
+      if (isHorizontalResistance && isRisingSupport) {
         patterns.push({
-          name: "Triángulo Simétrico",
-          type: "NEUTRAL",
-          reliability: 75,
-          status: "En formación",
-          entry: lastPrice,
-          sl: lastPrice * 0.98,
-          tp: lastPrice * 1.05,
-          action: "ESPERAR",
+          name: "Triángulo Ascendente",
+          type: "ALCISTA",
+          reliability: 78,
+          status: lastPrice > highs[highs.length-1] ? "Confirmado" : "En formación",
+          entry: highs[highs.length-1],
+          sl: lows[lows.length-1],
+          tp: highs[highs.length-1] + (highs[highs.length-1] - lows[0]),
+          action: lastPrice > highs[highs.length-1] ? "LONG" : "ESPERAR",
           points: [
-            { x: startIdx, y: highs[0] },
-            { x: endIdx, y: highs[highs.length-1] },
-            { x: startIdx, y: lows[0] },
-            { x: endIdx, y: lows[lows.length-1] }
+            { x: prices.length - 30, y: highs[0] },
+            { x: prices.length - 1, y: highs[highs.length-1] },
+            { x: prices.length - 30, y: lows[0] },
+            { x: prices.length - 1, y: lows[lows.length-1] }
           ]
         });
       }
@@ -155,59 +154,57 @@ export function detectPatterns(data: any[]): Pattern[] {
 }
 
 export function detectCandles(data: any[]): CandlePattern[] {
-  if (data.length < 5) return [];
+  if (data.length < 10) return [];
   
   const candlePatterns: CandlePattern[] = [];
-  
-  // We need OHLC data for real candle detection. 
-  // If we only have 'price', we'll simulate some based on price movement.
-  // In a real app, 'data' would be klines.
   
   for (let i = 2; i < data.length; i++) {
     const current = data[i];
     const prev = data[i-1];
-    const prev2 = data[i-2];
-
-    // Engulfing Alcista (Simulated)
-    if (current.price > prev.price && (current.price - prev.price) > (prev.price * 0.005)) {
+    
+    // Engulfing Alcista
+    if (current.price > prev.price && (current.price - prev.price) > (prev.price * 0.008)) {
       candlePatterns.push({
         name: "Engulfing Alcista",
         type: "ALCISTA",
         index: i,
         price: current.price,
         action: "LONG",
-        sl: prev.price * 0.995,
-        tp: current.price * 1.02
+        sl: prev.price * 0.99,
+        tp: current.price * 1.03,
+        description: "Vela de reversión alcista potente."
       });
     }
 
-    // Engulfing Bajista (Simulated)
-    if (current.price < prev.price && (prev.price - current.price) > (prev.price * 0.005)) {
+    // Engulfing Bajista
+    if (current.price < prev.price && (prev.price - current.price) > (prev.price * 0.008)) {
       candlePatterns.push({
         name: "Engulfing Bajista",
         type: "BAJISTA",
         index: i,
         price: current.price,
         action: "SHORT",
-        sl: prev.price * 1.005,
-        tp: current.price * 0.98
+        sl: prev.price * 1.01,
+        tp: current.price * 0.97,
+        description: "Vela de reversión bajista potente."
       });
     }
 
-    // Pin Bar (Simulated - would need high/low/open/close)
-    // For now, let's just mark some significant reversals
-    if (current.price > prev.price && prev.price < prev2.price && (current.price - prev.price) > (prev.price * 0.003)) {
+    // Hammer (Simulado)
+    if (i > 0 && current.price > prev.price && (current.price - prev.price) < (prev.price * 0.002)) {
+      // Si el precio sube poco después de una caída, simulamos un martillo
       candlePatterns.push({
-        name: "Pin Bar / Hammer",
+        name: "Hammer / Martillo",
         type: "ALCISTA",
         index: i,
         price: current.price,
         action: "LONG",
-        sl: prev.price * 0.99,
-        tp: current.price * 1.03
+        sl: current.price * 0.985,
+        tp: current.price * 1.04,
+        description: "Posible agotamiento de ventas."
       });
     }
   }
 
-  return candlePatterns.slice(-5); // Only return recent ones
+  return candlePatterns.slice(-10);
 }

@@ -132,21 +132,46 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
                       { x: chartData[pt.x]?.name, y: pt.y },
                       { x: chartData[p.points[j+1].x]?.name, y: p.points[j+1].y }
                     ]}
-                    stroke={p.type === "ALCISTA" ? "#00ffa3" : "#ff7162"}
-                    strokeWidth={3}
-                    strokeDasharray="5 5"
+                    stroke="#FFD700" // Yellow
+                    strokeWidth={2}
+                    strokeDasharray="3 3"
                   />
                 ))}
+                
+                {/* Entry Line */}
+                <ReferenceLine 
+                  y={p.entry} 
+                  stroke="#00ffa3" 
+                  strokeDasharray="3 3" 
+                  label={{ position: 'right', value: 'ENTRADA', fill: '#00ffa3', fontSize: 10, fontWeight: 'black' }} 
+                />
+                
+                {/* Target Line */}
+                <ReferenceLine 
+                  y={p.tp} 
+                  stroke="#00ffa3" 
+                  strokeWidth={2}
+                  label={{ position: 'right', value: 'OBJETIVO', fill: '#00ffa3', fontSize: 10, fontWeight: 'black' }} 
+                />
+
+                {/* Stop Loss Line */}
+                <ReferenceLine 
+                  y={p.sl} 
+                  stroke="#ff7162" 
+                  strokeDasharray="3 3" 
+                  label={{ position: 'right', value: 'STOP', fill: '#ff7162', fontSize: 10, fontWeight: 'black' }} 
+                />
+
                 <ReferenceDot 
                   x={chartData[p.points[p.points.length-1].x]?.name} 
                   y={p.points[p.points.length-1].y} 
                   r={6} 
-                  fill={p.type === "ALCISTA" ? "#00ffa3" : "#ff7162"} 
+                  fill="#FFD700" 
                   stroke="white"
                   label={{ 
                     position: 'top', 
-                    value: `${p.name} (${p.status})`, 
-                    fill: 'white', 
+                    value: `${p.name}`, 
+                    fill: '#FFD700', 
                     fontSize: 10, 
                     fontWeight: 'black' 
                   }} 
@@ -160,15 +185,16 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
                 key={`candle-${i}`}
                 x={chartData[c.index]?.name} 
                 y={c.price} 
-                r={8} 
+                r={10} 
                 fill={c.type === "ALCISTA" ? "#00ffa3" : "#ff7162"} 
                 stroke="white"
+                strokeWidth={2}
                 label={{ 
                   position: 'bottom', 
                   value: c.name, 
                   fill: c.type === "ALCISTA" ? "#00ffa3" : "#ff7162", 
-                  fontSize: 9, 
-                  fontWeight: 'black' 
+                  fontSize: 10, 
+                  fontWeight: 'black'
                 }} 
               />
             ))}
@@ -191,16 +217,57 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
       {(showPatterns || showCandles) && (
         <div className="grid grid-cols-1 gap-4 pt-6 border-t border-outline-variant/10">
           {patterns.map((p, i) => (
-            <div key={i} className="flex items-center justify-between p-4 bg-surface-container-high rounded-2xl border border-primary/20">
-              <div className="flex items-center gap-4">
-                <Zap className={cn("w-5 h-5", p.type === "ALCISTA" ? "text-primary" : "text-secondary")} />
-                <span className="text-[12px] font-black text-on-surface uppercase tracking-widest">{p.name}</span>
-              </div>
-              <div className="flex items-center gap-5">
-                <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{p.status}</span>
-                <span className={cn("px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest", p.type === "ALCISTA" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary")}>
+            <div key={`leg-p-${i}`} className="flex flex-col gap-4 p-6 bg-surface-container-high rounded-3xl border border-primary/20 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+              <div className="flex items-center justify-between relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border", p.type === "ALCISTA" ? "bg-primary/10 border-primary/20" : "bg-secondary/10 border-secondary/20")}>
+                    <Zap className={cn("w-5 h-5", p.type === "ALCISTA" ? "text-primary" : "text-secondary")} />
+                  </div>
+                  <div>
+                    <span className="text-[14px] font-black text-on-surface uppercase tracking-tight">{p.name}</span>
+                    <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">{p.status}</p>
+                  </div>
+                </div>
+                <div className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest", p.type === "ALCISTA" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary")}>
                   {p.action}
-                </span>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 relative z-10">
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Entrada</p>
+                  <p className="text-xs font-black text-on-surface">${p.entry.toLocaleString()}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Objetivo</p>
+                  <p className="text-xs font-black text-primary">${p.tp.toLocaleString()}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">Stop Loss</p>
+                  <p className="text-xs font-black text-secondary">${p.sl.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+          {candles.map((c, i) => (
+            <div key={`leg-c-${i}`} className="flex items-center justify-between p-5 bg-surface-container-high rounded-3xl border border-outline-variant/10 group hover:border-primary/30 transition-all">
+              <div className="flex items-center gap-4">
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border", c.type === "ALCISTA" ? "bg-primary/10 border-primary/20" : "bg-secondary/10 border-secondary/20")}>
+                  <Target className={cn("w-5 h-5", c.type === "ALCISTA" ? "text-primary" : "text-secondary")} />
+                </div>
+                <div>
+                  <span className="text-[13px] font-black text-on-surface uppercase tracking-tight">{c.name}</span>
+                  <p className="text-[10px] font-medium text-on-surface-variant opacity-70">{c.description}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <p className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest">TP: ${c.tp.toLocaleString()}</p>
+                  <p className="text-[9px] font-black text-secondary uppercase tracking-widest">SL: ${c.sl.toLocaleString()}</p>
+                </div>
+                <div className={cn("px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest", c.type === "ALCISTA" ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary")}>
+                  {c.action}
+                </div>
               </div>
             </div>
           ))}
