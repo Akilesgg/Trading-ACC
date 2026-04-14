@@ -23,6 +23,8 @@ interface MarketOverviewProps {
   timeframe: string;
   showPatterns?: boolean;
   showCandles?: boolean;
+  onTogglePatterns?: (val: boolean) => void;
+  onToggleCandles?: (val: boolean) => void;
 }
 
 const MarketOverview: React.FC<MarketOverviewProps> = ({
@@ -31,7 +33,9 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
   chartData,
   timeframe,
   showPatterns = false,
-  showCandles = false
+  showCandles = false,
+  onTogglePatterns,
+  onToggleCandles
 }) => {
   const isBullish = ticker && parseFloat(ticker.priceChangePercent) >= 0;
 
@@ -66,6 +70,33 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
 
       <div className="h-96 w-full bg-surface-container-high/20 rounded-[2.5rem] p-8 border border-outline-variant/10 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+        
+        {/* Chart Toggles Overlay */}
+        <div className="absolute top-6 right-6 z-30 flex gap-2">
+          <button 
+            onClick={() => onTogglePatterns?.(!showPatterns)}
+            className={cn(
+              "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all backdrop-blur-md",
+              showPatterns 
+                ? "bg-primary/20 border-primary/40 text-primary shadow-lg shadow-primary/20" 
+                : "bg-surface-container-highest/50 border-outline-variant/10 text-on-surface-variant hover:border-primary/30"
+            )}
+          >
+            Patrones {showPatterns ? "ON" : "OFF"}
+          </button>
+          <button 
+            onClick={() => onToggleCandles?.(!showCandles)}
+            className={cn(
+              "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all backdrop-blur-md",
+              showCandles 
+                ? "bg-secondary/20 border-secondary/40 text-secondary shadow-lg shadow-secondary/20" 
+                : "bg-surface-container-highest/50 border-outline-variant/10 text-on-surface-variant hover:border-secondary/30"
+            )}
+          >
+            Velas {showCandles ? "ON" : "OFF"}
+          </button>
+        </div>
+
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData}>
             <defs>

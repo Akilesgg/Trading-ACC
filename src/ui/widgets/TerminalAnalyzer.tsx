@@ -42,7 +42,7 @@ const ASSETS = [
   "DOTUSDT", "LINKUSDT", "MATICUSDT", "SHIBUSDT", "LTCUSDT", "TRXUSDT", "UNIUSDT", "ATOMUSDT"
 ];
 
-const TIMEFRAMES = ["1m", "5m", "15m", "1h", "4h", "1d"];
+const TIMEFRAMES = ["1m", "3m", "5m", "15m", "1h", "4h", "1d"];
 
 interface IndicatorConfig {
   id: string;
@@ -59,6 +59,8 @@ const TerminalAnalyzer: React.FC = () => {
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
   const [recommendation, setRecommendation] = useState<string>("");
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
+    { id: "patterns", name: "Patrones Detectados", description: "Detección de patrones de gráficos", enabled: false },
+    { id: "candles", name: "Velas Japonesas", description: "Detección de patrones de velas", enabled: false },
     { id: "macd", name: "MACD", description: "Moving Average Convergence Divergence", enabled: false },
     { id: "rsi", name: "RSI", description: "Relative Strength Index", enabled: false },
     { id: "bollinger", name: "Bandas de Bollinger", description: "Bollinger Bands", enabled: false },

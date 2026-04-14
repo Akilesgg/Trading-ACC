@@ -422,7 +422,7 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         </div>
       )}
 
-      {moduleId === "indicators" && (analysisSections["INDICADORES TÉCNICOS (TOP 2026)"] || analysisSections["PATRONES DETECTADOS"] || analysisSections["VELAS JAPONESAS"]) && (
+      {moduleId === "indicators" && (
         <div className="trading-card p-8 space-y-8">
           <div className="flex items-center justify-between">
             <h4 className="text-[13px] font-black text-primary uppercase tracking-widest flex items-center gap-3">

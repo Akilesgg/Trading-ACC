@@ -97,6 +97,8 @@ const WyckoffAnalyzer: React.FC = () => {
   const [recommendation, setRecommendation] = useState<string>("");
   
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
+    { id: "patterns", name: "Patrones Detectados", enabled: false },
+    { id: "candles", name: "Velas Japonesas", enabled: false },
     { id: "macd", name: "MACD", enabled: false },
     { id: "rsi", name: "RSI", enabled: false },
     { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
@@ -206,6 +208,7 @@ const WyckoffAnalyzer: React.FC = () => {
       
       const timeframeMultipliers: Record<string, number> = {
         "1m": 0.001,
+        "3m": 0.0015,
         "5m": 0.002,
         "15m": 0.005,
         "1h": 0.01,
@@ -428,7 +431,7 @@ const WyckoffAnalyzer: React.FC = () => {
         onChange={e => setSelectedTimeframe(e.target.value)}
         className="bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-on-surface outline-none"
       >
-        {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => <option key={tf} value={tf}>{tf.toUpperCase()}</option>)}
+        {["1m", "3m", "5m", "15m", "1h", "4h", "1d"].map(tf => <option key={tf} value={tf}>{tf.toUpperCase()}</option>)}
       </select>
     </div>
   </div>

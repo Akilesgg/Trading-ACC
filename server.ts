@@ -42,12 +42,11 @@ async function startServer() {
         DATOS ACTUALES: Precio: ${price}, Cambio 24h: ${change}%. 
         
         ${modePrompt}
-        
-        INSTRUCCIONES CRÍTICAS:
+          INSTRUCCIONES CRÍTICAS:
         1. Responde SIEMPRE en ESPAÑOL.
         2. Mantén un tono profesional, analítico, directo y profundamente involucrado.
         3. Involúcrate en los resultados: proporciona niveles de precios REALES y COHERENTES con el precio actual. La ENTRADA debe estar muy cerca del precio actual (máximo 1-2% de diferencia).
-        4. ES OBLIGATORIO que cada sección de análisis siga esta estructura lógica:
+        4. ES OBLIGATORIO que CADA SECCIÓN de análisis siga esta estructura lógica interna:
            - SITUACIÓN: Qué está pasando ahora mismo.
            - ANÁLISIS: Por qué ocurre (causas técnicas/fundamentales).
            - ACCIÓN: Qué hacer exactamente (decisión clara).
@@ -65,11 +64,11 @@ async function startServer() {
         
         **DOMINANCIA BTC**: Impacto en ${symbol}.
         
-        **FASE WYCKOFF**: Identificación y explicación.
+        **FASE WYCKOFF**: Identificación y explicación detallada.
         
-        **INDICADORES TÉCNICOS (TOP 2026)**: Lista de 8-10 indicadores.
+        **INDICADORES TÉCNICOS (TOP 2026)**: Lista de 8-10 indicadores con su estado actual.
         
-        **PATRONES DETECTADOS**: Identifica patrones como Doble Techo/Suelo, HCH, Triángulos, Canales, Banderas, etc. Indica si están en FORMACIÓN o CONFIRMADOS.
+        **PATRONES DETECTADOS**: Identifica patrones como Doble Techo/Suelo, HCH, Triángulos, Canales, Banderas, etc. Indica si están en FORMACIÓN o CONFIRMADOS. Sé extremadamente preciso.
         
         **VELAS JAPONESAS**: Identifica velas como Engulfing, Pin Bar, Hammer, Morning Star, etc. Analiza su relevancia en el contexto actual.
         

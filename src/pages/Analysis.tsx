@@ -560,6 +560,8 @@ const Analysis = () => {
               timeframe={selectedTimeframe}
               showPatterns={showPatterns}
               showCandles={showCandles}
+              onTogglePatterns={setShowPatterns}
+              onToggleCandles={setShowCandles}
             />
           </div>
           <div className="lg:col-span-8">

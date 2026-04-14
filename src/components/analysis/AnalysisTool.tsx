@@ -220,7 +220,8 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
             <div className="flex gap-3">
               {[
                 { id: "Standard", label: "Estándar", tf: "1h" },
-                { id: "Scalping", label: "Scalping", tf: "5m" },
+                { id: "Scalping", label: "Scalping 5M", tf: "5m" },
+                { id: "Scalping3M", label: "Scalping 3M", tf: "3m" },
                 { id: "Swing", label: "Swing", tf: "4h" }
               ].map((mode) => (
                 <button
