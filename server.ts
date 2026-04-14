@@ -251,6 +251,8 @@ async function startServer() {
             2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales. Incluye los mismos campos que las crypto bets.
             3. CRYPTO SUMMARY: Un resumen de cómo están las criptomonedas según el sentimiento y apuestas en Polymarket.
             4. BET SUGGESTIONS: Una lista de 3-5 sugerencias de apuestas basadas en el análisis de probabilidades y tendencias.
+            5. CONCLUSION: Una conclusión final sobre el sentimiento de Polymarket.
+            6. RECOMMENDATION: Una recomendación clara (COMPRA/VENTA/ESPERAR) basada en Polymarket.
           - BOLSA: Resumen de índices clave y narrativa macroeconómica actual.
           
           Responde estrictamente en formato JSON con esta estructura:
@@ -346,29 +348,37 @@ async function startServer() {
         ],
         polymarket: {
           cryptoBets: [
-            { market: "BTC > $70k en Abril", odds: "45%", volume: "$1.2M", trend: "UP" },
-            { market: "ETH ETF aprobado en Mayo", odds: "65%", volume: "$800k", trend: "STABLE" },
-            { market: "SOL > $200 en Mayo", odds: "30%", volume: "$500k", trend: "DOWN" },
-            { market: "BTC ATH antes de Junio", odds: "55%", volume: "$2.1M", trend: "UP" },
-            { market: "Binance lista nuevo token AI", odds: "20%", volume: "$150k", trend: "STABLE" },
-            { market: "Dominancia BTC > 55%", odds: "70%", volume: "$400k", trend: "UP" },
-            { market: "L2 TVL > $50B", odds: "40%", volume: "$300k", trend: "STABLE" },
-            { market: "Stablecoin cap > $160B", odds: "85%", volume: "$600k", trend: "UP" },
-            { market: "NFT volume > $1B", odds: "15%", volume: "$100k", trend: "DOWN" },
-            { market: "Crypto regulation US 2026", odds: "50%", volume: "$900k", trend: "STABLE" }
+            { market: "BTC > $70k en Abril", odds: "45%", volume: "$1.2M", trend: "UP", probability: 45, direction: "ALCISTA", confidence: 80, context: "Fuerte acumulación detectada en niveles de $65k." },
+            { market: "ETH ETF aprobado en Mayo", odds: "65%", volume: "$800k", trend: "STABLE", probability: 65, direction: "ALCISTA", confidence: 75, context: "Optimismo regulatorio tras comentarios de la SEC." },
+            { market: "SOL > $200 en Mayo", odds: "30%", volume: "$500k", trend: "DOWN", probability: 30, direction: "BAJISTA", confidence: 60, context: "Congestión en la red afecta el sentimiento a corto plazo." },
+            { market: "BTC ATH antes de Junio", odds: "55%", volume: "$2.1M", trend: "UP", probability: 55, direction: "ALCISTA", confidence: 85, context: "El halving actúa como catalizador principal." },
+            { market: "Binance lista nuevo token AI", odds: "20%", volume: "$150k", trend: "STABLE", probability: 20, direction: "ALCISTA", confidence: 40, context: "Rumores en Telegram sobre integración de Fetch.ai." },
+            { market: "Dominancia BTC > 55%", odds: "70%", volume: "$400k", trend: "UP", probability: 70, direction: "ALCISTA", confidence: 90, context: "Flujo de capital desde altcoins hacia la seguridad de BTC." },
+            { market: "L2 TVL > $50B", odds: "40%", volume: "$300k", trend: "STABLE", probability: 40, direction: "ALCISTA", confidence: 70, context: "Crecimiento constante de Base y Arbitrum." },
+            { market: "Stablecoin cap > $160B", odds: "85%", volume: "$600k", trend: "UP", probability: 85, direction: "ALCISTA", confidence: 95, context: "Entrada masiva de liquidez institucional (USDT/USDC)." },
+            { market: "NFT volume > $1B", odds: "15%", volume: "$100k", trend: "DOWN", probability: 15, direction: "BAJISTA", confidence: 50, context: "Falta de interés retail en colecciones tradicionales." },
+            { market: "Crypto regulation US 2026", odds: "50%", volume: "$900k", trend: "STABLE", probability: 50, direction: "NEUTRAL", confidence: 30, context: "Incertidumbre política ante las próximas elecciones." }
           ],
           popularBets: [
-            { market: "Elecciones US 2024 Ganador", odds: "52% Rep", volume: "$150M", trend: "UP" },
-            { market: "Corte de tasas FED Junio", odds: "60%", volume: "$12M", trend: "DOWN" },
-            { market: "Guerra comercial US-China", odds: "40%", volume: "$5M", trend: "STABLE" },
-            { market: "Próximo CEO de OpenAI", odds: "Sam Altman", volume: "$2M", trend: "STABLE" },
-            { market: "Misión Marte 2026 éxito", odds: "25%", volume: "$1M", trend: "DOWN" },
-            { market: "Campeón Champions League", odds: "Real Madrid", volume: "$10M", trend: "UP" },
-            { market: "Premio Nobel de la Paz", odds: "Variable", volume: "$500k", trend: "STABLE" },
-            { market: "Inflación US < 2.5%", odds: "35%", volume: "$8M", trend: "DOWN" },
-            { market: "Aceptación de pagos X", odds: "45%", volume: "$3M", trend: "UP" },
-            { market: "Lanzamiento GTA VI 2025", odds: "90%", volume: "$15M", trend: "STABLE" }
-          ]
+            { market: "Elecciones US 2024 Ganador", odds: "52% Rep", volume: "$150M", trend: "UP", probability: 52, direction: "ALCISTA", confidence: 80, context: "Mercados de predicción favorecen cambio de administración." },
+            { market: "Corte de tasas FED Junio", odds: "60%", volume: "$12M", trend: "DOWN", probability: 60, direction: "ALCISTA", confidence: 70, context: "Datos de inflación sugieren cautela por parte de Powell." },
+            { market: "Guerra comercial US-China", odds: "40%", volume: "$5M", trend: "STABLE", probability: 40, direction: "BAJISTA", confidence: 60, context: "Nuevos aranceles en sector tecnológico." },
+            { market: "Próximo CEO de OpenAI", odds: "Sam Altman", volume: "$2M", trend: "STABLE", probability: 95, direction: "ALCISTA", confidence: 99, context: "Consolidación de liderazgo tras crisis interna." },
+            { market: "Misión Marte 2026 éxito", odds: "25%", volume: "$1M", trend: "DOWN", probability: 25, direction: "BAJISTA", confidence: 40, context: "Retrasos técnicos en pruebas de motores." },
+            { market: "Campeón Champions League", odds: "Real Madrid", volume: "$10M", trend: "UP", probability: 40, direction: "ALCISTA", confidence: 85, context: "Historial dominante en fases eliminatorias." },
+            { market: "Premio Nobel de la Paz", odds: "Variable", volume: "$500k", trend: "STABLE", probability: 10, direction: "NEUTRAL", confidence: 20, context: "Múltiples candidatos en contexto de conflicto global." },
+            { market: "Inflación US < 2.5%", odds: "35%", volume: "$8M", trend: "DOWN", probability: 35, direction: "BAJISTA", confidence: 65, context: "Precios de energía mantienen presión al alza." },
+            { market: "Aceptación de pagos X", odds: "45%", volume: "$3M", trend: "UP", probability: 45, direction: "ALCISTA", confidence: 70, context: "Avances en licencias de transmisión de dinero." },
+            { market: "Lanzamiento GTA VI 2025", odds: "90%", volume: "$15M", trend: "STABLE", probability: 90, direction: "ALCISTA", confidence: 95, context: "Confirmación oficial de Rockstar Games." }
+          ],
+          cryptoSummary: "El mercado de predicción muestra un sesgo alcista moderado para BTC y ETH, con gran confianza en la aprobación de ETFs y la entrada de liquidez institucional. Sin embargo, hay cautela respecto a las altcoins de baja capitalización.",
+          betSuggestions: [
+            "LONG BTC ante ruptura de $70k (Confianza 85%)",
+            "LONG ETH ante noticias de ETF (Confianza 75%)",
+            "HEDGE con DXY ante incertidumbre de tasas (Confianza 60%)"
+          ],
+          conclusion: "Polymarket indica una alta probabilidad de continuación alcista para los activos principales, respaldada por volumen real y confianza institucional.",
+          recommendation: "COMPRA FUERTE en BTC y ETH; MANTENER en SOL hasta confirmación de red."
         },
         stockMarket: {
           indices: [

@@ -94,14 +94,14 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
   return (
     <div className="trading-card flex flex-col items-center text-center space-y-6 group hover:border-primary/30 transition-all">
       <div className="flex items-center justify-between w-full">
-        <h4 className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest">{label}</h4>
+        <h4 className="text-[14px] font-black text-on-surface-variant uppercase tracking-widest">{label}</h4>
         <div className="flex bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10 shadow-inner">
           {["1h", "4h", "1d"].map((tf) => (
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
               className={cn(
-                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                "px-4 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-widest transition-all",
                 timeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface"
               )}
             >
@@ -111,7 +111,7 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
         </div>
       </div>
       
-      <div className="relative w-40 h-40">
+      <div className="relative w-48 h-48">
         <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl group-hover:bg-primary/10 transition-all"></div>
         <svg className="w-full h-full relative z-10" viewBox="0 0 100 100">
           <circle
@@ -142,8 +142,8 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <span className={cn("text-5xl font-black tracking-tighter", getColor(value))}>{value}</span>
-          <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{getLabel(value)}</span>
+          <span className={cn("text-6xl font-black tracking-tighter", getColor(value))}>{value}</span>
+          <span className="text-[13px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{getLabel(value)}</span>
         </div>
       </div>
     </div>
@@ -170,6 +170,10 @@ interface AnalysisModuleProps {
   allAssets?: any[];
   marketIntelligence?: any;
   intelligenceLoading?: boolean;
+  showPatterns: boolean;
+  setShowPatterns: (val: boolean) => void;
+  showCandles: boolean;
+  setShowCandles: (val: boolean) => void;
 }
 
 const AnalysisModule: React.FC<AnalysisModuleProps> = ({ 
@@ -191,12 +195,14 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
   setGeneralTF,
   allAssets = [],
   marketIntelligence,
-  intelligenceLoading
+  intelligenceLoading,
+  showPatterns,
+  setShowPatterns,
+  showCandles,
+  setShowCandles
 }) => {
   const controls = useDragControls();
   const [copied, setCopied] = useState(false);
-  const [showPatterns, setShowPatterns] = useState(false);
-  const [showCandles, setShowCandles] = useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(analysis);
@@ -252,12 +258,12 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "context" && analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"] && (
-        <div className="trading-card p-8 space-y-4 border-l-4 border-primary/50 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-all"></div>
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3 relative z-10">
-            <Brain className="w-4 h-4" /> CONTEXTO Y RESUMEN EJECUTIVO
+        <div className="trading-card p-10 space-y-6 border-l-8 border-primary/50 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-3xl -mr-24 -mt-24 group-hover:bg-primary/10 transition-all"></div>
+          <h4 className="text-[12px] font-black text-primary uppercase tracking-widest flex items-center gap-3 relative z-10">
+            <Brain className="w-5 h-5" /> CONTEXTO Y RESUMEN EJECUTIVO
           </h4>
-          <p className="text-base text-on-surface leading-relaxed font-bold italic relative z-10">
+          <p className="text-xl text-on-surface leading-relaxed font-black italic relative z-10">
             "{analysisSections["CONTEXTO Y EXPLICACIÓN BREVE"]}"
           </p>
         </div>
@@ -286,12 +292,12 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "recommendation" && analysisSections["RECOMENDACIÓN IA"] && (
-        <div className="trading-card p-8 space-y-4 border-2 border-primary/30 bg-primary/5 shadow-xl shadow-primary/10 relative overflow-hidden group">
+        <div className="trading-card p-10 space-y-6 border-4 border-primary/30 bg-primary/5 shadow-2xl shadow-primary/10 relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-50"></div>
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3 relative z-10">
-            <Zap className="w-5 h-5 animate-pulse" /> RECOMENDACIÓN FINAL DE LA IA
+          <h4 className="text-[12px] font-black text-primary uppercase tracking-widest flex items-center gap-3 relative z-10">
+            <Zap className="w-6 h-6 animate-pulse" /> RECOMENDACIÓN FINAL DE LA IA
           </h4>
-          <p className="text-lg text-on-surface leading-relaxed font-black tracking-tight relative z-10">
+          <p className="text-2xl text-on-surface leading-relaxed font-black tracking-tight relative z-10">
             {analysisSections["RECOMENDACIÓN IA"]}
           </p>
         </div>
@@ -607,21 +613,21 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
       )}
 
       {moduleId === "levels" && analysisSections["NIVELES OPERATIVOS"] && (
-        <div className="trading-card p-8 space-y-6">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
-            <Target className="w-4 h-4" /> NIVELES OPERATIVOS
+        <div className="trading-card p-10 space-y-8">
+          <h4 className="text-[12px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Target className="w-5 h-5" /> NIVELES OPERATIVOS
           </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-surface-container-high rounded-2xl border-l-4 border-primary shadow-lg group hover:scale-[1.02] transition-all">
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-70">Entrada Sugerida</p>
-              <p className="text-3xl font-black text-on-surface tracking-tighter">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 bg-surface-container-high rounded-3xl border-l-8 border-primary shadow-xl group hover:scale-[1.02] transition-all">
+              <p className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest mb-3 opacity-70">Entrada Sugerida</p>
+              <p className="text-5xl font-black text-on-surface tracking-tighter">
                 {analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
                  analysisSections["NIVELES OPERATIVOS"]?.match(/ENTRADA:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
               </p>
             </div>
-            <div className="p-6 bg-surface-container-high rounded-2xl border-l-4 border-secondary shadow-lg group hover:scale-[1.02] transition-all">
-              <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest mb-2 opacity-70">Stop Loss</p>
-              <p className="text-3xl font-black text-secondary tracking-tighter">
+            <div className="p-8 bg-surface-container-high rounded-3xl border-l-8 border-secondary shadow-xl group hover:scale-[1.02] transition-all">
+              <p className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest mb-3 opacity-70">Stop Loss</p>
+              <p className="text-5xl font-black text-secondary tracking-tighter">
                 {analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\$?\d+([,.]\d+)*)/i)?.[1] || 
                  analysisSections["NIVELES OPERATIVOS"]?.match(/STOP LOSS:\s*(\d+([,.]\d+)*)/i)?.[1] || "---"}
               </p>

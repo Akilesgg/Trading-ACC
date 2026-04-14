@@ -147,6 +147,8 @@ const Analysis = () => {
   const [showHotSignal, setShowHotSignal] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
   const [selectedFundamental, setSelectedFundamental] = useState<AssetFundamental | null>(null);
+  const [showPatterns, setShowPatterns] = useState(false);
+  const [showCandles, setShowCandles] = useState(false);
 
   const showFundamentals = async (symbol: string) => {
     const data = await fetchAssetFundamentals(symbol);
@@ -556,6 +558,8 @@ const Analysis = () => {
               selectedSymbol={selectedSymbol}
               chartData={chartData}
               timeframe={selectedTimeframe}
+              showPatterns={showPatterns}
+              showCandles={showCandles}
             />
           </div>
           <div className="lg:col-span-8">
@@ -637,6 +641,10 @@ const Analysis = () => {
                 allAssets={allAssets}
                 marketIntelligence={marketIntelligence}
                 intelligenceLoading={intelligenceLoading}
+                showPatterns={showPatterns}
+                setShowPatterns={setShowPatterns}
+                showCandles={showCandles}
+                setShowCandles={setShowCandles}
               />
             ))}
           </Reorder.Group>

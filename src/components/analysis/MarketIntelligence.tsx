@@ -210,38 +210,43 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
                     key={i} 
-                    className="p-4 bg-surface-container-low/40 rounded-2xl border border-outline-variant/5 flex items-center justify-between group hover:border-primary/30 transition-all"
+                    className="p-5 bg-surface-container-low/40 rounded-2xl border border-outline-variant/5 flex items-center justify-between group hover:border-primary/30 transition-all"
                   >
-                    <div className="flex items-center gap-4">
-                      <span className="text-[10px] font-black text-on-surface-variant opacity-30 w-4">{i + 1}</span>
-                      <div className="space-y-1">
-                        <p className="text-[11px] font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors">{item.market}</p>
-                        <div className="flex items-center gap-3">
-                          <span className="text-[9px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/10">{item.odds}</span>
-                          <span className="text-[9px] font-medium text-on-surface-variant opacity-50 uppercase">{item.volume} Vol.</span>
+                    <div className="flex items-center gap-5">
+                      <span className="text-[12px] font-black text-on-surface-variant opacity-30 w-6">{i + 1}</span>
+                      <div className="space-y-2">
+                        <p className="text-[13px] font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors">{item.market}</p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-[10px] font-bold text-primary bg-primary/5 px-3 py-1 rounded-lg border border-primary/10">{item.odds}</span>
+                          <span className="text-[10px] font-medium text-on-surface-variant opacity-50 uppercase tracking-widest">{item.volume} Vol.</span>
                           {item.probability && (
-                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">Prob: {item.probability}%</span>
+                            <span className="text-[11px] font-black text-primary uppercase tracking-widest bg-primary/10 px-2 py-0.5 rounded">Prob: {item.probability}%</span>
                           )}
                           {item.direction && (
                             <span className={cn(
-                              "text-[8px] font-black px-2 py-0.5 rounded uppercase",
-                              item.direction === "ALCISTA" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                              "text-[10px] font-black px-3 py-1 rounded-lg uppercase tracking-widest",
+                              item.direction === "ALCISTA" ? "bg-primary/20 text-primary border border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
                             )}>{item.direction}</span>
+                          )}
+                          {item.confidence && (
+                            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Confianza: {item.confidence}%</span>
                           )}
                         </div>
                         {(item.context || item.detail) && (
-                          <p className="text-[9px] font-medium text-on-surface-variant/70 leading-relaxed mt-1 line-clamp-2">
-                            <span className="font-black text-primary uppercase mr-1">Contexto:</span>
-                            {item.context || item.detail}
-                          </p>
+                          <div className="p-3 bg-surface-container rounded-xl border border-outline-variant/5 mt-2">
+                            <p className="text-[11px] font-medium text-on-surface-variant/80 leading-relaxed">
+                              <span className="font-black text-primary uppercase mr-2 tracking-widest text-[9px]">Contexto:</span>
+                              {item.context || item.detail}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
                     <div className={cn(
-                      "w-7 h-7 rounded-lg flex items-center justify-center",
-                      item.trend === "UP" ? "bg-primary/10 text-primary" : item.trend === "DOWN" ? "bg-secondary/10 text-secondary" : "bg-surface-container text-on-surface-variant"
+                      "w-10 h-10 rounded-xl flex items-center justify-center shadow-lg",
+                      item.trend === "UP" ? "bg-primary/20 text-primary border border-primary/30" : item.trend === "DOWN" ? "bg-secondary/20 text-secondary border border-secondary/30" : "bg-surface-container text-on-surface-variant"
                     )}>
-                      {item.trend === "UP" ? <ArrowUpRight className="w-3.5 h-3.5" /> : item.trend === "DOWN" ? <ArrowDownRight className="w-3.5 h-3.5" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                      {item.trend === "UP" ? <ArrowUpRight className="w-5 h-5" /> : item.trend === "DOWN" ? <ArrowDownRight className="w-5 h-5" /> : <RefreshCw className="w-5 h-5" />}
                     </div>
                   </motion.div>
                 ))

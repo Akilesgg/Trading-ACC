@@ -69,10 +69,10 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
         </div>
         <div className="space-y-4 flex-1 relative z-10">
           <div className="flex items-center gap-3">
-            <span className="px-4 py-1 bg-primary text-on-primary text-[10px] font-black rounded-full uppercase tracking-widest">SISTEMA EXPERTO v5.0</span>
-            <h3 className="text-[14px] font-black uppercase tracking-[0.3em] text-primary">¿Qué hace este Analizador por ti?</h3>
+            <span className="px-4 py-1 bg-primary text-on-primary text-[12px] font-black rounded-full uppercase tracking-widest">SISTEMA EXPERTO v5.0</span>
+            <h3 className="text-[16px] font-black uppercase tracking-[0.3em] text-primary">¿Qué hace este Analizador por ti?</h3>
           </div>
-          <p className="text-[15px] text-on-surface-variant leading-relaxed max-w-5xl">
+          <p className="text-[16px] text-on-surface-variant leading-relaxed max-w-5xl">
             Nuestro motor de IA no solo lee datos; <span className="text-on-surface font-bold">interpreta el contexto global</span>. 
             Cruza movimientos de ballenas, eventos macroeconómicos, sentimiento de redes sociales y patrones técnicos avanzados (Wyckoff, SMC) para entregarte una 
             <span className="text-on-surface font-bold"> hoja de ruta accionable</span>. 
@@ -89,22 +89,22 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
               <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
                 <Zap className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-[13px] font-black uppercase tracking-widest text-on-surface">Señales Activas Recientes</h3>
+              <h3 className="text-[14px] font-black uppercase tracking-widest text-on-surface">Señales Activas Recientes</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {activeSignals.slice(0, 4).map((signal) => (
                 <div key={signal.id} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/5 flex justify-between items-center group hover:border-primary/30 transition-all">
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-[10px] font-black text-primary border border-primary/20">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-[12px] font-black text-primary border border-primary/20">
                       {signal.activo[0]}
                     </div>
                     <div>
-                      <p className="text-[10px] font-black text-on-surface uppercase leading-none mb-1">{signal.activo.replace("USDT", "")}</p>
-                      <p className="text-[8px] font-black text-on-surface-variant uppercase tracking-widest">Entrada: ${signal.entry}</p>
+                      <p className="text-[12px] font-black text-on-surface uppercase leading-none mb-1">{signal.activo.replace("USDT", "")}</p>
+                      <p className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">Entrada: ${signal.entry}</p>
                     </div>
                   </div>
                   <div className={cn(
-                    "px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest",
+                    "px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest",
                     signal.tipo === 'LONG' ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
                   )}>
                     {signal.tipo}
@@ -118,11 +118,11 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
       <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
         <div className="flex flex-wrap items-center gap-6 w-full lg:w-auto">
           <div className="space-y-2 w-full md:w-72" ref={dropdownRef}>
-            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Activo de Referencia</label>
+            <label className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Activo de Referencia</label>
             <div className="relative">
               <button
                 onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 text-left focus:outline-none focus:border-primary transition-all text-[10px] font-black uppercase tracking-widest text-on-surface flex items-center justify-between group"
+                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 text-left focus:outline-none focus:border-primary transition-all text-[12px] font-black uppercase tracking-widest text-on-surface flex items-center justify-between group"
               >
                 <div className="flex items-center gap-3">
                   {selectedAsset && (
@@ -200,12 +200,12 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
           </div>
 
           <div className="space-y-2 w-full md:w-40">
-            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Temporalidad</label>
+            <label className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Temporalidad</label>
             <div className="relative">
               <select 
                 value={selectedTimeframe}
                 onChange={(e) => setSelectedTimeframe(e.target.value)}
-                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 appearance-none focus:outline-none focus:border-primary transition-all text-[10px] font-black uppercase tracking-widest text-on-surface cursor-pointer"
+                className="w-full bg-surface-container-high border border-outline-variant/10 rounded-2xl py-4 pl-5 pr-12 appearance-none focus:outline-none focus:border-primary transition-all text-[12px] font-black uppercase tracking-widest text-on-surface cursor-pointer"
               >
                 {["1m", "3m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
                   <option key={tf} value={tf} className="bg-surface-container-high">{tf.toUpperCase()}</option>
@@ -216,7 +216,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
           </div>
 
           <div className="space-y-2 w-full md:w-auto flex-1">
-            <label className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Modelo de Ejecución</label>
+            <label className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest ml-1">Modelo de Ejecución</label>
             <div className="flex gap-3">
               {[
                 { id: "Standard", label: "Estándar", tf: "1h" },
@@ -230,7 +230,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
                     setSelectedTimeframe(mode.tf);
                   }}
                   className={cn(
-                    "flex-1 py-4 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border",
+                    "flex-1 py-4 px-6 rounded-2xl text-[12px] font-black uppercase tracking-widest transition-all border",
                     selectedMode === mode.id 
                       ? "bg-primary text-on-primary border-primary shadow-xl shadow-primary/20 scale-[1.02]" 
                       : "bg-surface-container-high text-on-surface-variant border-outline-variant/10 hover:border-primary/30"
@@ -254,7 +254,7 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
           onClick={onRunAnalysis}
           disabled={analyzing}
           className={cn(
-            "w-full lg:w-auto px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-4 transition-all shadow-2xl",
+            "w-full lg:w-auto px-12 py-5 rounded-2xl font-black uppercase tracking-widest text-[12px] flex items-center justify-center gap-4 transition-all shadow-2xl",
             analyzing ? "bg-surface-container-highest text-on-surface-variant cursor-not-allowed" : "btn-primary shadow-primary/30 hover:scale-105 active:scale-95"
           )}
         >
