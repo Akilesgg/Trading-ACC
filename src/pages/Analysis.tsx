@@ -468,6 +468,20 @@ const Analysis = () => {
         onShowFundamentals={showFundamentals}
       />
 
+      {/* Market Overview - Full Width */}
+      <div className="w-full">
+        <MarketOverview 
+          ticker={ticker}
+          selectedSymbol={selectedSymbol}
+          chartData={chartData}
+          timeframe={selectedTimeframe}
+          showPatterns={showPatterns}
+          showCandles={showCandles}
+          onTogglePatterns={setShowPatterns}
+          onToggleCandles={setShowCandles}
+        />
+      </div>
+
       {/* Automatic Signal Generator Block */}
       <div className="bg-surface-container-high/40 p-10 rounded-[3rem] border border-primary/20 backdrop-blur-3xl space-y-8">
         <div className="flex items-center justify-between">
@@ -550,66 +564,6 @@ const Analysis = () => {
       </div>
 
       <div className="space-y-12">
-        {/* Top Section: Market Overview & Global Intelligence */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-4">
-            <MarketOverview 
-              ticker={ticker}
-              selectedSymbol={selectedSymbol}
-              chartData={chartData}
-              timeframe={selectedTimeframe}
-              showPatterns={showPatterns}
-              showCandles={showCandles}
-              onTogglePatterns={setShowPatterns}
-              onToggleCandles={setShowCandles}
-            />
-          </div>
-          <div className="lg:col-span-8">
-            <div className="trading-card p-10 h-full border-2 border-primary/30 bg-primary/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-[120px] -mr-48 -mt-48 group-hover:bg-primary/20 transition-all duration-1000"></div>
-              <div className="relative z-10 space-y-8">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[12px] font-black uppercase tracking-[0.4em] text-primary flex items-center gap-4">
-                    <Brain className="w-6 h-6 animate-pulse" /> VEREDICTO GLOBAL DE INTELIGENCIA
-                  </h3>
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 bg-primary rounded-full animate-ping"></div>
-                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">Sincronizado</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <p className="text-3xl font-black text-on-surface tracking-tighter leading-tight">
-                    {marketIntelligence?.globalConsensus?.verdict || "Analizando convergencia de datos..."}
-                  </p>
-                  <p className="text-base text-on-surface-variant leading-relaxed font-medium max-w-4xl">
-                    {marketIntelligence?.globalConsensus?.reasoning || "Nuestro motor está cruzando señales de Polymarket, sentimiento social y análisis técnico para generar un veredicto unificado."}
-                  </p>
-                </div>
-
-                {marketIntelligence?.globalConsensus?.suggestedEntries && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                    {marketIntelligence?.globalConsensus?.suggestedEntries?.map((entry: any, i: number) => (
-                      <div key={i} className="p-5 bg-surface-container-highest/50 rounded-2xl border border-primary/20 backdrop-blur-xl group hover:border-primary transition-all">
-                        <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">{entry.asset}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xl font-black text-on-surface tracking-tighter">${entry.price.toLocaleString()}</span>
-                          <span className={cn(
-                            "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest",
-                            entry.type === 'LONG' ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
-                          )}>
-                            {entry.type}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Main Analysis Modules - Full Width Grid */}
         <ErrorBoundary>
           <Reorder.Group 
@@ -619,35 +573,39 @@ const Analysis = () => {
               setLayout(newOrder);
               localStorage.setItem("analysis_layout_v3", JSON.stringify(newOrder));
             }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8"
           >
             {layout.map((moduleId) => (
-              <AnalysisModule 
-                key={moduleId}
-                moduleId={moduleId}
-                analysisSections={analysisSections}
-                analysis={analysis}
-                ticker={ticker}
-                btcSentiment={btcSentiment}
-                setBtcSentiment={setBtcSentiment}
-                top100Sentiment={top100Sentiment}
-                setTop100Sentiment={setTop100Sentiment}
-                generalSentiment={generalSentiment}
-                setGeneralSentiment={setGeneralSentiment}
-                btcTF={btcTF}
-                setBtcTF={setBtcTF}
-                top100TF={top100TF}
-                setTop100TF={setTop100TF}
-                generalTF={generalTF}
-                setGeneralTF={setGeneralTF}
-                allAssets={allAssets}
-                marketIntelligence={marketIntelligence}
-                intelligenceLoading={intelligenceLoading}
-                showPatterns={showPatterns}
-                setShowPatterns={setShowPatterns}
-                showCandles={showCandles}
-                setShowCandles={setShowCandles}
-              />
+              <div key={moduleId} className={cn(
+                "col-span-1 md:col-span-2",
+                moduleId === "market_intelligence" || moduleId === "comparator" || moduleId === "raw" || moduleId === "justification" ? "lg:col-span-12" : "lg:col-span-6"
+              )}>
+                <AnalysisModule 
+                  moduleId={moduleId}
+                  analysisSections={analysisSections}
+                  analysis={analysis}
+                  ticker={ticker}
+                  btcSentiment={btcSentiment}
+                  setBtcSentiment={setBtcSentiment}
+                  top100Sentiment={top100Sentiment}
+                  setTop100Sentiment={setTop100Sentiment}
+                  generalSentiment={generalSentiment}
+                  setGeneralSentiment={setGeneralSentiment}
+                  btcTF={btcTF}
+                  setBtcTF={setBtcTF}
+                  top100TF={top100TF}
+                  setTop100TF={setTop100TF}
+                  generalTF={generalTF}
+                  setGeneralTF={setGeneralTF}
+                  allAssets={allAssets}
+                  marketIntelligence={marketIntelligence}
+                  intelligenceLoading={intelligenceLoading}
+                  showPatterns={showPatterns}
+                  setShowPatterns={setShowPatterns}
+                  showCandles={showCandles}
+                  setShowCandles={setShowCandles}
+                />
+              </div>
             ))}
           </Reorder.Group>
 

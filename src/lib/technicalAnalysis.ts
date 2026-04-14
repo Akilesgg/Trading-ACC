@@ -22,6 +22,44 @@ export interface CandlePattern {
   description: string;
 }
 
+export interface Level {
+  price: number;
+  type: "SOPORTE" | "RESISTENCIA";
+  strength: number;
+}
+
+export function detectLevels(data: any[]): Level[] {
+  if (data.length < 20) return [];
+  const prices = data.map(d => d.price);
+  const levels: Level[] = [];
+  
+  // Simple pivot point detection
+  for (let i = 5; i < prices.length - 5; i++) {
+    const isHigh = prices[i] > prices[i-1] && prices[i] > prices[i-2] && prices[i] > prices[i+1] && prices[i] > prices[i+2];
+    const isLow = prices[i] < prices[i-1] && prices[i] < prices[i-2] && prices[i] < prices[i+1] && prices[i] < prices[i+2];
+    
+    if (isHigh) {
+      levels.push({ price: prices[i], type: "RESISTENCIA", strength: 1 });
+    }
+    if (isLow) {
+      levels.push({ price: prices[i], type: "SOPORTE", strength: 1 });
+    }
+  }
+
+  // Cluster levels that are close to each other
+  const clustered: Level[] = [];
+  levels.forEach(l => {
+    const existing = clustered.find(c => Math.abs(c.price - l.price) / l.price < 0.005);
+    if (existing) {
+      existing.strength++;
+    } else {
+      clustered.push(l);
+    }
+  });
+
+  return clustered.sort((a, b) => b.strength - a.strength).slice(0, 4);
+}
+
 export function detectPatterns(data: any[]): Pattern[] {
   if (data.length < 20) return [];
   
@@ -147,6 +185,64 @@ export function detectPatterns(data: any[]): Pattern[] {
           ]
         });
       }
+    }
+  }
+
+  // 4. Hombro Cabeza Hombro (HCH)
+  if (prices.length > 40) {
+    const segment = prices.slice(-40);
+    const peaks = [];
+    for (let i = 2; i < segment.length - 2; i++) {
+      if (segment[i] > segment[i-1] && segment[i] > segment[i-2] && segment[i] > segment[i+1] && segment[i] > segment[i+2]) {
+        peaks.push({ val: segment[i], idx: prices.length - 40 + i });
+      }
+    }
+
+    if (peaks.length >= 3) {
+      const leftShoulder = peaks[peaks.length - 3];
+      const head = peaks[peaks.length - 2];
+      const rightShoulder = peaks[peaks.length - 1];
+
+      if (head.val > leftShoulder.val && head.val > rightShoulder.val && Math.abs(leftShoulder.val - rightShoulder.val) / leftShoulder.val < 0.02) {
+        patterns.push({
+          name: "Hombro Cabeza Hombro",
+          type: "BAJISTA",
+          reliability: 88,
+          status: "En formación",
+          entry: leftShoulder.val * 0.95,
+          sl: head.val,
+          tp: head.val - (head.val - leftShoulder.val) * 2,
+          action: "SHORT",
+          points: [
+            { x: leftShoulder.idx, y: leftShoulder.val },
+            { x: head.idx, y: head.val },
+            { x: rightShoulder.idx, y: rightShoulder.val }
+          ]
+        });
+      }
+    }
+  }
+
+  // 5. Canal Alcista
+  if (prices.length > 20) {
+    const recent = prices.slice(-20);
+    const first = recent[0];
+    const last = recent[recent.length - 1];
+    if (last > first * 1.02) {
+      patterns.push({
+        name: "Canal Alcista",
+        type: "ALCISTA",
+        reliability: 70,
+        status: "Confirmado",
+        entry: last,
+        sl: first,
+        tp: last + (last - first),
+        action: "LONG",
+        points: [
+          { x: prices.length - 20, y: first },
+          { x: prices.length - 1, y: last }
+        ]
+      });
     }
   }
 

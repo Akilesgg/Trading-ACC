@@ -159,8 +159,8 @@ async function startServer() {
         generationConfig: { responseMimeType: "application/json" }
       });
 
-      const prompt = `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas EXCLUSIVAMENTE de HOY ${new Date().toLocaleDateString()}.
-        Es CRÍTICO que no incluyas noticias de días anteriores.
+      const prompt = `Busca y analiza las 6 noticias más recientes e importantes de GEOPOLÍTICA INTERNACIONAL y ECONOMÍA que afecten al mercado de criptomonedas EXCLUSIVAMENTE de HOY ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}.
+        Es CRÍTICO que no incluyas noticias de días anteriores ni de años pasados como 2024 o 2025.
         Para cada noticia, proporciona:
         1. Título de la noticia.
         2. Un breve resumen (2 frases).
@@ -230,24 +230,28 @@ async function startServer() {
         });
         
         const prompt = `ACTÚA COMO UN ANALISTA DE INTELIGENCIA DE MERCADO DE ÉLITE Y RASTREADOR DE DATOS EN TIEMPO REAL.
-          Tu misión es proporcionar un informe DETALLADO Y TÉCNICO sobre el activo ${symbol} y el ecosistema cripto actual.
+          Tu misión es proporcionar un informe DETALLADO Y TÉCNICO sobre el activo ${symbol} y el ecosistema cripto actual a fecha de HOY ${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}.
+          
+          ADVERTENCIA CRÍTICA: SOLO UTILIZA DATOS DE HOY O DE LAS ÚLTIMAS 24 HORAS. 
+          CUALQUIER REFERENCIA A EVENTOS PASADOS (COMO ELECCIONES DE 2024 O DATOS DE 2025) DEBE SER DESCARTADA SI NO ES RELEVANTE PARA EL MERCADO DE HOY.
+          LOS MERCADOS DE PREDICCIÓN (POLYMARKET) DEBEN SER LOS QUE ESTÁN ACTIVOS EN ESTE MOMENTO.
           
           FUENTES OBLIGATORIAS A INVESTIGAR (USA LA HERRAMIENTA DE BÚSQUEDA):
           1. REDES SOCIALES: X (Twitter), Reddit (r/CryptoCurrency, r/Bitcoin, r/WallStreetBetsCrypto), Telegram (canales públicos de ballenas y señales).
           2. FOROS Y COMUNIDADES: Bitcointalk, Discord (servidores públicos de trading).
           3. NOTICIAS Y ON-CHAIN: Coindesk, Cointelegraph, Whale Alert, Glassnode (datos públicos recientes).
-          4. MERCADOS DE PREDICCIÓN: Polymarket (investiga apuestas actuales sobre cripto, política y economía que afecten al mercado).
+          4. MERCADOS DE PREDICCIÓN: Polymarket (investiga apuestas ACTUALES de HOY sobre cripto, política y economía. IGNORA CUALQUIER DATO DE 2024 O 2025).
           5. MERCADO DE VALORES (BOLSA): Investiga índices principales (S&P 500, Nasdaq, DXY) y su correlación actual con cripto.
           
           REQUERIMIENTOS DE INFORMACIÓN (MUCHO MÁS QUE TESTIMONIOS):
           - SENTIMIENTO: Cuantifica el sentimiento social con precisión.
-          - NARRATIVA ACTUAL: ¿De qué se está hablando exactamente? (ej: "Aprobación de ETF", "Liquidaciones masivas", "Actualización de red").
+          - NARRATIVA ACTUAL: ¿De qué se está hablando exactamente HOY?
           - DATOS ON-CHAIN: Menciona movimientos de ballenas detectados o flujos de exchanges si están disponibles.
           - NIVELES CLAVE: Identifica soportes y resistencias mencionados por analistas en foros.
           - TRENDING TOPICS: Lista los 5 temas o activos más calientes del momento.
-          - POLYMARKET: Extrae información extremadamente detallada:
-            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas. Para cada una incluye: "market", "odds", "volume", "trend", "probability" (%), "direction" (ALCISTA/BAJISTA), "confidence" (0-100), "context" (explicación breve).
-            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales. Incluye los mismos campos que las crypto bets.
+          - POLYMARKET: Extrae información extremadamente detallada y ACTUAL (HOY):
+            1. TOP 10 CRYPTO BETS: Las 10 apuestas más importantes relacionadas específicamente con criptomonedas. Para cada una incluye: "market", "odds", "volume", "trend", "probability" (%), "direction" (ALCISTA/BAJISTA), "confidence" (0-100), "context" (explicación breve). ASEGÚRATE DE QUE SEAN APUESTAS VIGENTES.
+            2. TOP 10 POPULAR BETS: Las 10 apuestas más populares/virales de HOY. Incluye los mismos campos que las crypto bets.
             3. CRYPTO SUMMARY: Un resumen de cómo están las criptomonedas según el sentimiento y apuestas en Polymarket.
             4. BET SUGGESTIONS: Una lista de 3-5 sugerencias de apuestas basadas en el análisis de probabilidades y tendencias.
             5. CONCLUSION: Una conclusión final sobre el sentimiento de Polymarket.
