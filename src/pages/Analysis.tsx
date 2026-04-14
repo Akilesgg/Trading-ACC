@@ -52,6 +52,8 @@ import FundamentalModal from "@/components/common/FundamentalModal";
 import WyckoffAnalyzer from "@/components/analysis/WyckoffAnalyzer";
 import ChartComparator from "@/components/analysis/ChartComparator";
 import MarketIntelligence from "@/components/analysis/MarketIntelligence";
+import PageRecommendation from "@/components/analysis/PageRecommendation";
+import { signalFilter, SignalSetup } from "@/services/signalFilter";
 
 const DEFAULT_LAYOUT = [
   "sentiment_gauges",
@@ -321,6 +323,14 @@ const Analysis = () => {
       {/* Page Specific Background */}
       
       <div className="relative z-10 pt-24 pb-32 px-6 max-w-none mx-auto space-y-12">
+      {/* General Page Recommendation */}
+      <PageRecommendation 
+        title={`Veredicto Global: ${selectedSymbol}`}
+        recommendation={analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"] || marketIntelligence.globalConsensus.verdict || "Analizando confluencias de mercado..."}
+        score={parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 50}
+        type={analysisSections["RECOMENDACIÓN IA"]?.includes("LONG") ? "LONG" : analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? "SHORT" : "NEUTRAL"}
+      />
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div className="space-y-3">
@@ -491,29 +501,48 @@ const Analysis = () => {
 
         <div className="p-8 bg-primary/10 rounded-3xl border border-primary/20 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="space-y-2">
-            <p className="text-lg font-black text-on-surface uppercase tracking-tight">Señal Detectada: <span className="text-primary">LONG EN {selectedSymbol}</span></p>
-            <p className="text-sm text-on-surface-variant font-medium">Entrada: $68,420 | TP: $72,500 | SL: $66,200</p>
+            <p className="text-lg font-black text-on-surface uppercase tracking-tight">Señal Validada: <span className="text-primary">{analysisSections["RECOMENDACIÓN IA"] || "LONG"} EN {selectedSymbol}</span></p>
+            <p className="text-sm text-on-surface-variant font-medium">{analysisSections["ESTRATEGIA"] || "Esperando confirmación de ruptura estructural."}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={cn(
+                "px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border",
+                (parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 0) >= 90 ? "bg-primary/20 text-primary border-primary/30" :
+                (parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 0) >= 75 ? "bg-primary/10 text-primary/80 border-primary/20" :
+                "bg-secondary/10 text-secondary border-secondary/20"
+              )}>
+                Score: {analysisSections["NIVEL DE CONFIANZA"] || "0"}%
+              </span>
+              <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest opacity-50">
+                {(parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 0) >= 90 ? "PREMIUM SETUP" : (parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 0) >= 75 ? "FUERTE" : "MEDIA"}
+              </span>
+            </div>
           </div>
           <button 
             onClick={() => {
+              const score = parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 0;
+              if (score < 60) {
+                toast.error("Señal filtrada: Calidad insuficiente (<60%)");
+                return;
+              }
+
               addSignal({
                 activo: selectedSymbol,
-                tipo: 'LONG',
-                entry: 68420,
-                tp1: 70500,
-                tp2: 71500,
-                tp3: 72500,
-                sl: 66200,
+                tipo: analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? 'SHORT' : 'LONG',
+                entry: ticker?.price ? parseFloat(ticker.price) : 0,
+                tp1: ticker?.price ? parseFloat(ticker.price) * (analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? 0.98 : 1.02) : 0,
+                tp2: ticker?.price ? parseFloat(ticker.price) * (analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? 0.96 : 1.04) : 0,
+                tp3: ticker?.price ? parseFloat(ticker.price) * (analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? 0.94 : 1.06) : 0,
+                sl: ticker?.price ? parseFloat(ticker.price) * (analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? 1.03 : 0.97) : 0,
                 estado: 'activa',
-                leverage: '20x',
-                confidence: 94,
-                analysis: 'Señal generada por el Analizador IA basada en ruptura de estructura y confirmación de volumen institucional.'
+                leverage: analysisSections["APALANCAMIENTO SUGERIDO"] || '10x',
+                confidence: score,
+                analysis: analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"] || analysisSections["JUSTIFICACIÓN TÉCNICA"] || 'Señal validada por el sistema de filtrado multi-confluencia.'
               });
-              toast.success("Señal publicada globalmente");
+              toast.success("Señal validada y publicada globalmente");
             }}
             className="px-10 py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-xl shadow-primary/20 hover:scale-105 transition-all"
           >
-            Publicar Señal Global
+            Publicar Señal Validada
           </button>
         </div>
       </div>

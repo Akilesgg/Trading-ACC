@@ -87,11 +87,11 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
             <Globe className="w-7 h-7 text-primary" />
           </div>
           <div>
-            <h3 className="text-3xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Polymarket</h3>
+            <h3 className="text-4xl font-black text-on-surface uppercase tracking-tighter">Inteligencia Polymarket</h3>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-70">Fuentes: X, Reddit, Telegram, Foros, On-Chain</span>
-              <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Live Scan</span>
+              <span className="text-[13px] font-black text-on-surface-variant uppercase tracking-widest opacity-70">Fuentes: X, Reddit, Telegram, Foros, On-Chain</span>
+              <div className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+              <span className="text-[12px] font-bold text-primary uppercase tracking-widest">Live Scan</span>
             </div>
           </div>
         </div>
@@ -310,18 +310,18 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
         {(data.polymarket?.cryptoSummary || data.polymarket?.betSuggestions) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-outline-variant/10">
             <div className="space-y-4">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-                <Brain className="w-4 h-4" /> Resumen del mercado según Polymarket
+              <h5 className="text-[12px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                <Brain className="w-5 h-5" /> Resumen del mercado según Polymarket
               </h5>
               <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20">
-                <p className="text-sm font-medium text-on-surface/90 leading-relaxed italic">
+                <p className="text-[13px] font-medium text-on-surface/90 leading-relaxed italic">
                   "{data.polymarket.cryptoSummary}"
                 </p>
               </div>
             </div>
             <div className="space-y-4">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
-                <Zap className="w-4 h-4" /> Sugerencias basadas en apuestas
+              <h5 className="text-[12px] font-black uppercase tracking-widest text-secondary flex items-center gap-2">
+                <Zap className="w-5 h-5" /> Sugerencias basadas en apuestas
               </h5>
               <div className="space-y-3">
                 {data.polymarket.betSuggestions?.map((suggestion: string, i: number) => (
@@ -329,7 +329,7 @@ const MarketIntelligence: React.FC<MarketIntelligenceProps> = ({ symbol = "BTCUS
                     <div className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center shrink-0">
                       <Zap className="w-4 h-4 text-secondary" />
                     </div>
-                    <p className="text-[11px] font-black text-secondary uppercase tracking-tight">
+                    <p className="text-[12px] font-black text-secondary uppercase tracking-tight">
                       {suggestion}
                     </p>
                   </div>

@@ -78,7 +78,7 @@
 }
 
 .section-title {
-  @apply text-[11px] font-black uppercase tracking-[0.2em] text-primary mb-4;
+  @apply text-[13px] font-black uppercase tracking-[0.2em] text-primary mb-4;
 }
 
 .value-up {
@@ -90,11 +90,11 @@
 }
 
 .btn-primary {
-  @apply px-6 py-3 bg-primary text-on-primary font-black uppercase tracking-widest text-[10px] rounded-xl transition-all hover:scale-105 active:scale-95;
+  @apply px-6 py-3 bg-primary text-on-primary font-black uppercase tracking-widest text-[12px] rounded-xl transition-all hover:scale-105 active:scale-95;
 }
 
 .btn-secondary {
-  @apply px-6 py-3 bg-surface-container-highest text-on-surface font-black uppercase tracking-widest text-[10px] rounded-xl border border-outline-variant/20 transition-all hover:bg-surface-bright;
+  @apply px-6 py-3 bg-surface-container-highest text-on-surface font-black uppercase tracking-widest text-[12px] rounded-xl border border-outline-variant/20 transition-all hover:bg-surface-bright;
 }
 
 .wyckoff-label {

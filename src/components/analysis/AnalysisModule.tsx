@@ -94,14 +94,14 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
   return (
     <div className="trading-card flex flex-col items-center text-center space-y-6 group hover:border-primary/30 transition-all">
       <div className="flex items-center justify-between w-full">
-        <h4 className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{label}</h4>
+        <h4 className="text-[12px] font-black text-on-surface-variant uppercase tracking-widest">{label}</h4>
         <div className="flex bg-surface-container-highest rounded-xl p-1 border border-outline-variant/10 shadow-inner">
           {["1h", "4h", "1d"].map((tf) => (
             <button
               key={tf}
               onClick={() => onTimeframeChange(tf)}
               className={cn(
-                "px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
                 timeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-on-surface-variant hover:text-on-surface"
               )}
             >
@@ -142,8 +142,8 @@ const SentimentGauge = ({ label, value, timeframe, onTimeframeChange }: any) => 
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-          <span className={cn("text-4xl font-black tracking-tighter", getColor(value))}>{value}</span>
-          <span className="text-[9px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{getLabel(value)}</span>
+          <span className={cn("text-5xl font-black tracking-tighter", getColor(value))}>{value}</span>
+          <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest mt-1">{getLabel(value)}</span>
         </div>
       </div>
     </div>
@@ -416,19 +416,65 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         </div>
       )}
 
-      {moduleId === "indicators" && analysisSections["INDICADORES TÉCNICOS (TOP 2026)"] && (
-        <div className="trading-card p-8 space-y-6">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
-            <BarChart3 className="w-4 h-4" /> INDICADORES TÉCNICOS (TOP 2026)
-          </h4>
+      {moduleId === "indicators" && (analysisSections["INDICADORES TÉCNICOS (TOP 2026)"] || analysisSections["PATRONES DETECTADOS"] || analysisSections["VELAS JAPONESAS"]) && (
+        <div className="trading-card p-8 space-y-8">
+          <div className="flex items-center justify-between">
+            <h4 className="text-[13px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+              <BarChart3 className="w-4 h-4" /> INDICADORES Y ESTRUCTURAS
+            </h4>
+            {analysisSections["NIVEL DE CONFIANZA"] && (
+              <div className={cn(
+                "px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border shadow-lg animate-pulse",
+                parseInt(analysisSections["NIVEL DE CONFIANZA"]) >= 90 ? "bg-blue-500/20 text-blue-400 border-blue-500/30" :
+                parseInt(analysisSections["NIVEL DE CONFIANZA"]) >= 75 ? "bg-primary/20 text-primary border-primary/30" :
+                parseInt(analysisSections["NIVEL DE CONFIANZA"]) >= 60 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                "bg-secondary/20 text-secondary border-secondary/30"
+              )}>
+                {parseInt(analysisSections["NIVEL DE CONFIANZA"]) >= 90 ? "PREMIUM" :
+                 parseInt(analysisSections["NIVEL DE CONFIANZA"]) >= 75 ? "FUERTE" :
+                 parseInt(analysisSections["NIVEL DE CONFIANZA"]) >= 60 ? "MEDIA" : "DÉBIL"}
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {analysisSections["INDICADORES TÉCNICOS (TOP 2026)"].split("\n").filter((line: string) => line.trim()).map((line: string, idx: number) => (
+            {analysisSections["INDICADORES TÉCNICOS (TOP 2026)"]?.split("\n").filter((line: string) => line.trim()).map((line: string, idx: number) => (
               <div key={idx} className="p-4 bg-surface-container-high rounded-2xl border border-outline-variant/10 flex items-center justify-between group hover:border-primary/30 transition-all">
                 <span className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest">{line.split(":")[0]?.replace(/^[-\s*]+/, "")}</span>
                 <span className="text-[10px] font-black text-primary text-right uppercase tracking-widest">{line.split(":")[1] || "ACTIVO"}</span>
               </div>
             ))}
-            
+          </div>
+
+          {analysisSections["PATRONES DETECTADOS"] && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Zap className="w-4 h-4" />
+                <h5 className="text-[11px] font-black uppercase tracking-widest">Patrones de Estructura Detectados</h5>
+              </div>
+              <div className="p-6 bg-primary/5 border border-primary/20 rounded-2xl">
+                <p className="text-[13px] font-medium text-on-surface leading-relaxed">
+                  {analysisSections["PATRONES DETECTADOS"]}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {analysisSections["VELAS JAPONESAS"] && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-secondary">
+                <Zap className="w-4 h-4" />
+                <h5 className="text-[11px] font-black uppercase tracking-widest">Análisis de Velas Japonesas</h5>
+              </div>
+              <div className="p-6 bg-secondary/5 border border-secondary/20 rounded-2xl">
+                <p className="text-[13px] font-medium text-on-surface leading-relaxed">
+                  {analysisSections["VELAS JAPONESAS"]}
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nuevo Indicador de Patrones */}
             <button 
               onClick={() => setShowPatterns(!showPatterns)}
@@ -634,39 +680,48 @@ const AnalysisModule: React.FC<AnalysisModuleProps> = ({
         </div>
       )}
 
-      {moduleId === "justification" && (analysisSections["JUSTIFICACIÓN TÉCNICA"] || analysisSections["ANÁLISIS DE ESTRUCTURA"]) && (
+      {moduleId === "justification" && (analysisSections["JUSTIFICACIÓN TÉCNICA"] || analysisSections["ANÁLISIS DE ESTRUCTURA"] || analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"]) && (
         <div className="trading-card p-10 space-y-8">
-          <h4 className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
-            <Activity className="w-4 h-4" /> JUSTIFICACIÓN TÉCNICA EXHAUSTIVA
+          <h4 className="text-[13px] font-black text-primary uppercase tracking-widest flex items-center gap-3">
+            <Shield className="w-5 h-5" /> VALIDACIÓN Y CONCLUSIÓN FINAL
           </h4>
+          
           <div className="space-y-8">
+            {analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"] && (
+              <div className="p-8 bg-primary/10 border border-primary/30 rounded-[2.5rem] space-y-4 shadow-2xl shadow-primary/10 animate-fast-flash">
+                <div className="flex items-center gap-3 text-primary">
+                  <Zap className="w-6 h-6" />
+                  <h5 className="text-[14px] font-black uppercase tracking-widest">VEREDICTO FINAL DEL SISTEMA</h5>
+                </div>
+                <p className="text-[16px] font-black text-on-surface leading-relaxed">
+                  {analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"]}
+                </p>
+                <div className="flex items-center gap-4 pt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary">Señal Validada</span>
+                  </div>
+                  <div className="w-px h-4 bg-primary/20" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-70">RR Mínimo 1:2</span>
+                </div>
+              </div>
+            )}
+
             {analysisSections["ANÁLISIS DE ESTRUCTURA"] && (
               <div className="group">
-                <p className="text-[10px] font-black text-on-surface-variant uppercase mb-3 tracking-widest group-hover:text-primary transition-colors">Análisis de Estructura</p>
+                <p className="text-[11px] font-black text-on-surface-variant uppercase mb-3 tracking-widest group-hover:text-primary transition-colors">Análisis de Estructura (BOS/CHoCH)</p>
                 <p className="text-sm text-on-surface leading-relaxed font-medium">
                   {analysisSections["ANÁLISIS DE ESTRUCTURA"]}
                 </p>
               </div>
             )}
+
             {analysisSections["JUSTIFICACIÓN TÉCNICA"] && (
               <div className="pt-8 border-t border-outline-variant/10 group">
-                <p className="text-[10px] font-black text-on-surface-variant uppercase mb-3 tracking-widest group-hover:text-primary transition-colors">Lógica de Niveles</p>
+                <p className="text-[11px] font-black text-on-surface-variant uppercase mb-3 tracking-widest group-hover:text-primary transition-colors">Lógica de Niveles e Ineficiencias</p>
                 <p className="text-sm text-on-surface leading-relaxed font-medium">
                   {analysisSections["JUSTIFICACIÓN TÉCNICA"]}
                 </p>
-              </div>
-            )}
-            {analysisSections["METÁFORA TÉCNICA"] && (
-              <div className="pt-8 border-t border-outline-variant/10 flex items-center gap-4 group">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-lg shadow-primary/5 group-hover:scale-110 transition-transform">
-                  <Flame className="w-6 h-6 text-primary animate-pulse" />
-                </div>
-                <div>
-                  <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-1">Metáfora Técnica</p>
-                  <p className="text-[11px] text-on-surface-variant italic leading-relaxed font-medium">
-                    {analysisSections["METÁFORA TÉCNICA"]}
-                  </p>
-                </div>
               </div>
             )}
           </div>

@@ -69,10 +69,10 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
         </div>
         <div className="space-y-4 flex-1 relative z-10">
           <div className="flex items-center gap-3">
-            <span className="px-3 py-1 bg-primary text-on-primary text-[8px] font-black rounded-full uppercase tracking-widest">SISTEMA EXPERTO v4.2</span>
-            <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-primary">¿Qué hace este Analizador por ti?</h3>
+            <span className="px-4 py-1 bg-primary text-on-primary text-[10px] font-black rounded-full uppercase tracking-widest">SISTEMA EXPERTO v5.0</span>
+            <h3 className="text-[14px] font-black uppercase tracking-[0.3em] text-primary">¿Qué hace este Analizador por ti?</h3>
           </div>
-          <p className="text-sm text-on-surface-variant leading-relaxed max-w-5xl">
+          <p className="text-[15px] text-on-surface-variant leading-relaxed max-w-5xl">
             Nuestro motor de IA no solo lee datos; <span className="text-on-surface font-bold">interpreta el contexto global</span>. 
             Cruza movimientos de ballenas, eventos macroeconómicos, sentimiento de redes sociales y patrones técnicos avanzados (Wyckoff, SMC) para entregarte una 
             <span className="text-on-surface font-bold"> hoja de ruta accionable</span>. 
@@ -86,10 +86,10 @@ const AnalysisTool: React.FC<AnalysisToolProps> = ({
         {activeSignals.length > 0 && (
           <div className="space-y-6 pb-8 border-b border-outline-variant/10">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
-                <Zap className="w-4 h-4 text-primary" />
+              <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center border border-primary/30">
+                <Zap className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="text-[11px] font-black uppercase tracking-widest text-on-surface">Señales Activas Recientes</h3>
+              <h3 className="text-[13px] font-black uppercase tracking-widest text-on-surface">Señales Activas Recientes</h3>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {activeSignals.slice(0, 4).map((signal) => (

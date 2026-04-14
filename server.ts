@@ -69,6 +69,10 @@ async function startServer() {
         
         **INDICADORES TÉCNICOS (TOP 2026)**: Lista de 8-10 indicadores.
         
+        **PATRONES DETECTADOS**: Identifica patrones como Doble Techo/Suelo, HCH, Triángulos, Canales, Banderas, etc. Indica si están en FORMACIÓN o CONFIRMADOS.
+        
+        **VELAS JAPONESAS**: Identifica velas como Engulfing, Pin Bar, Hammer, Morning Star, etc. Analiza su relevancia en el contexto actual.
+        
         **JUSTIFICACIÓN TÉCNICA**: Liquidez, FVG y Order Blocks.
         
         **ANÁLISIS DE ESTRUCTURA**: BOS, CHoCH.
@@ -80,9 +84,13 @@ async function startServer() {
         TAKE PROFIT 2: [precio]
         TAKE PROFIT 3: [precio]
         
-        **NIVEL DE CONFIANZA**: [1-100]
+        **NIVEL DE CONFIANZA**: [1-100] (Calculado por multi-confluencia: Tendencia + S/R + Patrón + Vela + Volumen).
         
-        **RECOMENDACIÓN DE APALANCAMIENTO Y RIESGO**: Sugerencia x10 y riesgo.
+        **CONCLUSIÓN FINAL DEL SISTEMA**: Resumen de confluencias y veredicto final (Ej: "Señal validada con alta confluencia técnica y respaldo de mercado. Entrada recomendada LONG.").
+        
+        **APALANCAMIENTO SUGERIDO**: [X]x
+        
+        **RECOMENDACIÓN DE RIESGO**: Sugerencia de gestión de riesgo.
         
         **METÁFORA TÉCNICA**: Comparación creativa.`;
 
