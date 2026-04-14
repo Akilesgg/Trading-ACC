@@ -326,7 +326,7 @@ const Analysis = () => {
       {/* General Page Recommendation */}
       <PageRecommendation 
         title={`Veredicto Global: ${selectedSymbol}`}
-        recommendation={analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"] || marketIntelligence.globalConsensus.verdict || "Analizando confluencias de mercado..."}
+        recommendation={analysisSections["CONCLUSIÓN FINAL DEL SISTEMA"] || marketIntelligence?.globalConsensus?.verdict || "Analizando confluencias de mercado..."}
         score={parseInt(analysisSections["NIVEL DE CONFIANZA"]) || 50}
         type={analysisSections["RECOMENDACIÓN IA"]?.includes("LONG") ? "LONG" : analysisSections["RECOMENDACIÓN IA"]?.includes("SHORT") ? "SHORT" : "NEUTRAL"}
       />
@@ -583,7 +583,7 @@ const Analysis = () => {
 
                 {marketIntelligence?.globalConsensus?.suggestedEntries && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-                    {marketIntelligence.globalConsensus.suggestedEntries.map((entry: any, i: number) => (
+                    {marketIntelligence?.globalConsensus?.suggestedEntries?.map((entry: any, i: number) => (
                       <div key={i} className="p-5 bg-surface-container-highest/50 rounded-2xl border border-primary/20 backdrop-blur-xl group hover:border-primary transition-all">
                         <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-2">{entry.asset}</p>
                         <div className="flex items-center justify-between">
