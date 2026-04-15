@@ -31,7 +31,8 @@ import {
   ReferenceArea,
   Area,
   Cell,
-  Legend
+  Legend,
+  Brush
 } from 'recharts';
 
 interface IndicatorConfig {
@@ -91,6 +92,9 @@ const WyckoffAnalyzer: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
+  const [zoomRange, setZoomRange] = useState({ start: 0, end: 49 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(0);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
@@ -163,8 +167,9 @@ const WyckoffAnalyzer: React.FC = () => {
   const runAnalysis = React.useCallback(async () => {
     setLoading(true);
     try {
-      const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 50);
+      const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 150);
       setData(klines);
+      setZoomRange({ start: Math.max(0, klines.length - 50), end: klines.length - 1 });
       const ticker = await fetchTicker(selectedSymbol);
       
       const aiResponse = await analyzeMarket(selectedSymbol, ticker.price, ticker.priceChangePercent);
@@ -261,6 +266,56 @@ const WyckoffAnalyzer: React.FC = () => {
   useEffect(() => {
     runAnalysis();
   }, [selectedSymbol, selectedTimeframe, activeStrategies.length, indicators.filter(i => i.enabled).length]);
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (chartData.length === 0) return;
+    const delta = e.deltaY;
+    const range = zoomRange.end - zoomRange.start;
+    const step = Math.max(1, Math.floor(range * 0.1));
+
+    if (delta < 0) {
+      if (range > 10) {
+        setZoomRange(prev => ({
+          start: Math.min(prev.end - 10, prev.start + step),
+          end: Math.max(prev.start + 10, prev.end - step)
+        }));
+      }
+    } else {
+      setZoomRange(prev => ({
+        start: Math.max(0, prev.start - step),
+        end: Math.min(chartData.length - 1, prev.end + step)
+      }));
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart(e.clientX);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || chartData.length === 0) return;
+    const delta = e.clientX - dragStart;
+    if (Math.abs(delta) > 5) {
+      const range = zoomRange.end - zoomRange.start;
+      const moveStep = Math.floor(delta / 5);
+      if (moveStep !== 0) {
+        setZoomRange(prev => {
+          const newStart = Math.max(0, prev.start - moveStep);
+          const newEnd = Math.min(chartData.length - 1, newStart + range);
+          const finalStart = Math.max(0, newEnd - range);
+          return { start: finalStart, end: newEnd };
+        });
+        setDragStart(e.clientX);
+      }
+    }
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
+
+  const visibleData = useMemo(() => {
+    return chartData.slice(zoomRange.start, zoomRange.end + 1);
+  }, [chartData, zoomRange]);
 
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
@@ -439,7 +494,17 @@ const WyckoffAnalyzer: React.FC = () => {
   {/* Chart and Phase */}
   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
     <div className="lg:col-span-8 space-y-6">
-      <div className="trading-card p-0 h-[450px] relative overflow-hidden">
+      <div 
+        className={cn(
+          "trading-card p-0 h-[450px] relative overflow-hidden",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -468,7 +533,7 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         </div>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+          <ComposedChart data={visibleData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.1}/>
@@ -476,7 +541,18 @@ const WyckoffAnalyzer: React.FC = () => {
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.05} />
-            <XAxis dataKey="time" hide />
+            <XAxis 
+              dataKey="time" 
+              stroke="#666" 
+              fontSize={10} 
+              fontWeight="bold" 
+              tickLine={false} 
+              axisLine={false}
+              dy={10}
+              interval="preserveStartEnd"
+              minTickGap={30}
+              tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            />
             <YAxis 
               yAxisId="price" 
               domain={['dataMin - 50', 'dataMax + 50']} 
@@ -514,12 +590,12 @@ const WyckoffAnalyzer: React.FC = () => {
             
             {/* Candlesticks */}
             <Bar yAxisId="price" dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>
-              {chartData.map((entry, index) => (
+              {visibleData.map((entry, index) => (
                 <Cell key={`wick-${index}`} fill={entry.color} />
               ))}
             </Bar>
             <Bar yAxisId="price" dataKey="bodyRange" name="Precio" barSize={8} animationDuration={1000}>
-              {chartData.map((entry, index) => (
+              {visibleData.map((entry, index) => (
                 <Cell key={`body-${index}`} fill={entry.color} />
               ))}
             </Bar>
@@ -560,6 +636,23 @@ const WyckoffAnalyzer: React.FC = () => {
             )}
             
             <Bar yAxisId="volume" dataKey="volume" name="Volumen" fill="#ffffff" opacity={0.03} />
+
+            <Brush 
+              dataKey="time" 
+              height={30} 
+              stroke="#333" 
+              fill="#0a0c10"
+              travellerWidth={10}
+              gap={1}
+              startIndex={zoomRange.start}
+              endIndex={zoomRange.end}
+              onChange={(range: any) => setZoomRange({ start: range.startIndex, end: range.endIndex })}
+              tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            >
+              <ComposedChart>
+                <Area dataKey="close" fill="#00ffa3" fillOpacity={0.2} stroke="none" />
+              </ComposedChart>
+            </Brush>
           </ComposedChart>
         </ResponsiveContainer>
       </div>
