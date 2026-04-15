@@ -13,27 +13,18 @@ import {
   Eye, 
   EyeOff,
   Search,
-  X,
-  Minus
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
+import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries } from 'lightweight-charts';
 import { 
-  ComposedChart, 
-  Line, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  ReferenceArea,
-  Area,
-  Cell,
-  Legend,
-  Brush
-} from 'recharts';
+  Plus,
+  Minus,
+  Maximize2,
+  RefreshCw
+} from "lucide-react";
 
 interface IndicatorConfig {
   id: string;
@@ -97,8 +88,11 @@ const WyckoffAnalyzer: React.FC = () => {
   const [priceOffset, setPriceOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [cursor, setCursor] = useState("grab");
+  const [cursor, setCursor] = useState("default");
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const chartRef = useRef<IChartApi | null>(null);
+  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const indicatorSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
@@ -271,141 +265,159 @@ const WyckoffAnalyzer: React.FC = () => {
     runAnalysis();
   }, [selectedSymbol, selectedTimeframe, activeStrategies.length, indicators.filter(i => i.enabled).length]);
 
-  const handleWheel = (e: React.WheelEvent) => {
-    if (chartData.length === 0 || !chartContainerRef.current) return;
-    
-    const rect = chartContainerRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-    
-    const isAtRightAxis = offsetX > rect.width - 80;
-    const isAtBottomAxis = offsetY > rect.height - 60;
-    
-    const delta = e.deltaY;
-
-    if (isAtRightAxis) {
-      // Vertical Zoom
-      const zoomStep = 0.1;
-      setPriceZoom(prev => {
-        const next = delta < 0 ? prev * (1 - zoomStep) : prev * (1 + zoomStep);
-        return Math.max(0.1, Math.min(10, next));
-      });
-      return;
-    }
-
-    // Horizontal Zoom (Default or Bottom Axis)
-    const range = zoomRange.end - zoomRange.start;
-    const step = Math.max(1, Math.floor(range * 0.1));
-    
-    // Calculate focus point (where the mouse is)
-    const focusRatio = offsetX / rect.width;
-
-    if (delta < 0) {
-      // Zoom in
-      if (range > 5) {
-        setZoomRange(prev => {
-          const zoomAmount = Math.max(2, Math.floor(range * 0.2));
-          const leftZoom = Math.floor(zoomAmount * focusRatio);
-          const rightZoom = zoomAmount - leftZoom;
-          
-          const newStart = Math.min(prev.end - 5, prev.start + leftZoom);
-          const newEnd = Math.max(newStart + 5, prev.end - rightZoom);
-          return { start: Math.floor(newStart), end: Math.floor(newEnd) };
-        });
-      }
-    } else {
-      // Zoom out
-      setZoomRange(prev => {
-        const zoomAmount = Math.max(2, Math.floor(range * 0.2));
-        const leftZoom = Math.floor(zoomAmount * focusRatio);
-        const rightZoom = zoomAmount - leftZoom;
-        
-        return {
-          start: Math.max(0, Math.floor(prev.start - leftZoom)),
-          end: Math.min(chartData.length - 1, Math.floor(prev.end + rightZoom))
-        };
-      });
-    }
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (chartData.length === 0 || !chartContainerRef.current) return;
-    
-    const rect = chartContainerRef.current.getBoundingClientRect();
-    const offsetX = e.clientX - rect.left;
-    const offsetY = e.clientY - rect.top;
-    
-    const isAtRightAxis = offsetX > rect.width - 80;
-    const isAtBottomAxis = offsetY > rect.height - 60;
-
-    if (!isDragging) {
-      if (isAtRightAxis) setCursor("ns-resize");
-      else if (isAtBottomAxis) setCursor("ew-resize");
-      else setCursor("grab");
-      return;
-    }
-
-    setCursor("grabbing");
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-    
-    const rangeX = zoomRange.end - zoomRange.start;
-    
-    // Horizontal Pan
-    if (Math.abs(deltaX) > 1) {
-      const moveStepX = Math.floor(deltaX / (rect.width / rangeX) * 0.5);
-      if (moveStepX !== 0) {
-        setZoomRange(prev => {
-          const newStart = Math.max(0, prev.start - moveStepX);
-          const newEnd = Math.min(chartData.length - 1, newStart + rangeX);
-          const finalStart = Math.max(0, newEnd - rangeX);
-          return { start: finalStart, end: newEnd };
-        });
-        setDragStart(prev => ({ ...prev, x: e.clientX }));
-      }
-    }
-
-    // Vertical Pan
-    if (Math.abs(deltaY) > 1) {
-      const visiblePrices = visibleData.map(d => d.close);
-      const dataMin = Math.min(...visiblePrices);
-      const dataMax = Math.max(...visiblePrices);
-      const currentRange = (dataMax - dataMin) * priceZoom;
-      const sensitivity = currentRange / rect.height;
-      
-      setPriceOffset(prev => prev + (deltaY * sensitivity));
-      setDragStart(prev => ({ ...prev, y: e.clientY }));
-    }
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
-
   const handleResetView = () => {
-    setZoomRange({ start: Math.max(0, chartData.length - 50), end: chartData.length - 1 });
-    setPriceZoom(1);
-    setPriceOffset(0);
+    if (chartRef.current) {
+      chartRef.current.timeScale().fitContent();
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (chartRef.current) {
+      const timeScale = chartRef.current.timeScale();
+      const range = timeScale.getVisibleLogicalRange();
+      if (range) {
+        const newRange = {
+          from: range.from + (range.to - range.from) * 0.1,
+          to: range.to - (range.to - range.from) * 0.1,
+        };
+        timeScale.setVisibleLogicalRange(newRange);
+      }
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (chartRef.current) {
+      const timeScale = chartRef.current.timeScale();
+      const range = timeScale.getVisibleLogicalRange();
+      if (range) {
+        const newRange = {
+          from: range.from - (range.to - range.from) * 0.1,
+          to: range.to + (range.to - range.from) * 0.1,
+        };
+        timeScale.setVisibleLogicalRange(newRange);
+      }
+    }
   };
 
   useEffect(() => {
-    const container = chartContainerRef.current;
-    if (!container) return;
+    if (!chartContainerRef.current) return;
 
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
+    const chart = createChart(chartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#94a3b8',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: 'rgba(148, 163, 184, 0.05)' },
+        horzLines: { color: 'rgba(148, 163, 184, 0.05)' },
+      },
+      crosshair: {
+        mode: CrosshairMode.Normal,
+        vertLine: {
+          width: 1,
+          color: '#64748b',
+          style: 3,
+          labelBackgroundColor: '#0f172a',
+        },
+        horzLine: {
+          width: 1,
+          color: '#64748b',
+          style: 3,
+          labelBackgroundColor: '#0f172a',
+        },
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(148, 163, 184, 0.1)',
+        autoScale: true,
+      },
+      timeScale: {
+        borderColor: 'rgba(148, 163, 184, 0.1)',
+        timeVisible: true,
+        secondsVisible: false,
+      },
+      handleScroll: true,
+      handleScale: true,
+    });
+
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+      upColor: '#00ffa3',
+      downColor: '#ff7162',
+      borderVisible: false,
+      wickUpColor: '#00ffa3',
+      wickDownColor: '#ff7162',
+    });
+
+    chartRef.current = chart;
+    candlestickSeriesRef.current = candlestickSeries;
+
+    const handleResize = () => {
+      if (chartContainerRef.current) {
+        chart.applyOptions({ 
+          width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight 
+        });
+      }
     };
 
-    container.addEventListener('wheel', onWheel, { passive: false });
-    return () => container.removeEventListener('wheel', onWheel);
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      chart.remove();
+    };
   }, []);
 
-  const visibleData = useMemo(() => {
-    return chartData.slice(zoomRange.start, zoomRange.end + 1);
-  }, [chartData, zoomRange]);
+  useEffect(() => {
+    if (!candlestickSeriesRef.current || !chartRef.current || chartData.length === 0) return;
+
+    const formattedData = chartData.map(d => ({
+      time: (d.time / 1000) as UTCTimestamp,
+      open: d.open,
+      high: d.high,
+      low: d.low,
+      close: d.close,
+    }));
+
+    candlestickSeriesRef.current.setData(formattedData);
+
+    // Update Indicators
+    const indicatorConfigs = [
+      { id: 'bollinger_upper', key: 'upperBB', color: '#00e0ff', dash: [3, 3] },
+      { id: 'bollinger_lower', key: 'lowerBB', color: '#00e0ff', dash: [3, 3] },
+      { id: 'supertrend', key: 'supertrend', color: '#ffcc00', dash: [] },
+      { id: 'vwap', key: 'vwap', color: '#ff00ff', dash: [] },
+      { id: 'wakeup', key: 'wakeup', color: '#ffffff', dash: [] },
+    ];
+
+    indicatorConfigs.forEach(config => {
+      const isEnabled = config.id.startsWith('bollinger') 
+        ? indicators.find(i => i.id === 'bollinger')?.enabled 
+        : indicators.find(i => i.id === config.id)?.enabled || config.id === 'wakeup';
+
+      if (isEnabled) {
+        if (!indicatorSeriesRef.current[config.id]) {
+          indicatorSeriesRef.current[config.id] = chartRef.current!.addSeries(LineSeries, {
+            color: config.color,
+            lineWidth: 2,
+            lineStyle: config.dash.length ? 2 : 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+        }
+        const lineData = chartData.map(d => ({
+          time: (d.time / 1000) as UTCTimestamp,
+          value: d[config.key],
+        }));
+        indicatorSeriesRef.current[config.id].setData(lineData);
+      } else if (indicatorSeriesRef.current[config.id]) {
+        chartRef.current!.removeSeries(indicatorSeriesRef.current[config.id]);
+        delete indicatorSeriesRef.current[config.id];
+      }
+    });
+
+  }, [chartData, indicators]);
 
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
@@ -494,12 +506,8 @@ const WyckoffAnalyzer: React.FC = () => {
                             <span className="font-black text-[9px]">${signal.tp3.toLocaleString()}</span>
                           </div>
                         </div>
-                        <div className="h-12 w-full mt-2 opacity-50">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={chartData.slice(-15)}>
-                              <Line type="monotone" dataKey="close" stroke="#00ffa3" strokeWidth={1} dot={false} />
-                            </ComposedChart>
-                          </ResponsiveContainer>
+                        <div className="h-12 w-full mt-2 opacity-50 bg-primary/5 rounded flex items-center justify-center">
+                          <Activity className="w-4 h-4 text-primary animate-pulse" />
                         </div>
                       </div>
                     )}
@@ -586,175 +594,68 @@ const WyckoffAnalyzer: React.FC = () => {
     <div className="lg:col-span-8 space-y-6">
       <div 
         ref={chartContainerRef}
-        className="trading-card p-0 h-[450px] relative overflow-hidden"
-        style={{ cursor }}
-        onWheel={handleWheel}
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-        onDoubleClick={handleResetView}
+        className="trading-card p-0 h-[500px] relative overflow-hidden bg-[#0b0f14]"
       >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
         )}
-        <div className="absolute top-2 left-2 z-10 flex items-center gap-3">
-          <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-3 py-1 rounded-lg">
-            <span className="text-[9px] font-black uppercase tracking-widest text-primary">Fase: {wyckoffPhase}</span>
+        <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3">
+          <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-3 py-1.5 rounded-lg">
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Fase: {wyckoffPhase}</span>
           </div>
-          <button 
-            onClick={handleResetView}
-            className="bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
-          >
-            Reset View
-          </button>
-          <div className="bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 px-3 py-1 rounded-lg flex items-center gap-2">
-            <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Tendencia:</span>
+          
+          <div className="flex items-center gap-1 bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 p-1 rounded-lg">
+            <button 
+              onClick={handleResetView}
+              title="Reset View"
+              className="p-1.5 rounded-md hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+            <button 
+              onClick={() => chartRef.current?.timeScale().fitContent()}
+              title="Auto Scale"
+              className="p-1.5 rounded-md hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+            <div className="w-px h-4 bg-outline-variant/20 mx-1" />
+            <button 
+              onClick={handleZoomIn}
+              title="Zoom In"
+              className="p-1.5 rounded-md hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" />
+            </button>
+            <button 
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              className="p-1.5 rounded-md hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors"
+            >
+              <Minus className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 px-3 py-1.5 rounded-lg flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Tendencia:</span>
             {chartData.length > 1 && (
               <div className={cn(
-                "flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter",
+                "flex items-center gap-1 text-[10px] font-black uppercase tracking-tighter",
                 chartData[chartData.length-1].close > chartData[0].close ? "text-primary" : chartData[chartData.length-1].close < chartData[0].close ? "text-secondary" : "text-tertiary"
               )}>
                 {chartData[chartData.length-1].close > chartData[0].close ? (
-                  <><TrendingUp className="w-3 h-3" /> Alcista</>
+                  <><TrendingUp className="w-3.5 h-3.5" /> Alcista</>
                 ) : chartData[chartData.length-1].close < chartData[0].close ? (
-                  <><TrendingDown className="w-3 h-3" /> Bajista</>
+                  <><TrendingDown className="w-3.5 h-3.5" /> Bajista</>
                 ) : (
-                  <><Minus className="w-3 h-3" /> Lateral</>
+                  <><Minus className="w-3.5 h-3.5" /> Lateral</>
                 )}
               </div>
             )}
           </div>
         </div>
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-            <defs>
-              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.1}/>
-                <stop offset="95%" stopColor="#00ffa3" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.05} />
-            <XAxis 
-              dataKey="time" 
-              stroke="#666" 
-              fontSize={10} 
-              fontWeight="bold" 
-              tickLine={false} 
-              axisLine={false}
-              dy={10}
-              interval="preserveStartEnd"
-              minTickGap={30}
-              tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            />
-            <YAxis 
-              yAxisId="price" 
-              domain={([dataMin, dataMax]: [number, number]) => {
-                const mid = (dataMin + dataMax) / 2 - priceOffset;
-                const range = (dataMax - dataMin) * priceZoom;
-                return [mid - range / 2, mid + range / 2];
-              }} 
-              orientation="right" 
-              tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} 
-              axisLine={false} 
-              tickLine={false} 
-              width={60}
-            />
-            <YAxis yAxisId="volume" hide />
-            <YAxis yAxisId="oscillator" domain={[0, 100]} hide />
-            
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: '#0b0f14', 
-                border: '1px solid #222', 
-                borderRadius: '12px',
-                boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
-              }}
-              itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
-              labelStyle={{ color: '#94a3b8', fontSize: '10px', marginBottom: '4px' }}
-              cursor={{ stroke: '#333', strokeWidth: 1 }}
-            />
-            
-            <Legend 
-              verticalAlign="top" 
-              align="right" 
-              iconType="circle"
-              wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px', paddingBottom: '20px' }}
-            />
-            
-            {wyckoffPhase.toLowerCase().includes("acumul") && chartData.length > 0 && (
-              <ReferenceArea yAxisId="price" y1={chartData[0].low} y2={chartData[0].high} fill="#00ffa3" fillOpacity={0.03} />
-            )}
-            
-            {/* Candlesticks */}
-            <Bar yAxisId="price" dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>
-              {chartData.map((entry, index) => (
-                <Cell key={`wick-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-            <Bar yAxisId="price" dataKey="bodyRange" name="Precio" barSize={8} animationDuration={1000}>
-              {chartData.map((entry, index) => (
-                <Cell key={`body-${index}`} fill={entry.color} />
-              ))}
-            </Bar>
-
-            {/* Wake Up Phase Line */}
-            <Line yAxisId="price" type="monotone" dataKey="wakeup" name="Wake Up Phase" stroke="#ffffff" strokeWidth={2} dot={false} opacity={0.8} />
-
-            {/* Indicators on Chart */}
-            {indicators.find(i => i.id === "bollinger" && i.enabled) && (
-              <>
-                <Line yAxisId="price" type="monotone" dataKey="upperBB" name="Bollinger Superior" stroke="#00e0ff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} opacity={0.6} />
-                <Line yAxisId="price" type="monotone" dataKey="lowerBB" name="Bollinger Inferior" stroke="#00e0ff" strokeWidth={1.5} strokeDasharray="3 3" dot={false} opacity={0.6} />
-              </>
-            )}
-            {indicators.find(i => i.id === "supertrend" && i.enabled) && (
-              <Line yAxisId="price" type="stepAfter" dataKey="supertrend" name="Supertrend" stroke="#ffcc00" strokeWidth={2} dot={false} opacity={0.8} />
-            )}
-            {indicators.find(i => i.id === "vwap" && i.enabled) && (
-              <Line yAxisId="price" type="monotone" dataKey="vwap" name="VWAP" stroke="#ff00ff" strokeWidth={1.5} dot={false} opacity={0.7} />
-            )}
-            {indicators.find(i => i.id === "psar" && i.enabled) && (
-              <Line yAxisId="price" type="monotone" dataKey="psar" name="Parabolic SAR" stroke="#ffffff" strokeWidth={0} dot={{ r: 2, fill: '#00e0ff' }} opacity={0.8} />
-            )}
-            {indicators.find(i => i.id === "macd" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="macd" name="MACD" stroke="#ff7162" strokeWidth={2.5} dot={false} opacity={0.9} />
-            )}
-            {indicators.find(i => i.id === "rsi" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="rsi" name="RSI" stroke="#81e9ff" strokeWidth={2.5} dot={false} opacity={0.9} />
-            )}
-            {indicators.find(i => i.id === "atr" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="atr" name="ATR" stroke="#ffa8a3" strokeWidth={2.5} dot={false} opacity={0.9} />
-            )}
-            {indicators.find(i => i.id === "ichimoku" && i.enabled) && (
-              <Area yAxisId="price" type="monotone" dataKey="ichimoku" name="Ichimoku Cloud" fill="#00ffa3" stroke="none" fillOpacity={0.1} />
-            )}
-            {indicators.find(i => i.id === "stochrsi" && i.enabled) && (
-              <Line yAxisId="oscillator" type="monotone" dataKey="stochRsi" name="Stoch RSI" stroke="#ffc3bb" strokeWidth={2.5} dot={false} opacity={0.9} />
-            )}
-            
-            <Bar yAxisId="volume" dataKey="volume" name="Volumen" fill="#ffffff" opacity={0.03} />
-
-            <Brush 
-              dataKey="time" 
-              height={30} 
-              stroke="#333" 
-              fill="#0a0c10"
-              travellerWidth={10}
-              gap={1}
-              startIndex={zoomRange.start}
-              endIndex={zoomRange.end}
-              onChange={(range: any) => setZoomRange({ start: range.startIndex, end: range.endIndex })}
-              tickFormatter={(time) => new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            >
-              <ComposedChart>
-                <Area dataKey="close" fill="#00ffa3" fillOpacity={0.2} stroke="none" />
-              </ComposedChart>
-            </Brush>
-          </ComposedChart>
-        </ResponsiveContainer>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
