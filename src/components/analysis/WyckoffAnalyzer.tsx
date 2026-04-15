@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
+import { analyzeMarketData, Candle } from "@/lib/analysisEngine";
 import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries } from 'lightweight-charts';
 import { 
   Plus,
@@ -172,6 +173,12 @@ const WyckoffAnalyzer: React.FC = () => {
       
       const aiResponse = await analyzeMarket(selectedSymbol, ticker.price, ticker.priceChangePercent);
       
+      // Real Technical Analysis Engine
+      const realAnalysis = analyzeMarketData(klines as Candle[], selectedTimeframe);
+      
+      console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
+      console.log("[DEBUG] Análisis Real de Velas:", realAnalysis['candles']);
+
       // Parsing logic
       const wyckoffMatch = aiResponse.match(/FASE WYCKOFF:?\s*(.*)/i);
       setWyckoffPhase(wyckoffMatch ? wyckoffMatch[1].split('\n')[0].trim() : "Acumulación - Fase C");
@@ -184,6 +191,19 @@ const WyckoffAnalyzer: React.FC = () => {
       
       const analysisMap: Record<string, string> = {};
       indicators.filter(i => i.enabled).forEach(ind => {
+        // Use real analysis if available for specific indicators
+        if (realAnalysis[ind.id]) {
+          const rawAnalysis = realAnalysis[ind.id];
+          // Map recommendation to Spanish
+          const formattedAnalysis = rawAnalysis
+            .replace('**RECOMENDACIÓN:** LONG', '**RECOMENDACIÓN:** LONG')
+            .replace('**RECOMENDACIÓN:** SHORT', '**RECOMENDACIÓN:** SHORT')
+            .replace('**RECOMENDACIÓN:** WAIT', '**RECOMENDACIÓN:** ESPERAR');
+          
+          analysisMap[ind.id] = formattedAnalysis;
+          return;
+        }
+
         const indRegex = new RegExp(`${ind.name}:?\\s*(.*)`, 'i');
         const indMatch = aiResponse.match(indRegex);
         
@@ -195,8 +215,8 @@ const WyckoffAnalyzer: React.FC = () => {
           detail = parts[0].trim();
           rec = parts[1] ? parts[1].trim() : "Mantener vigilancia en niveles de soporte/resistencia.";
         } else {
-          detail = `El indicador ${ind.name} muestra una estructura de consolidación en ${selectedTimeframe}.`;
-          rec = "Esperar confirmación de volumen para validar el movimiento.";
+          detail = `El indicador ${ind.name} está siendo procesado bajo el contexto de ${selectedTimeframe}.`;
+          rec = "ESPERAR";
         }
 
         analysisMap[ind.id] = `**ANÁLISIS:** ${detail}\n\n**RECOMENDACIÓN:** ${rec}`;
@@ -204,7 +224,13 @@ const WyckoffAnalyzer: React.FC = () => {
       setIndicatorAnalysis(analysisMap);
       
       const conclusionMatch = aiResponse.match(/\*\*RECOMENDACIÓN FINAL\*\*:?\s*(.*)/i);
-      setFinalConclusion(conclusionMatch ? conclusionMatch[1].trim() : "Confluencia técnica positiva. Mantener vigilancia en niveles clave.");
+      let finalConclusionText = conclusionMatch ? conclusionMatch[1].trim() : "Confluencia técnica positiva. Mantener vigilancia en niveles clave.";
+      
+      // Add context from real engine to final conclusion
+      if (realAnalysis['context']) {
+        finalConclusionText = `${realAnalysis['context']}\n\n${finalConclusionText}`;
+      }
+      setFinalConclusion(finalConclusionText);
 
       // Generate Strategy Signals for all
       const currentPrice = Number(ticker.price);
