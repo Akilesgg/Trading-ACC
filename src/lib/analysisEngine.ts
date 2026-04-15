@@ -14,6 +14,11 @@ export interface AnalysisResult {
   status: 'FORMING' | 'CONFIRMED';
   analysis: string;
   recommendation: 'LONG' | 'SHORT' | 'WAIT';
+  visuals?: {
+    price?: number;
+    points?: { time: number; price: number; label?: string }[];
+    type: 'HORIZONTAL' | 'MARKER' | 'STRUCTURE';
+  };
 }
 
 /**
@@ -41,7 +46,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       type: 'NEUTRAL',
       status: 'CONFIRMED',
       analysis: 'Se ha formado una vela Doji, indicando indecisión extrema en el mercado. El precio de apertura y cierre son casi idénticos.',
-      recommendation: 'WAIT'
+      recommendation: 'WAIT',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.high, label: 'Doji' }]
+      }
     };
   }
 
@@ -52,7 +61,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       type: 'BULLISH',
       status: 'CONFIRMED',
       analysis: 'Martillo detectado tras una presión vendedora. La larga mecha inferior indica que los compradores están absorbiendo la oferta.',
-      recommendation: 'LONG'
+      recommendation: 'LONG',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.low, label: 'Hammer' }]
+      }
     };
   }
 
@@ -63,7 +76,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       type: 'BEARISH',
       status: 'CONFIRMED',
       analysis: 'Estrella fugaz detectada. La larga mecha superior indica un fuerte rechazo de los niveles altos por parte de los vendedores.',
-      recommendation: 'SHORT'
+      recommendation: 'SHORT',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.high, label: 'Shooting Star' }]
+      }
     };
   }
 
@@ -75,7 +92,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       type: 'BULLISH',
       status: 'CONFIRMED',
       analysis: `Patrón Envolvente Alcista confirmado en ${last.close.toFixed(2)}. El cuerpo de la vela actual cubre completamente la vela bajista anterior, sugiriendo un cambio de momentum.`,
-      recommendation: 'LONG'
+      recommendation: 'LONG',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.low, label: 'Engulfing' }]
+      }
     };
   }
   if (isPrevBullish && !isBullish && last.close < prev.open && last.open > prev.close) {
@@ -84,7 +105,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       type: 'BEARISH',
       status: 'CONFIRMED',
       analysis: `Patrón Envolvente Bajista confirmado en ${last.close.toFixed(2)}. Los vendedores han tomado el control total, superando la fuerza de la vela alcista previa.`,
-      recommendation: 'SHORT'
+      recommendation: 'SHORT',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.high, label: 'Engulfing' }]
+      }
     };
   }
 
@@ -196,7 +221,15 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         type: 'BEARISH',
         status: 'CONFIRMED',
         analysis: 'Se ha identificado un patrón de Doble Techo. El precio ha fallado dos veces en superar la resistencia en el nivel de ' + p2.value.toFixed(2) + '.',
-        recommendation: 'SHORT'
+        recommendation: 'SHORT',
+        visuals: {
+          type: 'HORIZONTAL',
+          price: p2.value,
+          points: [
+            { time: data[p1.index].time, price: p1.value, label: 'Pico 1' },
+            { time: data[p2.index].time, price: p2.value, label: 'Pico 2' }
+          ]
+        }
       };
     }
   }
@@ -212,7 +245,15 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         type: 'BULLISH',
         status: 'CONFIRMED',
         analysis: 'Patrón de Doble Suelo detectado. El mercado ha encontrado un soporte sólido en el nivel de ' + t2.value.toFixed(2) + ' tras dos intentos de ruptura fallidos.',
-        recommendation: 'LONG'
+        recommendation: 'LONG',
+        visuals: {
+          type: 'HORIZONTAL',
+          price: t2.value,
+          points: [
+            { time: data[t1.index].time, price: t1.value, label: 'Suelo 1' },
+            { time: data[t2.index].time, price: t2.value, label: 'Suelo 2' }
+          ]
+        }
       };
     }
   }
@@ -229,7 +270,15 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         type: 'BEARISH',
         status: 'CONFIRMED',
         analysis: `Patrón Hombro-Cabeza-Hombro detectado. La cabeza en ${p2.value.toFixed(2)} es superior a los hombros, indicando un agotamiento de la tendencia alcista.`,
-        recommendation: 'SHORT'
+        recommendation: 'SHORT',
+        visuals: {
+          type: 'STRUCTURE',
+          points: [
+            { time: data[p1.index].time, price: p1.value, label: 'Hombro Izq' },
+            { time: data[p2.index].time, price: p2.value, label: 'Cabeza' },
+            { time: data[p3.index].time, price: p3.value, label: 'Hombro Der' }
+          ]
+        }
       };
     }
   }
@@ -246,7 +295,15 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         type: 'BULLISH',
         status: 'CONFIRMED',
         analysis: `Patrón H-C-H Invertido detectado. El suelo en ${t2.value.toFixed(2)} indica una capitulación final seguida de una acumulación agresiva.`,
-        recommendation: 'LONG'
+        recommendation: 'LONG',
+        visuals: {
+          type: 'STRUCTURE',
+          points: [
+            { time: data[t1.index].time, price: t1.value, label: 'Hombro Izq' },
+            { time: data[t2.index].time, price: t2.value, label: 'Cabeza' },
+            { time: data[t3.index].time, price: t3.value, label: 'Hombro Der' }
+          ]
+        }
       };
     }
   }
@@ -285,17 +342,22 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
 /**
  * Full Market Analysis Engine
  */
-export function analyzeMarketData(data: Candle[], timeframe: string): Record<string, string> {
+export function analyzeMarketData(data: Candle[], timeframe: string): { 
+  results: Record<string, string>, 
+  raw: Record<string, AnalysisResult> 
+} {
   console.log(`[DEBUG] Iniciando análisis para temporalidad: ${timeframe}`);
   console.log(`[DEBUG] Datos recibidos: ${data.length} velas`);
 
   const results: Record<string, string> = {};
+  const raw: Record<string, AnalysisResult> = {};
 
   // 1. Candlestick Analysis
   const candlePattern = detectCandlestickPatterns(data);
   if (candlePattern) {
     console.log(`[DEBUG] Patrón de vela detectado: ${candlePattern.pattern}`);
     results['candles'] = `**ANÁLISIS:** ${candlePattern.analysis}\n\n**RECOMENDACIÓN:** ${candlePattern.recommendation}`;
+    raw['candles'] = candlePattern;
   } else {
     results['candles'] = `**ANÁLISIS:** No hay patrones de velas relevantes actualmente en la temporalidad de ${timeframe}.\n\n**RECOMENDACIÓN:** ESPERAR`;
   }
@@ -305,6 +367,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): Record<str
   if (chartPattern) {
     console.log(`[DEBUG] Patrón de gráfico detectado: ${chartPattern.pattern}`);
     results['patterns'] = `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`;
+    raw['patterns'] = chartPattern;
   } else {
     results['patterns'] = `**ANÁLISIS:** No se detectan patrones estructurales claros en este momento.\n\n**RECOMENDACIÓN:** ESPERAR`;
   }
@@ -321,5 +384,5 @@ export function analyzeMarketData(data: Candle[], timeframe: string): Record<str
     results['context'] = "Enfoque INTRADÍA: Buscando movimientos de rango medio y confirmación de sesión.";
   }
 
-  return results;
+  return { results, raw };
 }

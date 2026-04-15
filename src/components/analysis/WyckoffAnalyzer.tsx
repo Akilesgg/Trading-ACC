@@ -18,8 +18,8 @@ import {
 import { cn } from "@/lib/utils";
 import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
-import { analyzeMarketData, Candle } from "@/lib/analysisEngine";
-import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries } from 'lightweight-charts';
+import { analyzeMarketData, Candle, AnalysisResult } from "@/lib/analysisEngine";
+import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries, IPriceLine, SeriesMarker, createSeriesMarkers, ISeriesMarkersPluginApi } from 'lightweight-charts';
 import { 
   Plus,
   Minus,
@@ -94,6 +94,8 @@ const WyckoffAnalyzer: React.FC = () => {
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const indicatorSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
+  const priceLinesRef = useRef<IPriceLine[]>([]);
+  const markersPluginRef = useRef<ISeriesMarkersPluginApi<any> | null>(null);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
@@ -174,10 +176,59 @@ const WyckoffAnalyzer: React.FC = () => {
       const aiResponse = await analyzeMarket(selectedSymbol, ticker.price, ticker.priceChangePercent);
       
       // Real Technical Analysis Engine
-      const realAnalysis = analyzeMarketData(klines as Candle[], selectedTimeframe);
+      const { results: realAnalysis, raw: rawAnalysis } = analyzeMarketData(klines as Candle[], selectedTimeframe);
       
       console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
       console.log("[DEBUG] Análisis Real de Velas:", realAnalysis['candles']);
+
+      // 1. Clear old visual patterns
+      if (candlestickSeriesRef.current) {
+        priceLinesRef.current.forEach(line => candlestickSeriesRef.current!.removePriceLine(line));
+        priceLinesRef.current = [];
+        
+        if (!markersPluginRef.current) {
+          markersPluginRef.current = createSeriesMarkers(candlestickSeriesRef.current);
+        }
+        markersPluginRef.current.setMarkers([]);
+      }
+
+      // 2. Draw new visual patterns
+      const markers: SeriesMarker<UTCTimestamp>[] = [];
+      
+      Object.values(rawAnalysis).forEach(analysis => {
+        if (!analysis.visuals) return;
+        const { visuals } = analysis;
+
+        if (visuals.type === 'HORIZONTAL' && visuals.price) {
+          const line = candlestickSeriesRef.current!.createPriceLine({
+            price: visuals.price,
+            color: '#fbbf24', // Amber/Yellow
+            lineWidth: 2,
+            lineStyle: 1, // Dotted
+            axisLabelVisible: true,
+            title: analysis.pattern,
+          });
+          priceLinesRef.current.push(line);
+        }
+
+        if (visuals.points) {
+          visuals.points.forEach(pt => {
+            markers.push({
+              time: (pt.time / 1000) as UTCTimestamp,
+              position: analysis.type === 'BULLISH' ? 'belowBar' : 'aboveBar',
+              color: analysis.type === 'BULLISH' ? '#00ffa3' : '#ff7162',
+              shape: analysis.type === 'BULLISH' ? 'arrowUp' : 'arrowDown',
+              text: pt.label || analysis.pattern,
+            });
+          });
+        }
+      });
+
+      if (markersPluginRef.current && markers.length > 0) {
+        // Sort markers by time
+        markers.sort((a, b) => (a.time as number) - (b.time as number));
+        markersPluginRef.current.setMarkers(markers);
+      }
 
       // Parsing logic
       const wyckoffMatch = aiResponse.match(/FASE WYCKOFF:?\s*(.*)/i);
@@ -193,9 +244,9 @@ const WyckoffAnalyzer: React.FC = () => {
       indicators.filter(i => i.enabled).forEach(ind => {
         // Use real analysis if available for specific indicators
         if (realAnalysis[ind.id]) {
-          const rawAnalysis = realAnalysis[ind.id];
+          const rawAnalysisText = realAnalysis[ind.id];
           // Map recommendation to Spanish
-          const formattedAnalysis = rawAnalysis
+          const formattedAnalysis = rawAnalysisText
             .replace('**RECOMENDACIÓN:** LONG', '**RECOMENDACIÓN:** LONG')
             .replace('**RECOMENDACIÓN:** SHORT', '**RECOMENDACIÓN:** SHORT')
             .replace('**RECOMENDACIÓN:** WAIT', '**RECOMENDACIÓN:** ESPERAR');
@@ -401,6 +452,10 @@ const WyckoffAnalyzer: React.FC = () => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (markersPluginRef.current) {
+        markersPluginRef.current.detach();
+        markersPluginRef.current = null;
+      }
       chart.remove();
     };
   }, []);
