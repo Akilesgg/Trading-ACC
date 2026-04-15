@@ -93,8 +93,11 @@ const WyckoffAnalyzer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [zoomRange, setZoomRange] = useState({ start: 0, end: 49 });
+  const [priceZoom, setPriceZoom] = useState(1);
+  const [priceOffset, setPriceOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState(0);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [cursor, setCursor] = useState("grab");
   const chartContainerRef = useRef<HTMLDivElement>(null);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
@@ -269,17 +272,37 @@ const WyckoffAnalyzer: React.FC = () => {
   }, [selectedSymbol, selectedTimeframe, activeStrategies.length, indicators.filter(i => i.enabled).length]);
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (chartData.length === 0) return;
+    if (chartData.length === 0 || !chartContainerRef.current) return;
+    
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    
+    const isAtRightAxis = offsetX > rect.width - 80;
+    const isAtBottomAxis = offsetY > rect.height - 60;
+    
     const delta = e.deltaY;
+
+    if (isAtRightAxis) {
+      // Vertical Zoom
+      const zoomStep = 0.1;
+      setPriceZoom(prev => {
+        const next = delta < 0 ? prev * (1 - zoomStep) : prev * (1 + zoomStep);
+        return Math.max(0.1, Math.min(10, next));
+      });
+      return;
+    }
+
+    // Horizontal Zoom (Default or Bottom Axis)
     const range = zoomRange.end - zoomRange.start;
-    const step = Math.max(1, Math.floor(range * 0.05)); // Smoother zoom
+    const step = Math.max(1, Math.floor(range * 0.1));
 
     if (delta < 0) {
       // Zoom in
-      if (range > 10) {
+      if (range > 5) {
         setZoomRange(prev => {
-          const newStart = Math.min(prev.end - 10, prev.start + step);
-          const newEnd = Math.max(newStart + 10, prev.end - step);
+          const newStart = Math.min(prev.end - 5, prev.start + step);
+          const newEnd = Math.max(newStart + 5, prev.end - step);
           return { start: Math.floor(newStart), end: Math.floor(newEnd) };
         });
       }
@@ -294,28 +317,66 @@ const WyckoffAnalyzer: React.FC = () => {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     setIsDragging(true);
-    setDragStart(e.clientX);
+    setDragStart({ x: e.clientX, y: e.clientY });
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || chartData.length === 0) return;
-    const delta = e.clientX - dragStart;
-    if (Math.abs(delta) > 5) {
-      const range = zoomRange.end - zoomRange.start;
-      const moveStep = Math.floor(delta / 5);
-      if (moveStep !== 0) {
+    if (chartData.length === 0 || !chartContainerRef.current) return;
+    
+    const rect = chartContainerRef.current.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    
+    const isAtRightAxis = offsetX > rect.width - 80;
+    const isAtBottomAxis = offsetY > rect.height - 60;
+
+    if (!isDragging) {
+      if (isAtRightAxis) setCursor("ns-resize");
+      else if (isAtBottomAxis) setCursor("ew-resize");
+      else setCursor("grab");
+      return;
+    }
+
+    setCursor("grabbing");
+    const deltaX = e.clientX - dragStart.x;
+    const deltaY = e.clientY - dragStart.y;
+    
+    const rangeX = zoomRange.end - zoomRange.start;
+    
+    // Horizontal Pan
+    if (Math.abs(deltaX) > 2) {
+      const moveStepX = Math.floor(deltaX / (rect.width / rangeX));
+      if (moveStepX !== 0) {
         setZoomRange(prev => {
-          const newStart = Math.max(0, prev.start - moveStep);
-          const newEnd = Math.min(chartData.length - 1, newStart + range);
-          const finalStart = Math.max(0, newEnd - range);
+          const newStart = Math.max(0, prev.start - moveStepX);
+          const newEnd = Math.min(chartData.length - 1, newStart + rangeX);
+          const finalStart = Math.max(0, newEnd - rangeX);
           return { start: finalStart, end: newEnd };
         });
-        setDragStart(e.clientX);
+        setDragStart(prev => ({ ...prev, x: e.clientX }));
       }
+    }
+
+    // Vertical Pan
+    if (Math.abs(deltaY) > 2) {
+      const visiblePrices = visibleData.map(d => d.close);
+      const dataMin = Math.min(...visiblePrices);
+      const dataMax = Math.max(...visiblePrices);
+      const currentRange = (dataMax - dataMin) * priceZoom;
+      const sensitivity = currentRange / rect.height;
+      
+      setPriceOffset(prev => prev + (deltaY * sensitivity * 1.5));
+      setDragStart(prev => ({ ...prev, y: e.clientY }));
     }
   };
 
   const handleMouseUp = () => setIsDragging(false);
+
+  const handleResetView = () => {
+    setZoomRange({ start: Math.max(0, chartData.length - 50), end: chartData.length - 1 });
+    setPriceZoom(1);
+    setPriceOffset(0);
+  };
 
   useEffect(() => {
     const container = chartContainerRef.current;
@@ -512,15 +573,14 @@ const WyckoffAnalyzer: React.FC = () => {
     <div className="lg:col-span-8 space-y-6">
       <div 
         ref={chartContainerRef}
-        className={cn(
-          "trading-card p-0 h-[450px] relative overflow-hidden",
-          isDragging ? "cursor-grabbing" : "cursor-grab"
-        )}
+        className="trading-card p-0 h-[450px] relative overflow-hidden"
+        style={{ cursor }}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onDoubleClick={handleResetView}
       >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -531,6 +591,12 @@ const WyckoffAnalyzer: React.FC = () => {
           <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-3 py-1 rounded-lg">
             <span className="text-[9px] font-black uppercase tracking-widest text-primary">Fase: {wyckoffPhase}</span>
           </div>
+          <button 
+            onClick={handleResetView}
+            className="bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary transition-colors"
+          >
+            Reset View
+          </button>
           <div className="bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 px-3 py-1 rounded-lg flex items-center gap-2">
             <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">Tendencia:</span>
             {chartData.length > 1 && (
@@ -572,7 +638,11 @@ const WyckoffAnalyzer: React.FC = () => {
             />
             <YAxis 
               yAxisId="price" 
-              domain={['dataMin - 50', 'dataMax + 50']} 
+              domain={([dataMin, dataMax]: [number, number]) => {
+                const mid = (dataMin + dataMax) / 2 - priceOffset;
+                const range = (dataMax - dataMin) * priceZoom;
+                return [mid - range / 2, mid + range / 2];
+              }} 
               orientation="right" 
               tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 'bold' }} 
               axisLine={false} 
