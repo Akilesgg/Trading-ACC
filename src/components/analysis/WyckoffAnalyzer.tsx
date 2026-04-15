@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Brain, 
@@ -95,6 +95,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const [zoomRange, setZoomRange] = useState({ start: 0, end: 49 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
@@ -271,19 +272,22 @@ const WyckoffAnalyzer: React.FC = () => {
     if (chartData.length === 0) return;
     const delta = e.deltaY;
     const range = zoomRange.end - zoomRange.start;
-    const step = Math.max(1, Math.floor(range * 0.1));
+    const step = Math.max(1, Math.floor(range * 0.05)); // Smoother zoom
 
     if (delta < 0) {
+      // Zoom in
       if (range > 10) {
-        setZoomRange(prev => ({
-          start: Math.min(prev.end - 10, prev.start + step),
-          end: Math.max(prev.start + 10, prev.end - step)
-        }));
+        setZoomRange(prev => {
+          const newStart = Math.min(prev.end - 10, prev.start + step);
+          const newEnd = Math.max(newStart + 10, prev.end - step);
+          return { start: Math.floor(newStart), end: Math.floor(newEnd) };
+        });
       }
     } else {
+      // Zoom out
       setZoomRange(prev => ({
-        start: Math.max(0, prev.start - step),
-        end: Math.min(chartData.length - 1, prev.end + step)
+        start: Math.max(0, Math.floor(prev.start - step)),
+        end: Math.min(chartData.length - 1, Math.floor(prev.end + step))
       }));
     }
   };
@@ -312,6 +316,18 @@ const WyckoffAnalyzer: React.FC = () => {
   };
 
   const handleMouseUp = () => setIsDragging(false);
+
+  useEffect(() => {
+    const container = chartContainerRef.current;
+    if (!container) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+    };
+
+    container.addEventListener('wheel', onWheel, { passive: false });
+    return () => container.removeEventListener('wheel', onWheel);
+  }, []);
 
   const visibleData = useMemo(() => {
     return chartData.slice(zoomRange.start, zoomRange.end + 1);
@@ -495,6 +511,7 @@ const WyckoffAnalyzer: React.FC = () => {
   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
     <div className="lg:col-span-8 space-y-6">
       <div 
+        ref={chartContainerRef}
         className={cn(
           "trading-card p-0 h-[450px] relative overflow-hidden",
           isDragging ? "cursor-grabbing" : "cursor-grab"
@@ -533,7 +550,7 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         </div>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={visibleData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#00ffa3" stopOpacity={0.1}/>
@@ -590,12 +607,12 @@ const WyckoffAnalyzer: React.FC = () => {
             
             {/* Candlesticks */}
             <Bar yAxisId="price" dataKey="wickRange" name="Wick" barSize={1} animationDuration={1000}>
-              {visibleData.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell key={`wick-${index}`} fill={entry.color} />
               ))}
             </Bar>
             <Bar yAxisId="price" dataKey="bodyRange" name="Precio" barSize={8} animationDuration={1000}>
-              {visibleData.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell key={`body-${index}`} fill={entry.color} />
               ))}
             </Bar>
