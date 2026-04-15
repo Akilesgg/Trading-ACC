@@ -296,22 +296,35 @@ const WyckoffAnalyzer: React.FC = () => {
     // Horizontal Zoom (Default or Bottom Axis)
     const range = zoomRange.end - zoomRange.start;
     const step = Math.max(1, Math.floor(range * 0.1));
+    
+    // Calculate focus point (where the mouse is)
+    const focusRatio = offsetX / rect.width;
 
     if (delta < 0) {
       // Zoom in
       if (range > 5) {
         setZoomRange(prev => {
-          const newStart = Math.min(prev.end - 5, prev.start + step);
-          const newEnd = Math.max(newStart + 5, prev.end - step);
+          const zoomAmount = Math.max(2, Math.floor(range * 0.2));
+          const leftZoom = Math.floor(zoomAmount * focusRatio);
+          const rightZoom = zoomAmount - leftZoom;
+          
+          const newStart = Math.min(prev.end - 5, prev.start + leftZoom);
+          const newEnd = Math.max(newStart + 5, prev.end - rightZoom);
           return { start: Math.floor(newStart), end: Math.floor(newEnd) };
         });
       }
     } else {
       // Zoom out
-      setZoomRange(prev => ({
-        start: Math.max(0, Math.floor(prev.start - step)),
-        end: Math.min(chartData.length - 1, Math.floor(prev.end + step))
-      }));
+      setZoomRange(prev => {
+        const zoomAmount = Math.max(2, Math.floor(range * 0.2));
+        const leftZoom = Math.floor(zoomAmount * focusRatio);
+        const rightZoom = zoomAmount - leftZoom;
+        
+        return {
+          start: Math.max(0, Math.floor(prev.start - leftZoom)),
+          end: Math.min(chartData.length - 1, Math.floor(prev.end + rightZoom))
+        };
+      });
     }
   };
 
@@ -344,8 +357,8 @@ const WyckoffAnalyzer: React.FC = () => {
     const rangeX = zoomRange.end - zoomRange.start;
     
     // Horizontal Pan
-    if (Math.abs(deltaX) > 2) {
-      const moveStepX = Math.floor(deltaX / (rect.width / rangeX));
+    if (Math.abs(deltaX) > 1) {
+      const moveStepX = Math.floor(deltaX / (rect.width / rangeX) * 0.5);
       if (moveStepX !== 0) {
         setZoomRange(prev => {
           const newStart = Math.max(0, prev.start - moveStepX);
@@ -358,14 +371,14 @@ const WyckoffAnalyzer: React.FC = () => {
     }
 
     // Vertical Pan
-    if (Math.abs(deltaY) > 2) {
+    if (Math.abs(deltaY) > 1) {
       const visiblePrices = visibleData.map(d => d.close);
       const dataMin = Math.min(...visiblePrices);
       const dataMax = Math.max(...visiblePrices);
       const currentRange = (dataMax - dataMin) * priceZoom;
       const sensitivity = currentRange / rect.height;
       
-      setPriceOffset(prev => prev + (deltaY * sensitivity * 1.5));
+      setPriceOffset(prev => prev + (deltaY * sensitivity));
       setDragStart(prev => ({ ...prev, y: e.clientY }));
     }
   };
