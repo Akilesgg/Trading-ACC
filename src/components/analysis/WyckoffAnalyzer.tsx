@@ -165,7 +165,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const runAnalysis = React.useCallback(async () => {
     setLoading(true);
     try {
-      const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 150);
+      const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 1000);
       setData(klines);
       setZoomRange({ start: Math.max(0, klines.length - 50), end: klines.length - 1 });
       const ticker = await fetchTicker(selectedSymbol);
@@ -304,9 +304,12 @@ const WyckoffAnalyzer: React.FC = () => {
 
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#94a3b8',
-        fontSize: 11,
+        background: { type: ColorType.Solid, color: '#0b0f14' },
+        textColor: '#d1d5db',
+        fontSize: 14,
+      },
+      localization: {
+        locale: 'es-ES',
       },
       grid: {
         vertLines: { color: 'rgba(148, 163, 184, 0.05)' },
@@ -330,11 +333,18 @@ const WyckoffAnalyzer: React.FC = () => {
       rightPriceScale: {
         borderColor: 'rgba(148, 163, 184, 0.1)',
         autoScale: true,
+        visible: true,
+        alignLabels: true,
       },
       timeScale: {
         borderColor: 'rgba(148, 163, 184, 0.1)',
         timeVisible: true,
         secondsVisible: false,
+        visible: true,
+        rightOffset: 12,
+        barSpacing: 10,
+        fixLeftEdge: true,
+        minBarSpacing: 0.1,
       },
       handleScroll: true,
       handleScale: true,
@@ -369,6 +379,9 @@ const WyckoffAnalyzer: React.FC = () => {
     };
   }, []);
 
+  const lastSymbolRef = useRef(selectedSymbol);
+  const lastTimeframeRef = useRef(selectedTimeframe);
+
   useEffect(() => {
     if (!candlestickSeriesRef.current || !chartRef.current || chartData.length === 0) return;
 
@@ -381,6 +394,12 @@ const WyckoffAnalyzer: React.FC = () => {
     }));
 
     candlestickSeriesRef.current.setData(formattedData);
+
+    if (lastSymbolRef.current !== selectedSymbol || lastTimeframeRef.current !== selectedTimeframe) {
+      chartRef.current.timeScale().fitContent();
+      lastSymbolRef.current = selectedSymbol;
+      lastTimeframeRef.current = selectedTimeframe;
+    }
 
     // Update Indicators
     const indicatorConfigs = [
@@ -594,7 +613,7 @@ const WyckoffAnalyzer: React.FC = () => {
     <div className="lg:col-span-8 space-y-6">
       <div 
         ref={chartContainerRef}
-        className="trading-card p-0 h-[500px] relative overflow-hidden bg-[#0b0f14]"
+        className="w-full h-[500px] rounded-xl bg-[#0b0f14] border border-outline-variant/10 relative"
       >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
