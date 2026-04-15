@@ -3,8 +3,9 @@ import { TrendingUp, TrendingDown, BarChart3, Zap, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CryptoData } from "@/services/cryptoService";
 import { 
-  AreaChart, 
+  ComposedChart,
   Area, 
+  Bar,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -12,7 +13,8 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   ReferenceDot,
-  Brush
+  Brush,
+  Cell
 } from 'recharts';
 import { detectPatterns, detectCandles, detectLevels, Pattern, CandlePattern, Level } from "@/lib/technicalAnalysis";
 import { ZoomIn, ZoomOut, Maximize2, Move } from "lucide-react";
@@ -40,9 +42,24 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
 }) => {
   const isBullish = ticker && parseFloat(ticker.priceChangePercent) >= 0;
   const [zoomRange, setZoomRange] = useState({ start: 0, end: 100 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(0);
   const [patterns, setPatterns] = useState<Pattern[]>([]);
   const [candles, setCandles] = useState<CandlePattern[]>([]);
   const [levels, setLevels] = useState<Level[]>([]);
+
+  const visibleData = useMemo(() => {
+    if (chartData.length === 0) return [];
+    return chartData.slice(zoomRange.start, zoomRange.end + 1);
+  }, [chartData, zoomRange]);
+
+  const visiblePatterns = useMemo(() => {
+    return patterns.filter(p => p.points.some(pt => pt.x >= zoomRange.start && pt.x <= zoomRange.end));
+  }, [patterns, zoomRange]);
+
+  const visibleCandleSignals = useMemo(() => {
+    return candles.filter(c => c.index >= zoomRange.start && c.index <= zoomRange.end);
+  }, [candles, zoomRange]);
 
   // Update indicators every 30 seconds
   useEffect(() => {
@@ -80,6 +97,58 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
     setZoomRange({ start: 0, end: chartData.length - 1 });
   };
 
+  const handleWheel = (e: React.WheelEvent) => {
+    if (chartData.length === 0) return;
+    
+    const delta = e.deltaY;
+    const range = zoomRange.end - zoomRange.start;
+    const step = Math.max(1, Math.floor(range * 0.1));
+
+    if (delta < 0) {
+      // Zoom in
+      if (range > 5) {
+        setZoomRange(prev => ({
+          start: Math.min(prev.end - 5, prev.start + step),
+          end: Math.max(prev.start + 5, prev.end - step)
+        }));
+      }
+    } else {
+      // Zoom out
+      setZoomRange(prev => ({
+        start: Math.max(0, prev.start - step),
+        end: Math.min(chartData.length - 1, prev.end + step)
+      }));
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart(e.clientX);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || chartData.length === 0) return;
+    const delta = e.clientX - dragStart;
+    if (Math.abs(delta) > 5) {
+      const range = zoomRange.end - zoomRange.start;
+      const moveStep = Math.floor(delta / 5); // Sensibilidad
+      if (moveStep !== 0) {
+        setZoomRange(prev => {
+          const newStart = Math.max(0, prev.start - moveStep);
+          const newEnd = Math.min(chartData.length - 1, newStart + range);
+          // Mantener el rango si es posible
+          const finalStart = Math.max(0, newEnd - range);
+          return { start: finalStart, end: newEnd };
+        });
+        setDragStart(e.clientX);
+      }
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
   return (
     <div className="trading-card space-y-8">
       <div className="flex justify-between items-center">
@@ -106,7 +175,17 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
         </div>
       </div>
 
-      <div className="h-[45rem] w-full bg-surface-container-high/20 rounded-[2.5rem] p-8 border border-outline-variant/10 relative overflow-hidden group/chart">
+      <div 
+        className={cn(
+          "h-[45rem] w-full bg-surface-container-high/20 rounded-[2.5rem] p-8 border border-outline-variant/10 relative overflow-hidden group/chart",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
         
         {/* Chart Controls Overlay */}
@@ -158,7 +237,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
         </div>
 
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 20, right: 60, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={isBullish ? "#00ffa3" : "#ff7162"} stopOpacity={0.4}/>
@@ -174,6 +253,8 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
               tickLine={false} 
               axisLine={false}
               dy={10}
+              interval="preserveStartEnd"
+              minTickGap={30}
             />
             <YAxis 
               stroke="#666"
@@ -193,12 +274,52 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
               type="monotone" 
               dataKey="price" 
               stroke={isBullish ? "#00ffa3" : "#ff7162"} 
-              fillOpacity={1} 
+              fillOpacity={showCandles ? 0.05 : 1} 
               fill="url(#colorPrice)" 
-              strokeWidth={4} 
+              strokeWidth={showCandles ? 1 : 4} 
               animationDuration={1000}
               activeDot={{ r: 6, strokeWidth: 0, fill: isBullish ? "#00ffa3" : "#ff7162" }}
             />
+
+            {showCandles && (
+              <>
+                {/* Wicks */}
+                <Bar 
+                  dataKey={(d: any) => [d.low, d.high]} 
+                  fill="none"
+                  strokeWidth={1}
+                  barSize={2}
+                >
+                  {chartData.map((entry: any, index: number) => (
+                    <Cell key={`wick-${index}`} stroke={entry.close >= entry.open ? "#00ffa3" : "#ff7162"} />
+                  ))}
+                </Bar>
+                {/* Bodies */}
+                <Bar 
+                  dataKey={(d: any) => [d.open, d.close]}
+                  barSize={12}
+                >
+                  {chartData.map((entry: any, index: number) => (
+                    <Cell key={`body-${index}`} fill={entry.close >= entry.open ? "#00ffa3" : "#ff7162"} />
+                  ))}
+                </Bar>
+              </>
+            )}
+
+            {ticker && (
+              <ReferenceLine 
+                y={parseFloat(ticker.price)} 
+                stroke={isBullish ? "#00ffa3" : "#ff7162"} 
+                strokeDasharray="3 3"
+                label={{ 
+                  position: 'right', 
+                  value: `$${parseFloat(ticker.price).toLocaleString()}`, 
+                  fill: isBullish ? "#00ffa3" : "#ff7162", 
+                  fontSize: 10, 
+                  fontWeight: 'black'
+                }} 
+              />
+            )}
 
             {/* Render Static Levels (Support/Resistance) */}
             {levels.map((l, i) => (
@@ -220,7 +341,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
             ))}
 
             {/* Render Patterns */}
-            {patterns.map((p, i) => (
+            {visiblePatterns.map((p, i) => (
               <React.Fragment key={`pattern-${i}`}>
                 {p.points.map((pt, j) => j < p.points.length - 1 && (
                   <ReferenceLine 
@@ -277,7 +398,7 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
             ))}
 
             {/* Render Candles */}
-            {candles.map((c, i) => (
+            {visibleCandleSignals.map((c, i) => (
               <ReferenceDot 
                 key={`candle-${i}`}
                 x={chartData[c.index]?.name} 
@@ -308,11 +429,11 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
               endIndex={zoomRange.end}
               onChange={(range: any) => setZoomRange({ start: range.startIndex, end: range.endIndex })}
             >
-              <AreaChart>
+              <ComposedChart>
                 <Area dataKey="price" fill={isBullish ? "#00ffa3" : "#ff7162"} fillOpacity={0.2} stroke="none" />
-              </AreaChart>
+              </ComposedChart>
             </Brush>
-          </AreaChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
 

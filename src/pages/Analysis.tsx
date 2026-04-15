@@ -164,10 +164,15 @@ const Analysis = () => {
       setTicker(tickerData);
       setAllAssets(assets);
       
-      const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 30);
+      const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 100);
       setChartData(klines.map((k: any) => ({
         name: new Date(k.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        price: k.close
+        price: k.close,
+        open: k.open,
+        high: k.high,
+        low: k.low,
+        close: k.close,
+        time: k.time
       })));
 
       const [whalesData, tradersData, txData] = await Promise.all([
