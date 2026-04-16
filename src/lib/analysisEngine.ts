@@ -340,30 +340,31 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
   const last3Troughs = troughs.slice(-3);
 
   // 6. Elliott Waves (Impulse 1-2-3-4-5 and Correction A-B-C)
-  if (peaks.length >= 4 && troughs.length >= 3) {
-    const p1 = peaks[peaks.length - 4];
-    const t1 = troughs[troughs.length - 3];
-    const p2 = peaks[peaks.length - 3];
-    const t2 = troughs[troughs.length - 2];
-    const p3 = peaks[peaks.length - 2]; // Wave 5 peak
+  if (peaks.length >= 5 && troughs.length >= 4) {
+    const p1 = peaks[peaks.length - 5];
+    const t1 = troughs[troughs.length - 4];
+    const p2 = peaks[peaks.length - 4];
+    const t2 = troughs[troughs.length - 3];
+    const p3 = peaks[peaks.length - 3]; // Wave 5 peak
     
-    const t3 = troughs[troughs.length - 1]; // Wave A trough
-    const p4 = peaks[peaks.length - 1]; // Wave B peak
+    const t3 = troughs[troughs.length - 2]; // Wave A trough
+    const p4 = peaks[peaks.length - 2]; // Wave B peak
+    const t4 = troughs[troughs.length - 1]; // Wave C trough
 
     // Basic Impulse Wave: 1(p1) -> 2(t1) -> 3(p2) -> 4(t2) -> 5(p3)
     if (p2.value > p1.value && p3.value > p2.value && t2.value > t1.value && t2.value > p1.value) {
       
       // Check for corrective A-B-C after wave 5
-      const isCorrective = t3.value < p3.value && p4.value < p3.value && p4.value > t3.value;
+      const isCorrective = t3.value < p3.value && p4.value < p3.value && p4.value > t3.value && t4.value < p4.value;
 
       return {
-        pattern: isCorrective ? 'Ondas de Elliott (Ciclo Completo)' : 'Ondas de Elliott (1-2-3-4-5)',
-        type: isCorrective ? 'NEUTRAL' : 'BULLISH',
+        pattern: isCorrective ? 'Ondas de Elliott (Ciclo Completo 1-5, A-C)' : 'Ondas de Elliott (1-2-3-4-5)',
+        type: isCorrective ? 'BEARISH' : 'BULLISH',
         status: 'CONFIRMED',
         analysis: isCorrective 
-          ? 'Ciclo de Elliott completo detectado. Tras las 5 ondas impulsivas, el mercado ha iniciado la corrección A-B-C. Precaución ante posible cambio de tendencia.'
+          ? 'Ciclo de Elliott completo detectado. Tras las 5 ondas impulsivas, el mercado ha completado la corrección A-B-C. Se espera un nuevo ciclo o consolidación.'
           : 'Estructura de Ondas de Elliott detectada. El mercado está en un ciclo impulsivo alcista. Actualmente finalizando Onda 5.',
-        recommendation: isCorrective ? 'WAIT' : 'LONG',
+        recommendation: isCorrective ? 'SHORT' : 'LONG',
         entryPrice: data[p3.index].close,
         stopLoss: data[t2.index].low,
         takeProfit: data[p3.index].close * 1.05,
@@ -377,7 +378,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
             { time: data[p3.index].time, price: p3.value, label: '5' },
             ...(isCorrective ? [
               { time: data[t3.index].time, price: t3.value, label: 'A' },
-              { time: data[p4.index].time, price: p4.value, label: 'B' }
+              { time: data[p4.index].time, price: p4.value, label: 'B' },
+              { time: data[t4.index].time, price: t4.value, label: 'C' }
             ] : [])
           ]
         }

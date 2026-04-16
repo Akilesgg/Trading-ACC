@@ -813,7 +813,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
   {/* Chart and Phase */}
   <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-    <div className="lg:col-span-8 space-y-6">
+    <div className="lg:col-span-12 space-y-6">
       <div 
         ref={chartContainerRef}
         className="w-full h-[550px] rounded-xl bg-[#0b0f14] border border-outline-variant/10 relative"
@@ -974,94 +974,117 @@ const WyckoffAnalyzer: React.FC = () => {
       </div>
     </div>
 
-    {/* Indicators and Analysis Sidebar */}
-    <div className="lg:col-span-4 space-y-6">
-      <div className="trading-card p-6 space-y-6 bg-surface-container-high/40 border-primary/20">
-        <h3 className="text-[12px] font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
-          <Brain className="w-4 h-4 text-primary" /> Análisis de Contexto
-        </h3>
-        
-        <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
-            <span className="text-[8px] uppercase opacity-50 block mb-1">Fase Actual</span>
-            <span className="text-[12px] font-black text-primary uppercase">{wyckoffPhase}</span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-surface/50 border border-outline-variant/10">
-            <span className="text-[8px] uppercase opacity-50 block mb-1">Explicación</span>
-            <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium">{wyckoffExplanation}</p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-            <span className="text-[8px] uppercase opacity-50 block mb-1">Wake Up Status</span>
-            <p className="text-[11px] text-white font-black leading-relaxed">
-              {wyckoffPhase.includes("Markup") ? "FASE ACTIVA: Despertar alcista confirmado." : "FASE LATENTE: Esperando señal institucional."}
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
-            <span className="text-[8px] uppercase opacity-50 block mb-1">Recomendación</span>
-            <p className="text-[11px] text-on-surface font-black leading-relaxed">{recommendation}</p>
+    {/* Indicators and Analysis Section - Moved below chart */}
+    <div className="lg:col-span-12 space-y-8">
+      <div className="trading-card p-6 space-y-6 bg-surface-container-high/20 border-primary/10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
+              <Eye className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-[14px] font-black uppercase tracking-widest text-on-surface">Panel de Indicadores Técnicos</h3>
+              <p className="text-[10px] font-black text-on-surface-variant uppercase opacity-60">Activa o desactiva para visualizar señales en tiempo real</p>
+            </div>
           </div>
         </div>
-      </div>
-
-      <div className="trading-card p-6 space-y-6">
-        <h3 className="text-[12px] font-black uppercase tracking-widest text-on-surface">Indicadores Técnicos</h3>
-        <div className="grid grid-cols-2 gap-3">
+        
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {indicators.map(ind => (
             <button
               key={ind.id}
               onClick={() => toggleIndicator(ind.id)}
               className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all",
-                ind.enabled ? "bg-primary/10 border-primary/30 text-primary" : "bg-surface-container-high border-outline-variant/10 text-on-surface-variant"
+                "flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 group",
+                ind.enabled 
+                  ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_25px_rgba(0,255,163,0.2)] scale-[1.02]" 
+                  : "bg-surface-container-high/40 border-outline-variant/10 text-on-surface-variant hover:border-outline-variant/40 hover:bg-surface-container-high"
               )}
             >
-              {ind.enabled ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+              {ind.enabled ? (
+                <Eye className="w-4 h-4 animate-pulse" />
+              ) : (
+                <EyeOff className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+              )}
               {ind.name}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-        {indicators.filter(i => i.enabled).map(ind => (
-          <motion.div
-            key={ind.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-surface-container-high/40 border border-outline-variant/10 rounded-2xl p-4"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-primary">{ind.name}</span>
-              <CheckCircle2 className="w-3 h-3 text-primary" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Wyckoff Context */}
+        <div className="trading-card p-8 space-y-8 bg-surface-container-high/40 border-primary/20">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30 shadow-[0_0_15px_rgba(0,255,163,0.1)]">
+              <Brain className="w-6 h-6 text-primary" />
             </div>
-            <div className="space-y-3">
-              {indicatorAnalysis[ind.id]?.split('\n\n').map((line, idx) => (
-                <p key={idx} className="text-[11px] text-on-surface-variant leading-relaxed font-medium">
-                  {line.startsWith('**ANÁLISIS:**') ? (
-                    <><span className="text-primary font-black">ANÁLISIS:</span> {line.replace('**ANÁLISIS:**', '')}</>
-                  ) : line.startsWith('**RECOMENDACIÓN:**') ? (
-                    <><span className="text-primary font-black">RECOMENDACIÓN:</span> {line.replace('**RECOMENDACIÓN:**', '')}</>
-                  ) : line}
-                </p>
-              ))}
-              {!indicatorAnalysis[ind.id] && (
-                <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium animate-pulse">
-                  Analizando comportamiento en {selectedTimeframe}...
-                </p>
-              )}
-            </div>
-          </motion.div>
-        ))}
-        {indicators.filter(i => i.enabled).length === 0 && (
-          <div className="text-center p-8 border-2 border-dashed border-outline-variant/10 rounded-2xl opacity-30">
-            <p className="text-[10px] font-black uppercase tracking-widest">Activa indicadores para ver el análisis</p>
+            <h3 className="text-lg font-black uppercase tracking-tighter text-on-surface">Análisis de Contexto Wyckoff</h3>
           </div>
-        )}
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 group hover:bg-primary/10 transition-all duration-300">
+              <span className="text-[9px] uppercase opacity-50 block mb-2 font-black tracking-widest">Fase Actual</span>
+              <span className="text-xl font-black text-primary uppercase tracking-tight">{wyckoffPhase || "Analizando..."}</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-primary/10 border border-primary/20 group hover:bg-primary/15 transition-all duration-300">
+              <span className="text-[9px] uppercase opacity-50 block mb-2 font-black tracking-widest">Recomendación</span>
+              <p className="text-[14px] text-on-surface font-black leading-tight">{recommendation || "Esperando confirmación..."}</p>
+            </div>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-surface/50 border border-outline-variant/10">
+            <span className="text-[9px] uppercase opacity-50 block mb-2 font-black tracking-widest">Explicación Estructural</span>
+            <p className="text-[12px] text-on-surface-variant leading-relaxed font-medium">
+              {wyckoffExplanation || "El motor de IA está procesando los datos históricos para identificar la fase del ciclo de mercado..."}
+            </p>
+          </div>
+        </div>
+
+        {/* Active Indicators Details */}
+        <div className="space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar pr-4">
+          <div className="flex items-center justify-between px-2">
+            <h3 className="text-[14px] font-black uppercase tracking-widest text-on-surface">Detalles de Indicadores</h3>
+            <span className="text-[10px] font-black text-primary uppercase bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+              {indicators.filter(i => i.enabled).length} Activos
+            </span>
+          </div>
+          
+          {indicators.filter(i => i.enabled).map(ind => (
+            <motion.div
+              key={ind.id}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-surface-container-high/40 border border-outline-variant/10 rounded-3xl p-6 hover:border-primary/30 transition-all duration-300 shadow-lg"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
+                  <span className="text-[12px] font-black uppercase tracking-widest text-primary">{ind.name}</span>
+                </div>
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+              </div>
+              <div className="space-y-4">
+                {indicatorAnalysis[ind.id]?.split('\n\n').map((line, idx) => (
+                  <p key={idx} className="text-[12px] text-on-surface-variant leading-relaxed font-medium">
+                    {line.startsWith('**ANÁLISIS:**') ? (
+                      <><span className="text-primary font-black uppercase text-[10px] tracking-wider mr-2">Análisis:</span> {line.replace('**ANÁLISIS:**', '')}</>
+                    ) : line.startsWith('**RECOMENDACIÓN:**') ? (
+                      <><span className="text-primary font-black uppercase text-[10px] tracking-wider mr-2">Recomendación:</span> {line.replace('**RECOMENDACIÓN:**', '')}</>
+                    ) : line}
+                  </p>
+                ))}
+                {!indicatorAnalysis[ind.id] && (
+                  <div className="flex items-center gap-3 text-[11px] text-on-surface-variant opacity-50 italic">
+                    <RefreshCw className="w-4 h-4 animate-spin" /> Procesando señales técnicas avanzadas...
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
-    </div>
   </div>
 
   {/* Final Conclusion */}
