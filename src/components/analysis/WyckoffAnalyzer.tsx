@@ -1083,33 +1083,39 @@ const WyckoffAnalyzer: React.FC = () => {
               </div>
             </motion.div>
           ))}
+          {indicators.filter(i => i.enabled).length === 0 && (
+            <div className="flex flex-col items-center justify-center p-16 border-2 border-dashed border-outline-variant/10 rounded-3xl opacity-20">
+              <EyeOff className="w-10 h-10 mb-4" />
+              <p className="text-[12px] font-black uppercase tracking-widest text-center max-w-[200px]">Activa indicadores en el panel superior para ver el análisis detallado</p>
+            </div>
+          )}
         </div>
       </div>
-  </div>
-
-  {/* Final Conclusion */}
-  <div className="grid grid-cols-1 gap-8">
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="trading-card p-8 bg-primary/5 border-primary/30 relative overflow-hidden"
-    >
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
-      <div className="relative z-10 space-y-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
-            <Brain className="w-6 h-6 text-primary" />
-          </div>
-          <h3 className="text-xl font-black uppercase tracking-tighter text-on-surface">Conclusión y Recomendación Final</h3>
-        </div>
-        <div className="p-6 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10">
-          <p className="text-base text-on-surface font-bold leading-relaxed italic">"{finalConclusion}"</p>
-        </div>
-      </div>
-    </motion.div>
-  </div>
     </div>
-  );
+
+    {/* Final Conclusion */}
+    <div className="grid grid-cols-1 gap-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="trading-card p-8 bg-primary/5 border-primary/30 relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
+              <Brain className="w-6 h-6 text-primary" />
+            </div>
+            <h3 className="text-xl font-black uppercase tracking-tighter text-on-surface">Conclusión y Recomendación Final</h3>
+          </div>
+          <div className="p-6 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10">
+            <p className="text-base text-on-surface font-bold leading-relaxed italic">"{finalConclusion}"</p>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  </div>
+);
 };
 
 export default WyckoffAnalyzer;
