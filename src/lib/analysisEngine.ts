@@ -339,23 +339,31 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
   const last3Peaks = peaks.slice(-3);
   const last3Troughs = troughs.slice(-3);
 
-  // 6. Elliott Waves (Simplified 1-2-3-4-5)
-  if (peaks.length >= 3 && troughs.length >= 2) {
-    const p1 = peaks[peaks.length - 3];
-    const t1 = troughs[troughs.length - 2];
-    const p2 = peaks[peaks.length - 2];
-    const t2 = troughs[troughs.length - 1];
-    const p3 = peaks[peaks.length - 1];
+  // 6. Elliott Waves (Impulse 1-2-3-4-5 and Correction A-B-C)
+  if (peaks.length >= 4 && troughs.length >= 3) {
+    const p1 = peaks[peaks.length - 4];
+    const t1 = troughs[troughs.length - 3];
+    const p2 = peaks[peaks.length - 3];
+    const t2 = troughs[troughs.length - 2];
+    const p3 = peaks[peaks.length - 2]; // Wave 5 peak
+    
+    const t3 = troughs[troughs.length - 1]; // Wave A trough
+    const p4 = peaks[peaks.length - 1]; // Wave B peak
 
     // Basic Impulse Wave: 1(p1) -> 2(t1) -> 3(p2) -> 4(t2) -> 5(p3)
-    // Rules: 3 is not the shortest, 2 doesn't retrace 100% of 1, 4 doesn't enter territory of 1
     if (p2.value > p1.value && p3.value > p2.value && t2.value > t1.value && t2.value > p1.value) {
+      
+      // Check for corrective A-B-C after wave 5
+      const isCorrective = t3.value < p3.value && p4.value < p3.value && p4.value > t3.value;
+
       return {
-        pattern: 'Ondas de Elliott (1-2-3-4-5)',
-        type: 'BULLISH',
+        pattern: isCorrective ? 'Ondas de Elliott (Ciclo Completo)' : 'Ondas de Elliott (1-2-3-4-5)',
+        type: isCorrective ? 'NEUTRAL' : 'BULLISH',
         status: 'CONFIRMED',
-        analysis: 'Estructura de Ondas de Elliott detectada. El mercado está en un ciclo impulsivo alcista. Actualmente en Onda 5.',
-        recommendation: 'LONG',
+        analysis: isCorrective 
+          ? 'Ciclo de Elliott completo detectado. Tras las 5 ondas impulsivas, el mercado ha iniciado la corrección A-B-C. Precaución ante posible cambio de tendencia.'
+          : 'Estructura de Ondas de Elliott detectada. El mercado está en un ciclo impulsivo alcista. Actualmente finalizando Onda 5.',
+        recommendation: isCorrective ? 'WAIT' : 'LONG',
         entryPrice: data[p3.index].close,
         stopLoss: data[t2.index].low,
         takeProfit: data[p3.index].close * 1.05,
@@ -366,7 +374,11 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
             { time: data[t1.index].time, price: t1.value, label: '2' },
             { time: data[p2.index].time, price: p2.value, label: '3' },
             { time: data[t2.index].time, price: t2.value, label: '4' },
-            { time: data[p3.index].time, price: p3.value, label: '5' }
+            { time: data[p3.index].time, price: p3.value, label: '5' },
+            ...(isCorrective ? [
+              { time: data[t3.index].time, price: t3.value, label: 'A' },
+              { time: data[p4.index].time, price: p4.value, label: 'B' }
+            ] : [])
           ]
         }
       };

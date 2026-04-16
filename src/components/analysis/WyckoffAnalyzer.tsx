@@ -880,24 +880,24 @@ const WyckoffAnalyzer: React.FC = () => {
         </div>
 
         {/* Floating Analysis Boxes */}
-        <div className="absolute top-16 right-4 z-20 flex flex-col gap-3 max-w-[280px]">
+        <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-3 max-w-[320px]">
           <AnimatePresence>
             {activeAnalysis && (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
                 className={cn(
-                  "p-4 rounded-xl backdrop-blur-md border shadow-2xl",
-                  activeAnalysis.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
-                  activeAnalysis.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
-                  "bg-surface-container-high/80 border-outline-variant/30"
+                  "p-5 rounded-xl backdrop-blur-md border shadow-2xl",
+                  activeAnalysis.type === 'BULLISH' ? "bg-primary/15 border-primary/40" : 
+                  activeAnalysis.type === 'BEARISH' ? "bg-secondary/15 border-secondary/40" : 
+                  "bg-surface-container-high/90 border-outline-variant/40"
                 )}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">{activeAnalysis.pattern}</span>
+                  <span className="text-[12px] font-black uppercase tracking-widest text-on-surface">{activeAnalysis.pattern}</span>
                   <span className={cn(
-                    "px-2 py-0.5 rounded text-[8px] font-black uppercase",
+                    "px-2 py-0.5 rounded text-[10px] font-black uppercase",
                     activeAnalysis.type === 'BULLISH' ? "bg-primary text-on-primary" : 
                     activeAnalysis.type === 'BEARISH' ? "bg-secondary text-on-secondary" : 
                     "bg-outline-variant text-on-surface-variant"
@@ -905,16 +905,16 @@ const WyckoffAnalyzer: React.FC = () => {
                     {activeAnalysis.type}
                   </span>
                 </div>
-                <p className="text-[10px] text-on-surface-variant leading-tight mb-3">{activeAnalysis.analysis}</p>
+                <p className="text-[12px] text-on-surface-variant leading-tight mb-3 font-medium">{activeAnalysis.analysis}</p>
                 {activeAnalysis.entryPrice && (
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant/10">
+                  <div className="grid grid-cols-2 gap-3 pt-3 border-t border-outline-variant/20">
                     <div>
-                      <span className="text-[8px] uppercase opacity-50 block">Entrada</span>
-                      <span className="text-[10px] font-black text-on-surface">${activeAnalysis.entryPrice.toLocaleString()}</span>
+                      <span className="text-[9px] uppercase opacity-60 block font-bold">Entrada</span>
+                      <span className="text-[12px] font-black text-on-surface">${activeAnalysis.entryPrice.toLocaleString()}</span>
                     </div>
                     <div>
-                      <span className="text-[8px] uppercase opacity-50 block">Stop Loss</span>
-                      <span className="text-[10px] font-black text-secondary">${activeAnalysis.stopLoss?.toLocaleString()}</span>
+                      <span className="text-[9px] uppercase opacity-60 block font-bold">Stop Loss</span>
+                      <span className="text-[12px] font-black text-secondary">${activeAnalysis.stopLoss?.toLocaleString()}</span>
                     </div>
                   </div>
                 )}
@@ -923,19 +923,48 @@ const WyckoffAnalyzer: React.FC = () => {
 
             {activeElliott && (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                className="p-4 rounded-xl bg-tertiary/10 backdrop-blur-md border border-tertiary/30 shadow-2xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="p-5 rounded-xl bg-tertiary/15 backdrop-blur-md border border-tertiary/40 shadow-2xl"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-3 h-3 text-tertiary" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Ondas de Elliott</span>
+                  <Activity className="w-4 h-4 text-tertiary" />
+                  <span className="text-[12px] font-black uppercase tracking-widest text-on-surface">Ondas de Elliott</span>
                 </div>
-                <p className="text-[10px] text-on-surface-variant leading-tight mb-2">{activeElliott.analysis}</p>
+                <p className="text-[12px] text-on-surface-variant leading-tight mb-3 font-medium">{activeElliott.analysis}</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-tertiary/20 text-tertiary rounded">
-                    Posibilidad: {activeElliott.type === 'BULLISH' ? 'Alcista' : 'Bajista'}
+                  <span className={cn(
+                    "text-[10px] font-black uppercase px-2 py-1 rounded",
+                    activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                  )}>
+                    Recomendación: {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {indicators.find(i => i.id === 'wakeup')?.enabled && wyckoffPhase && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="p-5 rounded-xl bg-surface-container-high/90 backdrop-blur-md border border-outline-variant/40 shadow-2xl"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <span className="text-[12px] font-black uppercase tracking-widest text-on-surface">Esquema Wyckoff</span>
+                </div>
+                <div className="mb-2">
+                  <span className="text-[10px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">Fase: {wyckoffPhase}</span>
+                </div>
+                <p className="text-[12px] text-on-surface-variant leading-tight mb-3 font-medium">{wyckoffExplanation}</p>
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-[10px] font-black uppercase px-2 py-1 rounded",
+                    recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                  )}>
+                    Tendencia: {recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? 'ALCISTA' : 'BAJISTA'}
                   </span>
                 </div>
               </motion.div>
