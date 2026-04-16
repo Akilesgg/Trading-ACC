@@ -1114,6 +1114,7 @@ const WyckoffAnalyzer: React.FC = () => {
         </div>
       </motion.div>
     </div>
+    </div>
   </div>
 );
 };
