@@ -94,6 +94,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const indicatorSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
+  const polylineSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
   const priceLinesRef = useRef<IPriceLine[]>([]);
   const markersPluginRef = useRef<ISeriesMarkersPluginApi<any> | null>(null);
   
@@ -114,7 +115,8 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "supertrend", name: "Supertrend", enabled: false },
     { id: "vwap", name: "VWAP", enabled: false },
     { id: "psar", name: "Parabolic SAR", enabled: false },
-    { id: "wakeup", name: "Etapa Wyckoff (Línea Base)", enabled: true },
+    { id: "elliott", name: "Ondas de Elliott", enabled: true },
+    { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: true },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -192,6 +194,11 @@ const WyckoffAnalyzer: React.FC = () => {
         priceLinesRef.current.forEach(line => candlestickSeriesRef.current!.removePriceLine(line));
         priceLinesRef.current = [];
         
+        Object.values(polylineSeriesRef.current).forEach(series => {
+          chartRef.current?.removeSeries(series);
+        });
+        polylineSeriesRef.current = {};
+
         if (!markersPluginRef.current) {
           markersPluginRef.current = createSeriesMarkers(candlestickSeriesRef.current);
         }
@@ -203,6 +210,8 @@ const WyckoffAnalyzer: React.FC = () => {
       
       const patternsEnabled = indicators.find(i => i.id === 'patterns')?.enabled;
       const candlesEnabled = indicators.find(i => i.id === 'candles')?.enabled;
+      const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
+      const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
 
       Object.entries(rawAnalysis).forEach(([key, analysis]) => {
         if (!analysis.visuals) return;
@@ -210,6 +219,8 @@ const WyckoffAnalyzer: React.FC = () => {
         // Check if indicator is enabled
         if (key === 'patterns' && !patternsEnabled) return;
         if (key === 'candles' && !candlesEnabled) return;
+        if (key === 'elliott' && !elliottEnabled) return;
+        if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
 
         const { visuals } = analysis;
 
@@ -225,7 +236,38 @@ const WyckoffAnalyzer: React.FC = () => {
           priceLinesRef.current.push(line);
         }
 
-        if (visuals.points) {
+        if (visuals.type === 'POLYLINE' && visuals.points) {
+          const polySeries = chartRef.current!.addSeries(LineSeries, {
+            color: key === 'elliott' ? '#00e0ff' : '#ffffff',
+            lineWidth: key === 'elliott' ? 2 : 3,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          
+          const lineData = visuals.points.map(pt => ({
+            time: (pt.time / 1000) as UTCTimestamp,
+            value: pt.price
+          }));
+          
+          polySeries.setData(lineData);
+          polylineSeriesRef.current[key] = polySeries;
+
+          // Add markers for labels if any
+          visuals.points.forEach(pt => {
+            if (pt.label) {
+              markers.push({
+                time: (pt.time / 1000) as UTCTimestamp,
+                position: 'aboveBar',
+                color: '#ffffff',
+                shape: 'circle',
+                text: pt.label,
+              });
+            }
+          });
+        }
+
+        if (visuals.points && visuals.type !== 'POLYLINE') {
           visuals.points.forEach(pt => {
             markers.push({
               time: (pt.time / 1000) as UTCTimestamp,
@@ -245,7 +287,7 @@ const WyckoffAnalyzer: React.FC = () => {
       }
 
       // 3. Draw Wyckoff Phase Context
-      if (candlestickSeriesRef.current && wyckoffPhase) {
+      if (candlestickSeriesRef.current && wyckoffPhase && wyckoffEnabled) {
         const currentPrice = Number(ticker.price);
         const line = candlestickSeriesRef.current.createPriceLine({
           price: currentPrice,
@@ -253,7 +295,7 @@ const WyckoffAnalyzer: React.FC = () => {
           lineWidth: 1,
           lineStyle: 2, // Dashed
           axisLabelVisible: true,
-          title: `Contexto: ${wyckoffPhase}`,
+          title: "", // Removed title to avoid obstruction
         });
         priceLinesRef.current.push(line);
       }
@@ -516,7 +558,6 @@ const WyckoffAnalyzer: React.FC = () => {
       { id: 'bollinger_lower', key: 'lowerBB', color: '#00e0ff', dash: [3, 3] },
       { id: 'supertrend', key: 'supertrend', color: '#ffcc00', dash: [] },
       { id: 'vwap', key: 'vwap', color: '#ff00ff', dash: [] },
-      { id: 'wakeup', key: 'wakeup', color: '#ffffff', dash: [] },
     ];
 
     indicatorConfigs.forEach(config => {
@@ -723,7 +764,7 @@ const WyckoffAnalyzer: React.FC = () => {
     <div className="lg:col-span-8 space-y-6">
       <div 
         ref={chartContainerRef}
-        className="w-full h-[500px] rounded-xl bg-[#0b0f14] border border-outline-variant/10 relative"
+        className="w-full h-[550px] rounded-xl bg-[#0b0f14] border border-outline-variant/10 relative"
       >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -786,33 +827,40 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="trading-card p-6 space-y-4">
-          <h3 className="text-[12px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-            <Info className="w-4 h-4" /> Explicación de la Fase
-          </h3>
-          <p className="text-[13px] text-on-surface-variant leading-relaxed font-medium">{wyckoffExplanation}</p>
-        </div>
-        <div className="trading-card p-6 space-y-4 border-white/20 bg-white/5">
-          <h3 className="text-[12px] font-black uppercase tracking-widest text-white flex items-center gap-2">
-            <Zap className="w-4 h-4" /> Wake Up Status
-          </h3>
-          <p className="text-[13px] text-white font-black leading-relaxed">
-            {wyckoffPhase.includes("Markup") ? "FASE ACTIVA: Despertar alcista confirmado con volumen creciente." : "FASE LATENTE: Esperando señal de ignición institucional."}
-          </p>
-        </div>
-        <div className="trading-card p-6 space-y-4 border-primary/20 bg-primary/5">
-          <h3 className="text-[12px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
-            <Target className="w-4 h-4" /> Recomendación de Entrada
-          </h3>
-          <p className="text-[13px] text-on-surface font-black leading-relaxed">{recommendation}</p>
-        </div>
-      </div>
     </div>
 
-    {/* Indicators Sidebar */}
+    {/* Indicators and Analysis Sidebar */}
     <div className="lg:col-span-4 space-y-6">
+      <div className="trading-card p-6 space-y-6 bg-surface-container-high/40 border-primary/20">
+        <h3 className="text-[12px] font-black uppercase tracking-widest text-on-surface flex items-center gap-2">
+          <Brain className="w-4 h-4 text-primary" /> Análisis de Contexto
+        </h3>
+        
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-primary/5 border border-primary/10">
+            <span className="text-[8px] uppercase opacity-50 block mb-1">Fase Actual</span>
+            <span className="text-[12px] font-black text-primary uppercase">{wyckoffPhase}</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-surface/50 border border-outline-variant/10">
+            <span className="text-[8px] uppercase opacity-50 block mb-1">Explicación</span>
+            <p className="text-[11px] text-on-surface-variant leading-relaxed font-medium">{wyckoffExplanation}</p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+            <span className="text-[8px] uppercase opacity-50 block mb-1">Wake Up Status</span>
+            <p className="text-[11px] text-white font-black leading-relaxed">
+              {wyckoffPhase.includes("Markup") ? "FASE ACTIVA: Despertar alcista confirmado." : "FASE LATENTE: Esperando señal institucional."}
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+            <span className="text-[8px] uppercase opacity-50 block mb-1">Recomendación</span>
+            <p className="text-[11px] text-on-surface font-black leading-relaxed">{recommendation}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="trading-card p-6 space-y-6">
         <h3 className="text-[12px] font-black uppercase tracking-widest text-on-surface">Indicadores Técnicos</h3>
         <div className="grid grid-cols-2 gap-3">

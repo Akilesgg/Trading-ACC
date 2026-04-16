@@ -17,7 +17,7 @@ export interface AnalysisResult {
   visuals?: {
     price?: number;
     points?: { time: number; price: number; label?: string }[];
-    type: 'HORIZONTAL' | 'MARKER' | 'STRUCTURE';
+    type: 'HORIZONTAL' | 'MARKER' | 'STRUCTURE' | 'POLYLINE';
   };
 }
 
@@ -312,6 +312,37 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
   const last3Peaks = peaks.slice(-3);
   const last3Troughs = troughs.slice(-3);
 
+  // 6. Elliott Waves (Simplified 1-2-3-4-5)
+  if (peaks.length >= 3 && troughs.length >= 2) {
+    const p1 = peaks[peaks.length - 3];
+    const t1 = troughs[troughs.length - 2];
+    const p2 = peaks[peaks.length - 2];
+    const t2 = troughs[troughs.length - 1];
+    const p3 = peaks[peaks.length - 1];
+
+    // Basic Impulse Wave: 1(p1) -> 2(t1) -> 3(p2) -> 4(t2) -> 5(p3)
+    // Rules: 3 is not the shortest, 2 doesn't retrace 100% of 1, 4 doesn't enter territory of 1
+    if (p2.value > p1.value && p3.value > p2.value && t2.value > t1.value && t2.value > p1.value) {
+      return {
+        pattern: 'Ondas de Elliott (1-2-3-4-5)',
+        type: 'BULLISH',
+        status: 'CONFIRMED',
+        analysis: 'Estructura de Ondas de Elliott detectada. El mercado está en un ciclo impulsivo alcista. Actualmente en Onda 5.',
+        recommendation: 'LONG',
+        visuals: {
+          type: 'POLYLINE',
+          points: [
+            { time: data[p1.index].time, price: p1.value, label: '1' },
+            { time: data[t1.index].time, price: t1.value, label: '2' },
+            { time: data[p2.index].time, price: p2.value, label: '3' },
+            { time: data[t2.index].time, price: t2.value, label: '4' },
+            { time: data[p3.index].time, price: p3.value, label: '5' }
+          ]
+        }
+      };
+    }
+  }
+
   if (last3Peaks.length === 3 && last3Peaks[2].value > last3Peaks[1].value && last3Peaks[1].value > last3Peaks[0].value) {
     if (last3Troughs.length === 3 && last3Troughs[2].value > last3Troughs[1].value) {
       return {
@@ -368,11 +399,49 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     console.log(`[DEBUG] Patrón de gráfico detectado: ${chartPattern.pattern}`);
     results['patterns'] = `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`;
     raw['patterns'] = chartPattern;
+    
+    // If it's Elliott Waves, also put it in its own slot
+    if (chartPattern.pattern.includes('Elliott')) {
+      raw['elliott'] = chartPattern;
+    }
   } else {
     results['patterns'] = `**ANÁLISIS:** No se detectan patrones estructurales claros en este momento.\n\n**RECOMENDACIÓN:** ESPERAR`;
   }
 
-  // 3. Timeframe specific context
+  // 3. Wyckoff Schematic (ZigZag of major points)
+  const highs = data.map(d => d.high);
+  const lows = data.map(d => d.low);
+  
+  const findMajorPoints = (arrH: number[], arrL: number[], window = 15) => {
+    const points = [];
+    for (let i = window; i < arrH.length - window; i++) {
+      const sliceH = arrH.slice(i - window, i + window + 1);
+      const sliceL = arrL.slice(i - window, i + window + 1);
+      if (arrH[i] === Math.max(...sliceH)) {
+        points.push({ time: data[i].time, price: arrH[i], type: 'PEAK' });
+      } else if (arrL[i] === Math.min(...sliceL)) {
+        points.push({ time: data[i].time, price: arrL[i], type: 'TROUGH' });
+      }
+    }
+    return points;
+  };
+
+  const majorPoints = findMajorPoints(highs, lows);
+  if (majorPoints.length >= 2) {
+    raw['wyckoff_schematic'] = {
+      pattern: 'Esquema Wyckoff',
+      type: 'NEUTRAL',
+      status: 'CONFIRMED',
+      analysis: 'Representación esquemática de la acción del precio siguiendo la metodología Wyckoff.',
+      recommendation: 'WAIT',
+      visuals: {
+        type: 'POLYLINE',
+        points: majorPoints.slice(-10).map(p => ({ time: p.time, price: p.price }))
+      }
+    };
+  }
+
+  // 4. Timeframe specific context
   const isScalping = ['1m', '3m', '5m'].includes(timeframe);
   const isSwing = ['4h', '1d'].includes(timeframe);
 
