@@ -102,8 +102,8 @@ const WyckoffAnalyzer: React.FC = () => {
   const [recommendation, setRecommendation] = useState<string>("");
   
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
-    { id: "patterns", name: "Patrones Detectados", enabled: false },
-    { id: "candles", name: "Velas Japonesas", enabled: false },
+    { id: "patterns", name: "Patrones Detectados", enabled: true },
+    { id: "candles", name: "Velas Japonesas", enabled: true },
     { id: "macd", name: "MACD", enabled: false },
     { id: "rsi", name: "RSI", enabled: false },
     { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
@@ -114,6 +114,7 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "supertrend", name: "Supertrend", enabled: false },
     { id: "vwap", name: "VWAP", enabled: false },
     { id: "psar", name: "Parabolic SAR", enabled: false },
+    { id: "wakeup", name: "Etapa Wyckoff (Línea Base)", enabled: true },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -121,6 +122,11 @@ const WyckoffAnalyzer: React.FC = () => {
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
+    
+    // Calculate a straight baseline for Wyckoff Stage
+    const minPrice = Math.min(...data.map(d => d.low));
+    const baselinePrice = minPrice * 0.98;
+
     return data.map((d, i) => {
       const isBullish = d.close >= d.open;
       return {
@@ -144,8 +150,8 @@ const WyckoffAnalyzer: React.FC = () => {
         vwap: d.close * (0.998 + Math.sin(i / 15) * 0.004),
         psar: d.close * (i % 10 > 5 ? 1.01 : 0.99),
         
-        // Wake Up Phase (White Line)
-        wakeup: d.close * (0.97 + Math.sin(i / 25) * 0.02)
+        // Wake Up Phase (Straight White Line)
+        wakeup: baselinePrice
       };
     });
   }, [data]);
@@ -195,8 +201,16 @@ const WyckoffAnalyzer: React.FC = () => {
       // 2. Draw new visual patterns
       const markers: SeriesMarker<UTCTimestamp>[] = [];
       
-      Object.values(rawAnalysis).forEach(analysis => {
+      const patternsEnabled = indicators.find(i => i.id === 'patterns')?.enabled;
+      const candlesEnabled = indicators.find(i => i.id === 'candles')?.enabled;
+
+      Object.entries(rawAnalysis).forEach(([key, analysis]) => {
         if (!analysis.visuals) return;
+        
+        // Check if indicator is enabled
+        if (key === 'patterns' && !patternsEnabled) return;
+        if (key === 'candles' && !candlesEnabled) return;
+
         const { visuals } = analysis;
 
         if (visuals.type === 'HORIZONTAL' && visuals.price) {
@@ -228,6 +242,20 @@ const WyckoffAnalyzer: React.FC = () => {
         // Sort markers by time
         markers.sort((a, b) => (a.time as number) - (b.time as number));
         markersPluginRef.current.setMarkers(markers);
+      }
+
+      // 3. Draw Wyckoff Phase Context
+      if (candlestickSeriesRef.current && wyckoffPhase) {
+        const currentPrice = Number(ticker.price);
+        const line = candlestickSeriesRef.current.createPriceLine({
+          price: currentPrice,
+          color: '#ffffff',
+          lineWidth: 1,
+          lineStyle: 2, // Dashed
+          axisLabelVisible: true,
+          title: `Contexto: ${wyckoffPhase}`,
+        });
+        priceLinesRef.current.push(line);
       }
 
       // Parsing logic
@@ -500,10 +528,11 @@ const WyckoffAnalyzer: React.FC = () => {
         if (!indicatorSeriesRef.current[config.id]) {
           indicatorSeriesRef.current[config.id] = chartRef.current!.addSeries(LineSeries, {
             color: config.color,
-            lineWidth: 2,
+            lineWidth: config.id === 'wakeup' ? 3 : 2,
             lineStyle: config.dash.length ? 2 : 0,
             priceLineVisible: false,
             lastValueVisible: false,
+            title: config.id === 'wakeup' ? 'Línea Base Wyckoff' : undefined,
           });
         }
         const lineData = chartData.map(d => ({
