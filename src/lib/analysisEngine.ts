@@ -14,6 +14,9 @@ export interface AnalysisResult {
   status: 'FORMING' | 'CONFIRMED';
   analysis: string;
   recommendation: 'LONG' | 'SHORT' | 'WAIT';
+  entryPrice?: number;
+  stopLoss?: number;
+  takeProfit?: number;
   visuals?: {
     price?: number;
     points?: { time: number; price: number; label?: string }[];
@@ -62,6 +65,9 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       status: 'CONFIRMED',
       analysis: 'Martillo detectado tras una presión vendedora. La larga mecha inferior indica que los compradores están absorbiendo la oferta.',
       recommendation: 'LONG',
+      entryPrice: last.close,
+      stopLoss: last.low * 0.995,
+      takeProfit: last.close * 1.02,
       visuals: {
         type: 'MARKER',
         points: [{ time: last.time, price: last.low, label: 'Hammer' }]
@@ -77,6 +83,9 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       status: 'CONFIRMED',
       analysis: 'Estrella fugaz detectada. La larga mecha superior indica un fuerte rechazo de los niveles altos por parte de los vendedores.',
       recommendation: 'SHORT',
+      entryPrice: last.close,
+      stopLoss: last.high * 1.005,
+      takeProfit: last.close * 0.98,
       visuals: {
         type: 'MARKER',
         points: [{ time: last.time, price: last.high, label: 'Shooting Star' }]
@@ -93,6 +102,9 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       status: 'CONFIRMED',
       analysis: `Patrón Envolvente Alcista confirmado en ${last.close.toFixed(2)}. El cuerpo de la vela actual cubre completamente la vela bajista anterior, sugiriendo un cambio de momentum.`,
       recommendation: 'LONG',
+      entryPrice: last.close,
+      stopLoss: prev.low * 0.995,
+      takeProfit: last.close * 1.03,
       visuals: {
         type: 'MARKER',
         points: [{ time: last.time, price: last.low, label: 'Engulfing' }]
@@ -106,6 +118,9 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       status: 'CONFIRMED',
       analysis: `Patrón Envolvente Bajista confirmado en ${last.close.toFixed(2)}. Los vendedores han tomado el control total, superando la fuerza de la vela alcista previa.`,
       recommendation: 'SHORT',
+      entryPrice: last.close,
+      stopLoss: prev.high * 1.005,
+      takeProfit: last.close * 0.97,
       visuals: {
         type: 'MARKER',
         points: [{ time: last.time, price: last.high, label: 'Engulfing' }]
@@ -222,6 +237,9 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         status: 'CONFIRMED',
         analysis: 'Se ha identificado un patrón de Doble Techo. El precio ha fallado dos veces en superar la resistencia en el nivel de ' + p2.value.toFixed(2) + '.',
         recommendation: 'SHORT',
+        entryPrice: data[data.length - 1].close,
+        stopLoss: p2.value * 1.005,
+        takeProfit: data[data.length - 1].close * 0.95,
         visuals: {
           type: 'HORIZONTAL',
           price: p2.value,
@@ -246,6 +264,9 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         status: 'CONFIRMED',
         analysis: 'Patrón de Doble Suelo detectado. El mercado ha encontrado un soporte sólido en el nivel de ' + t2.value.toFixed(2) + ' tras dos intentos de ruptura fallidos.',
         recommendation: 'LONG',
+        entryPrice: data[data.length - 1].close,
+        stopLoss: t2.value * 0.995,
+        takeProfit: data[data.length - 1].close * 1.05,
         visuals: {
           type: 'HORIZONTAL',
           price: t2.value,
@@ -271,6 +292,9 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         status: 'CONFIRMED',
         analysis: `Patrón Hombro-Cabeza-Hombro detectado. La cabeza en ${p2.value.toFixed(2)} es superior a los hombros, indicando un agotamiento de la tendencia alcista.`,
         recommendation: 'SHORT',
+        entryPrice: data[data.length - 1].close,
+        stopLoss: p2.value * 1.005,
+        takeProfit: data[data.length - 1].close * 0.95,
         visuals: {
           type: 'STRUCTURE',
           points: [
@@ -296,6 +320,9 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         status: 'CONFIRMED',
         analysis: `Patrón H-C-H Invertido detectado. El suelo en ${t2.value.toFixed(2)} indica una capitulación final seguida de una acumulación agresiva.`,
         recommendation: 'LONG',
+        entryPrice: data[data.length - 1].close,
+        stopLoss: t2.value * 0.995,
+        takeProfit: data[data.length - 1].close * 1.05,
         visuals: {
           type: 'STRUCTURE',
           points: [
@@ -329,6 +356,9 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         status: 'CONFIRMED',
         analysis: 'Estructura de Ondas de Elliott detectada. El mercado está en un ciclo impulsivo alcista. Actualmente en Onda 5.',
         recommendation: 'LONG',
+        entryPrice: data[p3.index].close,
+        stopLoss: data[t2.index].low,
+        takeProfit: data[p3.index].close * 1.05,
         visuals: {
           type: 'POLYLINE',
           points: [
@@ -350,7 +380,10 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         type: 'BULLISH',
         status: 'CONFIRMED',
         analysis: 'Estructura de mercado alcista con máximos y mínimos crecientes. La tendencia es sólida y los retrocesos están siendo comprados.',
-        recommendation: 'LONG'
+        recommendation: 'LONG',
+        entryPrice: data[data.length - 1].close,
+        stopLoss: last3Troughs[2].value * 0.995,
+        takeProfit: data[data.length - 1].close * 1.04
       };
     }
   }
@@ -362,7 +395,10 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         type: 'BEARISH',
         status: 'CONFIRMED',
         analysis: 'Estructura de mercado bajista con máximos y mínimos decrecientes. La presión vendedora domina el flujo de órdenes.',
-        recommendation: 'SHORT'
+        recommendation: 'SHORT',
+        entryPrice: data[data.length - 1].close,
+        stopLoss: last3Peaks[2].value * 1.005,
+        takeProfit: data[data.length - 1].close * 0.96
       };
     }
   }

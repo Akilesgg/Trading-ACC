@@ -103,8 +103,8 @@ const WyckoffAnalyzer: React.FC = () => {
   const [recommendation, setRecommendation] = useState<string>("");
   
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
-    { id: "patterns", name: "Patrones Detectados", enabled: true },
-    { id: "candles", name: "Velas Japonesas", enabled: true },
+    { id: "patterns", name: "Patrones Detectados", enabled: false },
+    { id: "candles", name: "Velas Japonesas", enabled: false },
     { id: "macd", name: "MACD", enabled: false },
     { id: "rsi", name: "RSI", enabled: false },
     { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
@@ -115,12 +115,14 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "supertrend", name: "Supertrend", enabled: false },
     { id: "vwap", name: "VWAP", enabled: false },
     { id: "psar", name: "Parabolic SAR", enabled: false },
-    { id: "elliott", name: "Ondas de Elliott", enabled: true },
-    { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: true },
+    { id: "elliott", name: "Ondas de Elliott", enabled: false },
+    { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: false },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
   const [finalConclusion, setFinalConclusion] = useState<string>("");
+  const [activeAnalysis, setActiveAnalysis] = useState<AnalysisResult | null>(null);
+  const [activeElliott, setActiveElliott] = useState<AnalysisResult | null>(null);
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -213,6 +215,9 @@ const WyckoffAnalyzer: React.FC = () => {
       const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
 
+      let currentAnalysis: AnalysisResult | null = null;
+      let currentElliott: AnalysisResult | null = null;
+
       Object.entries(rawAnalysis).forEach(([key, analysis]) => {
         if (!analysis.visuals) return;
         
@@ -221,6 +226,13 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'candles' && !candlesEnabled) return;
         if (key === 'elliott' && !elliottEnabled) return;
         if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
+
+        if (key === 'patterns' || key === 'candles') {
+          currentAnalysis = analysis;
+        }
+        if (key === 'elliott') {
+          currentElliott = analysis;
+        }
 
         const { visuals } = analysis;
 
@@ -234,6 +246,43 @@ const WyckoffAnalyzer: React.FC = () => {
             title: analysis.pattern,
           });
           priceLinesRef.current.push(line);
+        }
+
+        // Draw Entry/SL/TP if present
+        if (analysis.entryPrice && (key === 'patterns' || key === 'candles')) {
+          const entryLine = candlestickSeriesRef.current!.createPriceLine({
+            price: analysis.entryPrice,
+            color: '#00ffa3',
+            lineWidth: 2,
+            lineStyle: 0,
+            axisLabelVisible: true,
+            title: `ENTRADA: $${analysis.entryPrice.toLocaleString()}`,
+          });
+          priceLinesRef.current.push(entryLine);
+
+          if (analysis.stopLoss) {
+            const slLine = candlestickSeriesRef.current!.createPriceLine({
+              price: analysis.stopLoss,
+              color: '#ff7162',
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: `SL: $${analysis.stopLoss.toLocaleString()}`,
+            });
+            priceLinesRef.current.push(slLine);
+          }
+
+          if (analysis.takeProfit) {
+            const tpLine = candlestickSeriesRef.current!.createPriceLine({
+              price: analysis.takeProfit,
+              color: '#00e0ff',
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: `TP: $${analysis.takeProfit.toLocaleString()}`,
+            });
+            priceLinesRef.current.push(tpLine);
+          }
         }
 
         if (visuals.type === 'POLYLINE' && visuals.points) {
@@ -285,6 +334,9 @@ const WyckoffAnalyzer: React.FC = () => {
         markers.sort((a, b) => (a.time as number) - (b.time as number));
         markersPluginRef.current.setMarkers(markers);
       }
+
+      setActiveAnalysis(currentAnalysis);
+      setActiveElliott(currentElliott);
 
       // 3. Draw Wyckoff Phase Context
       if (candlestickSeriesRef.current && wyckoffPhase && wyckoffEnabled) {
@@ -825,6 +877,70 @@ const WyckoffAnalyzer: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Floating Analysis Boxes */}
+        <div className="absolute top-16 right-4 z-20 flex flex-col gap-3 max-w-[280px]">
+          <AnimatePresence>
+            {activeAnalysis && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className={cn(
+                  "p-4 rounded-xl backdrop-blur-md border shadow-2xl",
+                  activeAnalysis.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
+                  activeAnalysis.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
+                  "bg-surface-container-high/80 border-outline-variant/30"
+                )}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">{activeAnalysis.pattern}</span>
+                  <span className={cn(
+                    "px-2 py-0.5 rounded text-[8px] font-black uppercase",
+                    activeAnalysis.type === 'BULLISH' ? "bg-primary text-on-primary" : 
+                    activeAnalysis.type === 'BEARISH' ? "bg-secondary text-on-secondary" : 
+                    "bg-outline-variant text-on-surface-variant"
+                  )}>
+                    {activeAnalysis.type}
+                  </span>
+                </div>
+                <p className="text-[10px] text-on-surface-variant leading-tight mb-3">{activeAnalysis.analysis}</p>
+                {activeAnalysis.entryPrice && (
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-outline-variant/10">
+                    <div>
+                      <span className="text-[8px] uppercase opacity-50 block">Entrada</span>
+                      <span className="text-[10px] font-black text-on-surface">${activeAnalysis.entryPrice.toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-[8px] uppercase opacity-50 block">Stop Loss</span>
+                      <span className="text-[10px] font-black text-secondary">${activeAnalysis.stopLoss?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {activeElliott && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="p-4 rounded-xl bg-tertiary/10 backdrop-blur-md border border-tertiary/30 shadow-2xl"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-3 h-3 text-tertiary" />
+                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Ondas de Elliott</span>
+                </div>
+                <p className="text-[10px] text-on-surface-variant leading-tight mb-2">{activeElliott.analysis}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-[8px] font-black uppercase px-2 py-0.5 bg-tertiary/20 text-tertiary rounded">
+                    Posibilidad: {activeElliott.type === 'BULLISH' ? 'Alcista' : 'Bajista'}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
