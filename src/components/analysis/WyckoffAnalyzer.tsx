@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
 import { analyzeMarketData, Candle, AnalysisResult } from "@/lib/analysisEngine";
-import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries, IPriceLine, SeriesMarker, createSeriesMarkers, ISeriesMarkersPluginApi } from 'lightweight-charts';
+import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries, HistogramSeries, IPriceLine, SeriesMarker, createSeriesMarkers, ISeriesMarkersPluginApi } from 'lightweight-charts';
 import { 
   Plus,
   Minus,
@@ -93,10 +93,11 @@ const WyckoffAnalyzer: React.FC = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const indicatorSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
+  const indicatorSeriesRef = useRef<Record<string, ISeriesApi<any>>>({});
   const polylineSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
   const priceLinesRef = useRef<IPriceLine[]>([]);
   const markersPluginRef = useRef<ISeriesMarkersPluginApi<any> | null>(null);
+  const [macdData, setMacdData] = useState<{ macd: any[], signal: any[], histogram: any[] } | null>(null);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
@@ -186,7 +187,8 @@ const WyckoffAnalyzer: React.FC = () => {
       const aiResponse = await analyzeMarket(selectedSymbol, ticker.price, ticker.priceChangePercent);
       
       // Real Technical Analysis Engine
-      const { results: realAnalysis, raw: rawAnalysis } = analyzeMarketData(klines as Candle[], selectedTimeframe);
+      const { results: realAnalysis, raw: rawAnalysis, indicators: indicatorData } = analyzeMarketData(klines as Candle[], selectedTimeframe);
+      setMacdData(indicatorData.macd || null);
       
       console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
       console.log("[DEBUG] Análisis Real de Velas:", realAnalysis['candles']);
@@ -302,7 +304,7 @@ const WyckoffAnalyzer: React.FC = () => {
           polySeries.setData(lineData);
           polylineSeriesRef.current[key] = polySeries;
 
-          // Add markers for labels if any
+          // Add markers for labels - Use clear, professional labels
           visuals.points.forEach(pt => {
             if (pt.label) {
               markers.push({
@@ -311,6 +313,7 @@ const WyckoffAnalyzer: React.FC = () => {
                 color: '#ffffff',
                 shape: 'circle',
                 text: pt.label,
+                size: 2
               });
             }
           });
@@ -632,14 +635,104 @@ const WyckoffAnalyzer: React.FC = () => {
           time: (d.time / 1000) as UTCTimestamp,
           value: d[config.key],
         }));
-        indicatorSeriesRef.current[config.id].setData(lineData);
+        (indicatorSeriesRef.current[config.id] as ISeriesApi<"Line">).setData(lineData);
       } else if (indicatorSeriesRef.current[config.id]) {
         chartRef.current!.removeSeries(indicatorSeriesRef.current[config.id]);
         delete indicatorSeriesRef.current[config.id];
       }
     });
 
-  }, [chartData, indicators]);
+    // Handle MACD Pro
+    const macdEnabled = indicators.find(i => i.id === 'macd')?.enabled;
+    if (macdEnabled && macdData) {
+      if (!indicatorSeriesRef.current['macd_line']) {
+        // Histogram
+        indicatorSeriesRef.current['macd_hist'] = chartRef.current!.addSeries(LineSeries, {
+          color: '#26a69a',
+          lineWidth: 2,
+          priceScaleId: 'macd',
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        const histogramSeries = chartRef.current!.addSeries(CandlestickSeries, {
+          priceScaleId: 'macd',
+          upColor: '#26a69a',
+          downColor: '#ef5350',
+          borderVisible: false,
+          wickVisible: false,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        // Use Histogram instead
+        chartRef.current!.removeSeries(indicatorSeriesRef.current['macd_hist'] as ISeriesApi<"Line">);
+        
+        indicatorSeriesRef.current['macd_hist'] = chartRef.current!.addSeries(HistogramSeries as any, {
+          color: '#26a69a',
+          priceScaleId: 'macd',
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        indicatorSeriesRef.current['macd_line'] = chartRef.current!.addSeries(LineSeries, {
+          color: '#2962FF',
+          lineWidth: 2,
+          priceScaleId: 'macd',
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        indicatorSeriesRef.current['macd_signal'] = chartRef.current!.addSeries(LineSeries, {
+          color: '#FF6D00',
+          lineWidth: 2,
+          priceScaleId: 'macd',
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        chartRef.current!.priceScale('macd').applyOptions({
+          mode: 0,
+          autoScale: true,
+          scaleMargins: { top: 0.8, bottom: 0.05 },
+          borderColor: 'rgba(148, 163, 184, 0.1)',
+        });
+      }
+
+      const hData = macdData.histogram.map((val, i) => {
+        const prevVal = i > 0 ? macdData.histogram[i-1] : 0;
+        let color = val >= 0 ? (val > prevVal ? '#26a69a' : '#b2dfdb') : (val < prevVal ? '#ef5350' : '#ffcdd2');
+        return {
+          time: (chartData[i].time / 1000) as UTCTimestamp,
+          value: val,
+          color: color
+        };
+      });
+
+      const mData = macdData.macd.map((val, i) => ({
+        time: (chartData[i].time / 1000) as UTCTimestamp,
+        value: val
+      }));
+
+      const sData = macdData.signal.map((val, i) => ({
+        time: (chartData[i].time / 1000) as UTCTimestamp,
+        value: val
+      }));
+
+      (indicatorSeriesRef.current['macd_hist'] as any).setData(hData);
+      (indicatorSeriesRef.current['macd_line'] as any).setData(mData);
+      (indicatorSeriesRef.current['macd_signal'] as any).setData(sData);
+
+    } else {
+      ['macd_hist', 'macd_line', 'macd_signal'].forEach(id => {
+        if (indicatorSeriesRef.current[id]) {
+          chartRef.current!.removeSeries(indicatorSeriesRef.current[id]);
+          delete indicatorSeriesRef.current[id];
+        }
+      });
+    }
+
+  }, [chartData, indicators, macdData]);
 
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
@@ -879,42 +972,44 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         </div>
 
-        {/* Floating Analysis Boxes */}
-        <div className="absolute bottom-4 right-4 z-20 flex flex-col gap-3 max-w-[320px]">
+        {/* Floating Analysis Boxes - Draggable UX */}
+        <div className="absolute inset-0 pointer-events-none z-20">
           <AnimatePresence>
             {activeAnalysis && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, x: 20, y: 350 }}
+                animate={{ opacity: 1, x: 0, y: 350 }}
+                exit={{ opacity: 0, scale: 0.9 }}
                 className={cn(
-                  "p-5 rounded-xl backdrop-blur-md border shadow-2xl",
-                  activeAnalysis.type === 'BULLISH' ? "bg-primary/15 border-primary/40" : 
-                  activeAnalysis.type === 'BEARISH' ? "bg-secondary/15 border-secondary/40" : 
-                  "bg-surface-container-high/90 border-outline-variant/40"
+                  "absolute bottom-4 right-4 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px]",
+                  activeAnalysis.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
+                  activeAnalysis.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
+                  "bg-surface-container-high/80 border-outline-variant/30"
                 )}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[12px] font-black uppercase tracking-widest text-on-surface">{activeAnalysis.pattern}</span>
-                  <span className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-black uppercase",
-                    activeAnalysis.type === 'BULLISH' ? "bg-primary text-on-primary" : 
-                    activeAnalysis.type === 'BEARISH' ? "bg-secondary text-on-secondary" : 
+                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                  <span className="text-[13px] font-black uppercase tracking-widest text-white">{activeAnalysis.pattern}</span>
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                    activeAnalysis.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
+                    activeAnalysis.type === 'BEARISH' ? "bg-secondary/20 text-secondary border-secondary/30" : 
                     "bg-outline-variant text-on-surface-variant"
                   )}>
                     {activeAnalysis.type}
-                  </span>
+                  </div>
                 </div>
-                <p className="text-[12px] text-on-surface-variant leading-tight mb-3 font-medium">{activeAnalysis.analysis}</p>
+                <p className="text-[12px] text-on-surface-variant leading-relaxed mb-4 font-medium font-sans">{activeAnalysis.analysis}</p>
                 {activeAnalysis.entryPrice && (
-                  <div className="grid grid-cols-2 gap-3 pt-3 border-t border-outline-variant/20">
-                    <div>
-                      <span className="text-[9px] uppercase opacity-60 block font-bold">Entrada</span>
-                      <span className="text-[12px] font-black text-on-surface">${activeAnalysis.entryPrice.toLocaleString()}</span>
+                  <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
+                    <div className="bg-white/5 p-2 rounded-lg">
+                      <span className="text-[9px] uppercase opacity-40 block font-black mb-1">Entrada</span>
+                      <span className="text-[12px] font-bold text-on-surface font-mono">${activeAnalysis.entryPrice.toLocaleString()}</span>
                     </div>
-                    <div>
-                      <span className="text-[9px] uppercase opacity-60 block font-bold">Stop Loss</span>
-                      <span className="text-[12px] font-black text-secondary">${activeAnalysis.stopLoss?.toLocaleString()}</span>
+                    <div className="bg-white/5 p-2 rounded-lg">
+                      <span className="text-[9px] uppercase opacity-40 block font-black mb-1">Stop Loss</span>
+                      <span className="text-[12px] font-bold text-secondary font-mono">${activeAnalysis.stopLoss?.toLocaleString()}</span>
                     </div>
                   </div>
                 )}
@@ -923,43 +1018,47 @@ const WyckoffAnalyzer: React.FC = () => {
 
             {activeElliott && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="p-6 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-2xl space-y-4"
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, x: -350, y: 250 }}
+                animate={{ opacity: 1, x: 0, y: 250 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute top-4 left-4 p-6 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] pointer-events-auto cursor-move space-y-4 max-w-[320px]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-white" />
-                    <span className="text-[14px] font-black uppercase tracking-widest text-white">Ondas de Elliott</span>
+                    <Activity className="w-5 h-5 text-white animate-pulse" />
+                    <span className="text-[14px] font-black uppercase tracking-widest text-white">FASE ACTUAL DE ELLIOTT</span>
                   </div>
                   <div className={cn(
-                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
-                    activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                    activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
                   )}>
                     {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
                   </div>
                 </div>
 
                 {/* Mini Wave Visualization */}
-                <div className="flex items-end justify-between h-12 px-2 border-b border-white/5 pb-2">
+                <div className="flex items-end justify-between h-14 px-2 border-b border-white/5 pb-2">
                   {[1, 2, 3, 4, 5, 'A', 'B', 'C'].map((label, i) => (
                     <div key={i} className="flex flex-col items-center gap-1">
                       <div className={cn(
-                        "w-1 rounded-t-full transition-all duration-500",
-                        i % 2 === 0 ? "h-6 bg-white/40" : "h-3 bg-white/20",
-                        activeElliott.visuals?.points?.some(p => p.label === String(label)) ? "bg-primary h-8" : ""
+                        "w-1.5 rounded-t-full transition-all duration-500",
+                        i % 2 === 0 ? "h-6 bg-white/20" : "h-3 bg-white/10",
+                        activeElliott.visuals?.points?.some(p => p.label === String(label)) ? "bg-primary h-8 shadow-[0_0_10px_rgba(0,255,163,0.5)]" : ""
                       )} />
                       <span className="text-[8px] font-black text-white/40">{label}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-[12px] text-white/80 leading-relaxed font-medium">{activeElliott.analysis}</p>
-                  <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                    <span className="text-[9px] uppercase text-white/40 block mb-1 font-bold">Recomendación Estratégica</span>
-                    <p className="text-[11px] text-white font-black">{activeElliott.recommendation === 'LONG' ? 'ENTRADA EN COMPRA (LONG)' : 'ENTRADA EN VENTA (SHORT)'}</p>
+                <div className="space-y-3">
+                  <p className="text-[12px] text-white/80 leading-relaxed font-medium font-sans">{activeElliott.analysis}</p>
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
+                    <span className="text-[9px] uppercase text-white/40 block mb-1 font-black">RECOMENDACIÓN DE ENTRADA</span>
+                    <p className="text-[12px] text-white font-black leading-tight">
+                      {activeElliott.recommendation === 'LONG' ? '🚀 LONG en inicio de onda 3' : '📉 SHORT en onda C'}
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -967,26 +1066,28 @@ const WyckoffAnalyzer: React.FC = () => {
 
             {indicators.find(i => i.id === 'wakeup')?.enabled && wyckoffPhase && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                className="p-5 rounded-xl bg-surface-container-high/90 backdrop-blur-md border border-outline-variant/40 shadow-2xl"
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, x: -350, y: 10 }}
+                animate={{ opacity: 1, x: 0, y: 10 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute bottom-4 left-4 p-5 rounded-2xl bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px]"
               >
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
                   <TrendingUp className="w-4 h-4 text-primary" />
-                  <span className="text-[12px] font-black uppercase tracking-widest text-on-surface">Esquema Wyckoff</span>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-white">Fases Wyckoff</span>
                 </div>
-                <div className="mb-2">
-                  <span className="text-[10px] font-black text-primary uppercase bg-primary/10 px-2 py-0.5 rounded">Fase: {wyckoffPhase}</span>
+                <div className="mb-3">
+                  <span className="text-[10px] font-black text-primary uppercase bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">Fase Actual: {wyckoffPhase}</span>
                 </div>
-                <p className="text-[12px] text-on-surface-variant leading-tight mb-3 font-medium">{wyckoffExplanation}</p>
+                <p className="text-[12px] text-on-surface-variant leading-relaxed mb-4 font-medium font-sans">{wyckoffExplanation}</p>
                 <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-[10px] font-black uppercase px-2 py-1 rounded",
-                    recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                  <div className={cn(
+                    "w-full text-center py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border",
+                    recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border-secondary/30"
                   )}>
-                    Tendencia: {recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? 'ALCISTA' : 'BAJISTA'}
-                  </span>
+                    {recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? 'RECO: ALCISTA' : 'RECO: BAJISTA'}
+                  </div>
                 </div>
               </motion.div>
             )}

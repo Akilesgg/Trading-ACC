@@ -421,47 +421,143 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
 }
 
 /**
+ * Calculates EMA for a given period.
+ */
+function calculateEMA(data: number[], period: number): number[] {
+  const k = 2 / (period + 1);
+  const ema = new Array(data.length).fill(0);
+  
+  // Initial SMA as the first EMA value
+  let sma = 0;
+  for (let i = 0; i < period; i++) sma += data[i];
+  ema[period - 1] = sma / period;
+
+  for (let i = period; i < data.length; i++) {
+    ema[i] = (data[i] * k) + (ema[i - 1] * (1 - k));
+  }
+  return ema;
+}
+
+/**
+ * Detects MACD, Signal and Histogram with Divergences.
+ */
+export function analyzeMACD(data: Candle[]): { 
+  macd: number[], 
+  signal: number[], 
+  histogram: number[],
+  analysis: string,
+  divergence?: 'BULLISH' | 'BEARISH'
+} | null {
+  if (data.length < 35) return null;
+
+  const closes = data.map(d => d.close);
+  const ema12 = calculateEMA(closes, 12);
+  const ema26 = calculateEMA(closes, 26);
+  
+  const macd = ema12.map((e12, i) => i >= 25 ? e12 - ema26[i] : 0);
+  const signal = calculateEMA(macd.slice(25), 9);
+  
+  // Align signal with macd
+  const alignedSignal = new Array(25).fill(0).concat(signal);
+  const histogram = macd.map((m, i) => i >= 25 ? m - alignedSignal[i] : 0);
+
+  const lastMacd = macd[macd.length - 1];
+  const lastSignal = alignedSignal[alignedSignal.length - 1];
+  const prevMacd = macd[macd.length - 2];
+  const prevSignal = alignedSignal[alignedSignal.length - 2];
+
+  let analysis = "";
+  if (lastMacd > lastSignal && prevMacd <= prevSignal) {
+    analysis = "Cruce ALCISTA de MACD detectado. El momentum está cambiando a favor de los compradores.";
+  } else if (lastMacd < lastSignal && prevMacd >= prevSignal) {
+    analysis = "Cruce BAJISTA de MACD detectado. Los vendedores están tomando el control del momentum.";
+  } else {
+    analysis = lastMacd > 0 ? "MACD en territorio positivo, tendencia alcista mantenida." : "MACD en territorio negativo, presión bajista persistente.";
+  }
+
+  // Basic Divergence Detection
+  let divergence: 'BULLISH' | 'BEARISH' | undefined;
+  const lastPrice = closes[closes.length - 1];
+  const prevPricePeakIndex = closes.length - 10;
+  const prevPricePeak = Math.max(...closes.slice(closes.length - 20, closes.length - 5));
+  const lastMacdPeak = Math.max(...macd.slice(macd.length - 5));
+  const prevMacdPeak = Math.max(...macd.slice(macd.length - 20, macd.length - 5));
+
+  if (lastPrice > prevPricePeak && lastMacdPeak < prevMacdPeak) {
+    divergence = 'BEARISH';
+    analysis += "\n\n⚠️ DIVERGENCIA BAJISTA: El precio sube pero el MACD no acompaña. Posible agotamiento.";
+  } else {
+    const lastPriceTrough = Math.min(...closes.slice(closes.length - 5));
+    const prevPriceTrough = Math.min(...closes.slice(closes.length - 20, closes.length - 5));
+    const lastMacdTrough = Math.min(...macd.slice(macd.length - 5));
+    const prevMacdTrough = Math.min(...macd.slice(macd.length - 20, macd.length - 5));
+
+    if (lastPriceTrough < prevPriceTrough && lastMacdTrough > prevMacdTrough) {
+      divergence = 'BULLISH';
+      analysis += "\n\n🚀 DIVERGENCIA ALCISTA: El precio cae pero el MACD muestra fuerza latente.";
+    }
+  }
+
+  return { macd, signal: alignedSignal, histogram, analysis, divergence };
+}
+
+/**
  * Full Market Analysis Engine
  */
 export function analyzeMarketData(data: Candle[], timeframe: string): { 
   results: Record<string, string>, 
-  raw: Record<string, AnalysisResult> 
+  raw: Record<string, AnalysisResult>,
+  indicators: {
+    macd?: { macd: number[], signal: number[], histogram: number[] }
+  }
 } {
-  console.log(`[DEBUG] Iniciando análisis para temporalidad: ${timeframe}`);
-  console.log(`[DEBUG] Datos recibidos: ${data.length} velas`);
-
   const results: Record<string, string> = {};
   const raw: Record<string, AnalysisResult> = {};
+  const indicatorData: any = {};
 
   // 1. Candlestick Analysis
   const candlePattern = detectCandlestickPatterns(data);
   if (candlePattern) {
-    console.log(`[DEBUG] Patrón de vela detectado: ${candlePattern.pattern}`);
     results['candles'] = `**ANÁLISIS:** ${candlePattern.analysis}\n\n**RECOMENDACIÓN:** ${candlePattern.recommendation}`;
     raw['candles'] = candlePattern;
   } else {
-    results['candles'] = `**ANÁLISIS:** No hay patrones de velas relevantes actualmente en la temporalidad de ${timeframe}.\n\n**RECOMENDACIÓN:** ESPERAR`;
+    results['candles'] = `**ANÁLISIS:** Sin patrones de velas claros.\n\n**RECOMENDACIÓN:** ESPERAR`;
   }
 
   // 2. Chart Pattern Analysis
   const chartPattern = detectChartPatterns(data);
   if (chartPattern) {
-    console.log(`[DEBUG] Patrón de gráfico detectado: ${chartPattern.pattern}`);
     results['patterns'] = `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`;
     raw['patterns'] = chartPattern;
     
-    // If it's Elliott Waves, also put it in its own slot
     if (chartPattern.pattern.includes('Elliott')) {
       raw['elliott'] = chartPattern;
     }
   } else {
-    results['patterns'] = `**ANÁLISIS:** No se detectan patrones estructurales claros en este momento.\n\n**RECOMENDACIÓN:** ESPERAR`;
+    results['patterns'] = `**ANÁLISIS:** Estructura neutral actualmente.\n\n**RECOMENDACIÓN:** ESPERAR`;
   }
 
-  // 3. Wyckoff Schematic (ZigZag of major points)
+  // 3. MACD Analysis
+  const macdResult = analyzeMACD(data);
+  if (macdResult) {
+    indicatorData.macd = {
+      macd: macdResult.macd,
+      signal: macdResult.signal,
+      histogram: macdResult.histogram
+    };
+    results['macd'] = `**ANÁLISIS:** ${macdResult.analysis}\n\n**RECOMENDACIÓN:** ${macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'CONTRATAR LARGOS' : 'BUSCAR CORTOS'}`;
+    raw['macd'] = {
+      pattern: 'MACD Pro',
+      type: macdResult.divergence || (macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'BULLISH' : 'BEARISH'),
+      status: 'CONFIRMED',
+      analysis: macdResult.analysis,
+      recommendation: macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'LONG' : 'SHORT'
+    };
+  }
+
+  // 4. Wyckoff Schematic
   const highs = data.map(d => d.high);
   const lows = data.map(d => d.low);
-  
   const findMajorPoints = (arrH: number[], arrL: number[], window = 15) => {
     const points = [];
     for (let i = window; i < arrH.length - window; i++) {
@@ -482,7 +578,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
       pattern: 'Esquema Wyckoff',
       type: 'NEUTRAL',
       status: 'CONFIRMED',
-      analysis: 'Representación esquemática de la acción del precio siguiendo la metodología Wyckoff.',
+      analysis: 'Esquema de acción de precio siguiendo Wyckoff.',
       recommendation: 'WAIT',
       visuals: {
         type: 'POLYLINE',
@@ -491,17 +587,10 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     };
   }
 
-  // 4. Timeframe specific context
+  // Timeframe context
   const isScalping = ['1m', '3m', '5m'].includes(timeframe);
   const isSwing = ['4h', '1d'].includes(timeframe);
+  results['context'] = isScalping ? "CONTEXTO: Scalping" : (isSwing ? "CONTEXTO: Swing Trading" : "CONTEXTO: Intradía");
 
-  if (isScalping) {
-    results['context'] = "Enfoque de SCALPING: Priorizando volatilidad inmediata y micro-estructuras.";
-  } else if (isSwing) {
-    results['context'] = "Enfoque de SWING: Priorizando tendencias macro y niveles de liquidez institucional.";
-  } else {
-    results['context'] = "Enfoque INTRADÍA: Buscando movimientos de rango medio y confirmación de sesión.";
-  }
-
-  return { results, raw };
+  return { results, raw, indicators: indicatorData };
 }
