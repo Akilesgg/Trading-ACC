@@ -176,7 +176,7 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       takeProfit: last.close * 1.025,
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: 'ENVOLVENTE' }]
+        points: [{ time: last.time, price: last.low, label: 'ENVOLVENTE ALC' }]
       }
     };
   }
@@ -192,7 +192,75 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       takeProfit: last.close * 0.975,
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'ENVOLVENTE' }]
+        points: [{ time: last.time, price: last.high, label: 'ENVOLVENTE BAJ' }]
+      }
+    };
+  }
+
+  // 5. Morning Star / Evening Star (3 candles)
+  const isPrev2Bearish = prev2.close < prev2.open;
+  const isPrev2Bullish = prev2.close > prev2.open;
+  const prev2BodySize = Math.abs(prev2.close - prev2.open);
+
+  // Morning Star
+  if (isPrev2Bearish && prevBodySize < prev2BodySize * 0.3 && isBullish && last.close > (prev2.open + prev2.close) / 2) {
+    return {
+      pattern: 'Morning Star - COMBO ALCISTA',
+      type: 'BULLISH',
+      status: 'CONFIRMED',
+      analysis: 'Patrón Morning Star detectado. Una vela bajista fuerte seguida de una de indecisión y una fuerte alcista. Indicativo de suelo y reversión.',
+      recommendation: 'LONG',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.low, label: 'MORNING STAR' }]
+      }
+    };
+  }
+
+  // Evening Star
+  if (isPrev2Bullish && prevBodySize < prev2BodySize * 0.3 && !isBullish && last.close < (prev2.open + prev2.close) / 2) {
+    return {
+      pattern: 'Evening Star - COMBO BAJISTA',
+      type: 'BEARISH',
+      status: 'CONFIRMED',
+      analysis: 'Patrón Evening Star detectado. Agotamiento de tendencia alcista con entrada agresiva de vendedores.',
+      recommendation: 'SHORT',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.high, label: 'EVENING STAR' }]
+      }
+    };
+  }
+
+  // 6. Three White Soldiers / Three Black Crows
+  const last3 = data.slice(-3);
+  const is3Soldiers = last3.every((c, i) => i === 0 || (c.close > c.open && c.close > last3[i-1].close));
+  const is3Crows = last3.every((c, i) => i === 0 || (c.close < c.open && c.close < last3[i-1].close));
+
+  if (is3Soldiers) {
+    return {
+      pattern: 'Tres Soldados Blancos - IMPULSO AGRESIVO',
+      type: 'BULLISH',
+      status: 'CONFIRMED',
+      analysis: 'Tres velas alcistas consecutivas con cierres progresivamente más altos. Señal de momentum alcista muy fuerte.',
+      recommendation: 'LONG',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.low, label: '3 SOLDIERS' }]
+      }
+    };
+  }
+
+  if (is3Crows) {
+    return {
+      pattern: 'Tres Cuervos Negros - DESPLOME INMINENTE',
+      type: 'BEARISH',
+      status: 'CONFIRMED',
+      analysis: 'Tres velas bajistas consecutivas con cierres progresivamente más bajos. Señal de pánico o distribución agresiva.',
+      recommendation: 'SHORT',
+      visuals: {
+        type: 'MARKER',
+        points: [{ time: last.time, price: last.high, label: '3 CROWS' }]
       }
     };
   }

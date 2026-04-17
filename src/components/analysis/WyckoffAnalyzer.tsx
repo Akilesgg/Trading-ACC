@@ -24,7 +24,8 @@ import {
   Plus,
   Minus,
   Maximize2,
-  RefreshCw
+  RefreshCw,
+  RotateCcw
 } from "lucide-react";
 
 interface IndicatorConfig {
@@ -125,6 +126,13 @@ const WyckoffAnalyzer: React.FC = () => {
   const [activePatterns, setActivePatterns] = useState<AnalysisResult | null>(null);
   const [activeCandles, setActiveCandles] = useState<AnalysisResult | null>(null);
   const [activeElliott, setActiveElliott] = useState<AnalysisResult | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [rawAnalysisData, setRawAnalysisData] = useState<Record<string, any>>({});
+
+  const handleManualRefresh = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -432,6 +440,7 @@ const WyckoffAnalyzer: React.FC = () => {
         analysisMap[ind.id] = `**ANÁLISIS:** ${detail}\n\n**RECOMENDACIÓN:** ${rec}`;
       });
       setIndicatorAnalysis(analysisMap);
+      setRawAnalysisData(rawAnalysis);
       
       const conclusionMatch = aiResponse.match(/\*\*RECOMENDACIÓN FINAL\*\*:?\s*(.*)/i);
       let finalConclusionText = conclusionMatch ? conclusionMatch[1].trim() : "Confluencia técnica positiva. Mantener vigilancia en niveles clave.";
@@ -623,8 +632,9 @@ const WyckoffAnalyzer: React.FC = () => {
   const lastTimeframeRef = useRef(selectedTimeframe);
 
   useEffect(() => {
-    if (!candlestickSeriesRef.current || !chartRef.current || chartData.length === 0) return;
+    if (!chartRef.current || !candlestickSeriesRef.current || chartData.length === 0) return;
 
+    // 1. Set Main Candlestick Data
     const formattedData = chartData.map(d => ({
       time: (d.time / 1000) as UTCTimestamp,
       open: d.open,
@@ -632,7 +642,6 @@ const WyckoffAnalyzer: React.FC = () => {
       low: d.low,
       close: d.close,
     }));
-
     candlestickSeriesRef.current.setData(formattedData);
 
     if (lastSymbolRef.current !== selectedSymbol || lastTimeframeRef.current !== selectedTimeframe) {
@@ -641,7 +650,140 @@ const WyckoffAnalyzer: React.FC = () => {
       lastTimeframeRef.current = selectedTimeframe;
     }
 
-    // Update Indicators
+    if (chartRef.current && chartData.length > 0) {
+      // ... drawings ...
+      // 1. Clear previous drawings
+      priceLinesRef.current.forEach(line => candlestickSeriesRef.current?.removePriceLine(line));
+      priceLinesRef.current = [];
+      
+      Object.keys(polylineSeriesRef.current).forEach(key => {
+        chartRef.current?.removeSeries(polylineSeriesRef.current[key]);
+      });
+      polylineSeriesRef.current = {};
+
+      if (markersPluginRef.current) {
+        markersPluginRef.current.setMarkers([]);
+      }
+
+      // 2. Draw new visual patterns
+      const markers: SeriesMarker<UTCTimestamp>[] = [];
+      
+      const patternsEnabled = indicators.find(i => i.id === 'patterns')?.enabled;
+      const candlesEnabled = indicators.find(i => i.id === 'candles')?.enabled;
+      const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
+      const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
+
+      let currentPatterns: AnalysisResult | null = null;
+      let currentCandles: AnalysisResult | null = null;
+      let currentElliott: AnalysisResult | null = null;
+
+      Object.entries(rawAnalysisData).forEach(([key, analysis]) => {
+        if (!analysis.visuals) return;
+        
+        // Check if indicator is enabled
+        if (key === 'patterns' && !patternsEnabled) return;
+        if (key === 'candles' && !candlesEnabled) return;
+        if (key === 'elliott' && !elliottEnabled) return;
+        if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
+
+        if (key === 'patterns') currentPatterns = analysis;
+        if (key === 'candles') currentCandles = analysis;
+        if (key === 'elliott') currentElliott = analysis;
+
+        const { visuals } = analysis;
+
+        // Add dynamic Recommendation Arrows on the latest candle for all active indicators
+        const latestTime = (chartData[chartData.length - 1].time / 1000) as UTCTimestamp;
+        
+        markers.push({
+          time: latestTime,
+          position: analysis.type === 'BULLISH' ? 'belowBar' : (analysis.type === 'BEARISH' ? 'aboveBar' : 'inBar'),
+          color: analysis.type === 'BULLISH' ? '#00ffa3' : (analysis.type === 'BEARISH' ? '#ff7162' : '#ffffff'),
+          shape: analysis.type === 'BULLISH' ? 'arrowUp' : (analysis.type === 'BEARISH' ? 'arrowDown' : 'square'),
+          text: `${analysis.pattern.split(' ')[0]} ${analysis.type === 'BULLISH' ? '↑' : (analysis.type === 'BEARISH' ? '↓' : '↔')}`,
+          size: 2
+        });
+
+        if ((visuals.type === 'HORIZONTAL' || visuals.type === 'STRUCTURE') && visuals.price) {
+          const line = candlestickSeriesRef.current!.createPriceLine({
+            price: visuals.price,
+            color: '#ffffff', // White
+            lineWidth: 2,
+            lineStyle: 1, // Dotted
+            axisLabelVisible: true,
+            title: analysis.pattern.toUpperCase(),
+          });
+          priceLinesRef.current.push(line);
+        }
+
+        if (visuals.type === 'STRUCTURE' && visuals.points) {
+          visuals.points.forEach(pt => {
+             const line = candlestickSeriesRef.current!.createPriceLine({
+              price: pt.price,
+              color: '#ffffff',
+              lineWidth: 1,
+              lineStyle: 1, // Dotted
+              axisLabelVisible: true,
+              title: pt.label ? `${analysis.pattern}: ${pt.label}` : analysis.pattern.toUpperCase(),
+            });
+            priceLinesRef.current.push(line);
+            
+            markers.push({
+               time: (pt.time / 1000) as UTCTimestamp,
+               position: 'aboveBar',
+               color: '#ffffff',
+               shape: 'circle',
+               text: pt.label || analysis.pattern,
+               size: 1
+            });
+          });
+        }
+
+        if (visuals.type === 'POLYLINE' && visuals.points) {
+          const polySeries = chartRef.current!.addSeries(LineSeries, {
+            color: '#ffffff',
+            lineWidth: 3,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          
+          const lineData = visuals.points.map(pt => ({
+            time: (pt.time / 1000) as UTCTimestamp,
+            value: pt.price
+          }));
+          
+          polySeries.setData(lineData);
+          polylineSeriesRef.current[key] = polySeries;
+
+          visuals.points.forEach(pt => {
+            if (pt.label) {
+              const markerTime = (pt.time / 1000) as UTCTimestamp;
+              const candle = chartData.find(d => d.time === pt.time);
+              markers.push({
+                time: markerTime,
+                position: candle && pt.price > candle.close ? 'aboveBar' : 'belowBar',
+                color: '#ffffff',
+                shape: 'circle',
+                text: pt.label,
+                size: 2
+              });
+            }
+          });
+        }
+      });
+
+      if (markersPluginRef.current && markers.length > 0) {
+        markers.sort((a, b) => (a.time as number) - (b.time as number));
+        markersPluginRef.current.setMarkers(markers);
+      }
+
+      setActivePatterns(currentPatterns);
+      setActiveCandles(currentCandles);
+      setActiveElliott(currentElliott);
+    }
+
+    // 4. Update Other Indicator Series (BB, Supertrend, etc)
     const indicatorConfigs = [
       { id: 'bollinger_upper', key: 'upperBB', color: '#00e0ff', dash: [3, 3] },
       { id: 'bollinger_lower', key: 'lowerBB', color: '#00e0ff', dash: [3, 3] },
@@ -676,54 +818,35 @@ const WyckoffAnalyzer: React.FC = () => {
       }
     });
 
-    // Handle MACD Pro
+    // 5. Handle MACD
     const macdEnabled = indicators.find(i => i.id === 'macd')?.enabled;
     if (macdEnabled && macdData) {
       if (!indicatorSeriesRef.current['macd_line']) {
-        // Histogram
-        indicatorSeriesRef.current['macd_hist'] = chartRef.current!.addSeries(LineSeries, {
-          color: '#26a69a',
-          lineWidth: 2,
-          priceScaleId: 'macd',
-          priceLineVisible: false,
-          lastValueVisible: false,
-        });
-
-        const histogramSeries = chartRef.current!.addSeries(CandlestickSeries, {
-          priceScaleId: 'macd',
-          upColor: '#26a69a',
-          downColor: '#ef5350',
-          borderVisible: false,
-          wickVisible: false,
-          priceLineVisible: false,
-          lastValueVisible: false,
-        });
-
-        // Use Histogram instead
-        chartRef.current!.removeSeries(indicatorSeriesRef.current['macd_hist'] as ISeriesApi<"Line">);
-        
-        indicatorSeriesRef.current['macd_hist'] = chartRef.current!.addSeries(HistogramSeries as any, {
+        const hSeries = chartRef.current!.addSeries(HistogramSeries as any, {
           color: '#26a69a',
           priceScaleId: 'macd',
           priceLineVisible: false,
           lastValueVisible: false,
         });
+        indicatorSeriesRef.current['macd_hist'] = hSeries;
 
-        indicatorSeriesRef.current['macd_line'] = chartRef.current!.addSeries(LineSeries, {
+        const mSeries = chartRef.current!.addSeries(LineSeries, {
           color: '#2962FF',
           lineWidth: 2,
           priceScaleId: 'macd',
           priceLineVisible: false,
           lastValueVisible: false,
         });
+        indicatorSeriesRef.current['macd_line'] = mSeries;
 
-        indicatorSeriesRef.current['macd_signal'] = chartRef.current!.addSeries(LineSeries, {
+        const sSeries = chartRef.current!.addSeries(LineSeries, {
           color: '#FF6D00',
           lineWidth: 2,
           priceScaleId: 'macd',
           priceLineVisible: false,
           lastValueVisible: false,
         });
+        indicatorSeriesRef.current['macd_signal'] = sSeries;
 
         chartRef.current!.priceScale('macd').applyOptions({
           mode: 0,
@@ -756,7 +879,6 @@ const WyckoffAnalyzer: React.FC = () => {
       (indicatorSeriesRef.current['macd_hist'] as any).setData(hData);
       (indicatorSeriesRef.current['macd_line'] as any).setData(mData);
       (indicatorSeriesRef.current['macd_signal'] as any).setData(sData);
-
     } else {
       ['macd_hist', 'macd_line', 'macd_signal'].forEach(id => {
         if (indicatorSeriesRef.current[id]) {
@@ -765,8 +887,7 @@ const WyckoffAnalyzer: React.FC = () => {
         }
       });
     }
-
-  }, [chartData, indicators, macdData]);
+  }, [chartData, selectedTimeframe, indicators, indicatorAnalysis, macdData, refreshTrigger, selectedSymbol, rawAnalysisData]);
 
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
@@ -1009,7 +1130,7 @@ const WyckoffAnalyzer: React.FC = () => {
         {/* Floating Analysis Boxes - Draggable UX */}
         <div className="absolute inset-0 pointer-events-none z-20">
           <AnimatePresence>
-            {activePatterns && (
+            {activePatterns && indicators.find(i => i.id === 'patterns')?.enabled && (
               <motion.div
                 drag
                 dragMomentum={false}
@@ -1024,7 +1145,12 @@ const WyckoffAnalyzer: React.FC = () => {
                 )}
               >
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                  <span className="text-[13px] font-black uppercase tracking-widest text-white">PATRÓN ESTRUCTURAL</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-black uppercase tracking-widest text-white">PATRÓN ESTRUCTURAL</span>
+                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
+                    </button>
+                  </div>
                   <div className={cn(
                     "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
                     activePatterns.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
@@ -1050,7 +1176,7 @@ const WyckoffAnalyzer: React.FC = () => {
               </motion.div>
             )}
 
-            {activeCandles && (
+            {activeCandles && indicators.find(i => i.id === 'candles')?.enabled && (
               <motion.div
                 drag
                 dragMomentum={false}
@@ -1065,7 +1191,12 @@ const WyckoffAnalyzer: React.FC = () => {
                 )}
               >
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                  <span className="text-[13px] font-black uppercase tracking-widest text-white">VELAS JAPONESAS</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-black uppercase tracking-widest text-white">VELAS JAPONESAS</span>
+                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
+                    </button>
+                  </div>
                   <div className={cn(
                     "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
                     activeCandles.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
@@ -1090,7 +1221,7 @@ const WyckoffAnalyzer: React.FC = () => {
               </motion.div>
             )}
 
-            {activeElliott && (
+            {activeElliott && indicators.find(i => i.id === 'elliott')?.enabled && (
               <motion.div
                 drag
                 dragMomentum={false}
@@ -1102,7 +1233,10 @@ const WyckoffAnalyzer: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Activity className="w-5 h-5 text-white animate-pulse" />
-                    <span className="text-[14px] font-black uppercase tracking-widest text-white">FASE ACTUAL DE ELLIOTT</span>
+                    <span className="text-[14px] font-black uppercase tracking-widest text-white">ELLIOTT WAVES</span>
+                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
+                    </button>
                   </div>
                   <div className={cn(
                     "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
@@ -1138,6 +1272,45 @@ const WyckoffAnalyzer: React.FC = () => {
               </motion.div>
             )}
 
+            {indicators.find(i => i.id === 'macd')?.enabled && rawAnalysisData['macd'] && (
+              <motion.div
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, x: -350, y: 10 }}
+                animate={{ opacity: 1, x: 0, y: -100 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute middle-4 left-4 p-5 rounded-2xl bg-[#1e293b]/90 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px]"
+              >
+                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-primary" />
+                    <span className="text-[13px] font-black uppercase tracking-widest text-white">MACD PRO</span>
+                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
+                    </button>
+                  </div>
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                    rawAnalysisData['macd'].type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border-secondary/30"
+                  )}>
+                    {rawAnalysisData['macd'].type}
+                  </div>
+                </div>
+                <p className="text-[14px] text-white/80 font-medium mb-3">{rawAnalysisData['macd'].analysis}</p>
+                <div className="bg-primary/5 p-3 rounded-xl border border-primary/10">
+                  <span className="text-[10px] uppercase text-primary font-black">MOMENTUM SCORE</span>
+                  <div className="flex gap-1 mt-2">
+                    {[1, 2, 3, 4, 5, 6, 7].map(i => (
+                      <div key={i} className={cn(
+                        "h-1.5 flex-1 rounded-full",
+                        i < 4 ? "bg-primary" : "bg-white/10"
+                      )} />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {indicators.find(i => i.id === 'wakeup')?.enabled && wyckoffPhase && (
               <motion.div
                 drag
@@ -1147,9 +1320,15 @@ const WyckoffAnalyzer: React.FC = () => {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="absolute bottom-4 left-4 p-5 rounded-2xl bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px]"
               >
-                <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  <span className="text-[13px] font-black uppercase tracking-widest text-white">Fases Wyckoff</span>
+                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-primary" />
+                    <span className="text-[13px] font-black uppercase tracking-widest text-white">FASES WYCKOFF</span>
+                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
+                    </button>
+                  </div>
+                  <span className="text-[10px] font-black text-primary uppercase bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">Activo</span>
                 </div>
                 <div className="mb-3">
                   <span className="text-[11px] font-black text-primary uppercase bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">Fase Actual: {wyckoffPhase}</span>
@@ -1165,6 +1344,44 @@ const WyckoffAnalyzer: React.FC = () => {
                 </div>
               </motion.div>
             )}
+
+            {/* Generic Boxes for Other Indicators */}
+            {indicators.filter(ind => ind.enabled && !['patterns', 'candles', 'elliott', 'wakeup', 'macd'].includes(ind.id)).map((ind, idx) => (
+              <motion.div
+                key={ind.id}
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, x: 20, y: 350 + (idx * 160) }}
+                animate={{ opacity: 1, x: 0, y: 350 + (idx * 160) }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="absolute p-5 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[300px] z-20"
+              >
+                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    <span className="text-[12px] font-black uppercase tracking-widest text-white">{ind.name}</span>
+                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {indicatorAnalysis[ind.id]?.split('\n\n').map((line, idx2) => (
+                    <div key={idx2} className="text-[12px] text-white/80 leading-relaxed font-medium">
+                      {line.startsWith('**ANÁLISIS:**') ? (
+                        <p><span className="text-primary font-black uppercase text-[9px] tracking-wider mr-2">Análisis:</span> {line.replace('**ANÁLISIS:**', '')}</p>
+                      ) : line.startsWith('**RECOMENDACIÓN:**') ? (
+                        <div className="mt-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
+                          <span className="text-primary font-black uppercase text-[9px] tracking-wider block mb-1">Recomendación:</span>
+                          <span className="text-white font-black uppercase text-[12px]">{line.replace('**RECOMENDACIÓN:**', '')}</span>
+                        </div>
+                      ) : <p>{line}</p>}
+                    </div>
+                  ))}
+                  {!indicatorAnalysis[ind.id] && <p className="text-[11px] text-white/40 italic">Procesando datos técnicos...</p>}
+                </div>
+              </motion.div>
+            ))}
           </AnimatePresence>
         </div>
       </div>
