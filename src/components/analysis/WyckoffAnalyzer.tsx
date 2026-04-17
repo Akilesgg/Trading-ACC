@@ -122,7 +122,8 @@ const WyckoffAnalyzer: React.FC = () => {
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
   const [finalConclusion, setFinalConclusion] = useState<string>("");
-  const [activeAnalysis, setActiveAnalysis] = useState<AnalysisResult | null>(null);
+  const [activePatterns, setActivePatterns] = useState<AnalysisResult | null>(null);
+  const [activeCandles, setActiveCandles] = useState<AnalysisResult | null>(null);
   const [activeElliott, setActiveElliott] = useState<AnalysisResult | null>(null);
 
   const chartData = useMemo(() => {
@@ -217,7 +218,8 @@ const WyckoffAnalyzer: React.FC = () => {
       const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
 
-      let currentAnalysis: AnalysisResult | null = null;
+      let currentPatterns: AnalysisResult | null = null;
+      let currentCandles: AnalysisResult | null = null;
       let currentElliott: AnalysisResult | null = null;
 
       Object.entries(rawAnalysis).forEach(([key, analysis]) => {
@@ -229,8 +231,11 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'elliott' && !elliottEnabled) return;
         if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
 
-        if (key === 'patterns' || key === 'candles') {
-          currentAnalysis = analysis;
+        if (key === 'patterns') {
+          currentPatterns = analysis;
+        }
+        if (key === 'candles') {
+          currentCandles = analysis;
         }
         if (key === 'elliott') {
           currentElliott = analysis;
@@ -238,16 +243,31 @@ const WyckoffAnalyzer: React.FC = () => {
 
         const { visuals } = analysis;
 
-        if (visuals.type === 'HORIZONTAL' && visuals.price) {
+        if ((visuals.type === 'HORIZONTAL' || visuals.type === 'STRUCTURE') && visuals.price) {
           const line = candlestickSeriesRef.current!.createPriceLine({
             price: visuals.price,
-            color: '#fbbf24', // Amber/Yellow
+            color: '#ffffff', // White
             lineWidth: 2,
             lineStyle: 1, // Dotted
             axisLabelVisible: true,
-            title: analysis.pattern,
+            title: analysis.pattern.toUpperCase(),
           });
           priceLinesRef.current.push(line);
+        }
+
+        if (visuals.type === 'STRUCTURE' && visuals.points) {
+          // For Structure like H-C-H, also mark the peaks with dotted lines
+          visuals.points.forEach(pt => {
+             const line = candlestickSeriesRef.current!.createPriceLine({
+              price: pt.price,
+              color: '#ffffff',
+              lineWidth: 1,
+              lineStyle: 1, // Dotted
+              axisLabelVisible: true,
+              title: pt.label ? `${analysis.pattern}: ${pt.label}` : analysis.pattern,
+            });
+            priceLinesRef.current.push(line);
+          });
         }
 
         // Draw Entry/SL/TP if present
@@ -338,7 +358,8 @@ const WyckoffAnalyzer: React.FC = () => {
         markersPluginRef.current.setMarkers(markers);
       }
 
-      setActiveAnalysis(currentAnalysis);
+      setActivePatterns(currentPatterns);
+      setActiveCandles(currentCandles);
       setActiveElliott(currentElliott);
 
       // 3. Draw Wyckoff Phase Context
@@ -975,7 +996,7 @@ const WyckoffAnalyzer: React.FC = () => {
         {/* Floating Analysis Boxes - Draggable UX */}
         <div className="absolute inset-0 pointer-events-none z-20">
           <AnimatePresence>
-            {activeAnalysis && (
+            {activePatterns && (
               <motion.div
                 drag
                 dragMomentum={false}
@@ -983,36 +1004,76 @@ const WyckoffAnalyzer: React.FC = () => {
                 animate={{ opacity: 1, x: 0, y: 350 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 className={cn(
-                  "absolute bottom-4 right-4 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px]",
-                  activeAnalysis.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
-                  activeAnalysis.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
+                  "absolute bottom-4 right-4 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px] font-sans",
+                  activePatterns.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
+                  activePatterns.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
                   "bg-surface-container-high/80 border-outline-variant/30"
                 )}
               >
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                  <span className="text-[13px] font-black uppercase tracking-widest text-white">{activeAnalysis.pattern}</span>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-white">PATRÓN ESTRUCTURAL</span>
                   <div className={cn(
                     "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
-                    activeAnalysis.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
-                    activeAnalysis.type === 'BEARISH' ? "bg-secondary/20 text-secondary border-secondary/30" : 
+                    activePatterns.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
+                    activePatterns.type === 'BEARISH' ? "bg-secondary/20 text-secondary border-secondary/30" : 
                     "bg-outline-variant text-on-surface-variant"
                   )}>
-                    {activeAnalysis.type}
+                    {activePatterns.pattern}
                   </div>
                 </div>
-                <p className="text-[12px] text-on-surface-variant leading-relaxed mb-4 font-medium font-sans">{activeAnalysis.analysis}</p>
-                {activeAnalysis.entryPrice && (
+                <p className="text-[14px] text-on-surface-variant leading-relaxed mb-4 font-medium">{activePatterns.analysis}</p>
+                {activePatterns.entryPrice && (
                   <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/5">
-                    <div className="bg-white/5 p-2 rounded-lg">
-                      <span className="text-[9px] uppercase opacity-40 block font-black mb-1">Entrada</span>
-                      <span className="text-[12px] font-bold text-on-surface font-mono">${activeAnalysis.entryPrice.toLocaleString()}</span>
+                    <div className="bg-white/5 p-2 rounded-lg text-center">
+                      <span className="text-[10px] uppercase opacity-40 block font-black mb-1">Entrada Sugerida</span>
+                      <span className="text-[14px] font-bold text-on-surface font-mono">${activePatterns.entryPrice.toLocaleString()}</span>
                     </div>
-                    <div className="bg-white/5 p-2 rounded-lg">
-                      <span className="text-[9px] uppercase opacity-40 block font-black mb-1">Stop Loss</span>
-                      <span className="text-[12px] font-bold text-secondary font-mono">${activeAnalysis.stopLoss?.toLocaleString()}</span>
+                    <div className="bg-white/5 p-2 rounded-lg text-center">
+                      <span className="text-[10px] uppercase opacity-40 block font-black mb-1">Objetivo (TP)</span>
+                      <span className="text-[14px] font-bold text-primary font-mono">${activePatterns.takeProfit?.toLocaleString()}</span>
                     </div>
                   </div>
                 )}
+              </motion.div>
+            )}
+
+            {activeCandles && (
+              <motion.div
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, x: 20, y: 10 }}
+                animate={{ opacity: 1, x: 0, y: 10 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className={cn(
+                  "absolute top-4 right-4 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px] font-sans",
+                  activeCandles.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
+                  activeCandles.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
+                  "bg-surface-container-high/80 border-outline-variant/30"
+                )}
+              >
+                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                  <span className="text-[13px] font-black uppercase tracking-widest text-white">VELAS JAPONESAS</span>
+                  <div className={cn(
+                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                    activeCandles.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
+                    activeCandles.type === 'BEARISH' ? "bg-secondary/20 text-secondary border-secondary/30" : 
+                    "bg-outline-variant text-on-surface-variant"
+                  )}>
+                    {activeCandles.recommendation === 'LONG' ? 'RECO: COMPRA' : (activeCandles.recommendation === 'SHORT' ? 'RECO: VENTA' : 'ESPERAR')}
+                  </div>
+                </div>
+                <div className="mb-3">
+                   <p className="text-[13px] font-black text-white/90 uppercase tracking-tighter mb-1">{activeCandles.pattern}</p>
+                   <p className="text-[14px] text-on-surface-variant leading-relaxed font-medium">{activeCandles.analysis}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-white/5 border border-white/10 mt-2">
+                    <span className="text-[10px] uppercase text-white/40 block mb-1 font-black">Estrategia Detallada</span>
+                    <p className="text-[13px] text-white font-medium italic">
+                      {activeCandles.type === 'BULLISH' ? 'Buscar confirmación alcista tras cierre de vela. Proyectar entrada en el 50% del cuerpo.' : 
+                       activeCandles.type === 'BEARISH' ? 'Presión vendedora detectada. Posible retroceso inminente. Reducir exposición o buscar cortos.' : 
+                       'Mercado en equilibrio. Evitar operar hasta ruptura clara de rangos.'}
+                    </p>
+                </div>
               </motion.div>
             )}
 
@@ -1053,10 +1114,10 @@ const WyckoffAnalyzer: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <p className="text-[12px] text-white/80 leading-relaxed font-medium font-sans">{activeElliott.analysis}</p>
+                  <p className="text-[14px] text-white/80 leading-relaxed font-medium font-sans">{activeElliott.analysis}</p>
                   <div className="p-4 rounded-xl bg-white/5 border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
-                    <span className="text-[9px] uppercase text-white/40 block mb-1 font-black">RECOMENDACIÓN DE ENTRADA</span>
-                    <p className="text-[12px] text-white font-black leading-tight">
+                    <span className="text-[10px] uppercase text-white/40 block mb-1 font-black">RECOMENDACIÓN DE ENTRADA</span>
+                    <p className="text-[14px] text-white font-black leading-tight">
                       {activeElliott.recommendation === 'LONG' ? '🚀 LONG en inicio de onda 3' : '📉 SHORT en onda C'}
                     </p>
                   </div>
@@ -1078,12 +1139,12 @@ const WyckoffAnalyzer: React.FC = () => {
                   <span className="text-[13px] font-black uppercase tracking-widest text-white">Fases Wyckoff</span>
                 </div>
                 <div className="mb-3">
-                  <span className="text-[10px] font-black text-primary uppercase bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">Fase Actual: {wyckoffPhase}</span>
+                  <span className="text-[11px] font-black text-primary uppercase bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">Fase Actual: {wyckoffPhase}</span>
                 </div>
-                <p className="text-[12px] text-on-surface-variant leading-relaxed mb-4 font-medium font-sans">{wyckoffExplanation}</p>
+                <p className="text-[14px] text-on-surface-variant leading-relaxed mb-4 font-medium font-sans">{wyckoffExplanation}</p>
                 <div className="flex items-center gap-2">
                   <div className={cn(
-                    "w-full text-center py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border",
+                    "w-full text-center py-2 rounded-xl text-[13px] font-black uppercase tracking-widest border",
                     recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border-secondary/30"
                   )}>
                     {recommendation.toLowerCase().includes('compra') || recommendation.toLowerCase().includes('alcista') ? 'RECO: ALCISTA' : 'RECO: BAJISTA'}

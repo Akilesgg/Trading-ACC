@@ -25,6 +25,71 @@ export interface AnalysisResult {
 }
 
 /**
+ * Analyzes the most recent candles to provide general market context/status.
+ */
+export function detectLatestCandleStatus(data: Candle[]): { status: string; type: 'BULLISH' | 'BEARISH' | 'NEUTRAL'; analysis: string } {
+  if (data.length < 5) return { status: 'Inicializando', type: 'NEUTRAL', analysis: 'Datos insuficientes.' };
+
+  const last3 = data.slice(-3);
+  const consecutiveBullish = last3.every(c => c.close > c.open);
+  const consecutiveBearish = last3.every(c => c.close < c.open);
+  
+  const totalRange = Math.max(...last3.map(c => c.high)) - Math.min(...last3.map(c => c.low));
+  const avgBody = last3.reduce((acc, c) => acc + Math.abs(c.close - c.open), 0) / 3;
+  
+  if (consecutiveBullish && avgBody > totalRange * 0.4) {
+    return {
+      status: 'Expansión Alcista Fuerte',
+      type: 'BULLISH',
+      analysis: 'Las últimas velas muestran una fuerte presión compradora con cuerpos sólidos. Momento de alta convicción alcista.'
+    };
+  }
+  
+  if (consecutiveBearish && avgBody > totalRange * 0.4) {
+    return {
+      status: 'Presión Bajista Agresiva',
+      type: 'BEARISH',
+      analysis: 'Dominancia clara de vendedores. Las velas cierran sistemáticamente cerca de sus mínimos. Posible continuación de caída.'
+    };
+  }
+
+  const isConsolidating = avgBody < totalRange * 0.2;
+  if (isConsolidating) {
+    return {
+      status: 'Consolidación de Rango Estrecho',
+      type: 'NEUTRAL',
+      analysis: 'El precio se mueve lateralmente con velas de cuerpo pequeño. El mercado está acumulando órdenes para el próximo movimiento.'
+    };
+  }
+
+  const lastCandle = data[data.length - 1];
+  const upperWick = lastCandle.high - Math.max(lastCandle.open, lastCandle.close);
+  const lowerWick = Math.min(lastCandle.open, lastCandle.close) - lastCandle.low;
+
+  if (upperWick > Math.abs(lastCandle.close - lastCandle.open) * 2) {
+    return {
+      status: 'Rechazo en Máximos',
+      type: 'BEARISH',
+      analysis: 'Se observa una mecha superior prominente. Los vendedores han repelido el intento de los compradores de subir el precio.'
+    };
+  }
+
+  if (lowerWick > Math.abs(lastCandle.close - lastCandle.open) * 2) {
+    return {
+      status: 'Absorción en Mínimos',
+      type: 'BULLISH',
+      analysis: 'Fuerte mecha inferior detectada. Los compradores están entrando agresivamente en niveles bajos, absorbiendo toda la oferta.'
+    };
+  }
+
+  return {
+    status: 'Movimiento Orgánico',
+    type: 'NEUTRAL',
+    analysis: 'El precio fluye sin una dominancia extrema. Estructura de mercado estándar en esta temporalidad.'
+  };
+}
+
+/**
  * Detects candlestick patterns in the most recent data.
  */
 export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null {
@@ -42,53 +107,57 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
   const isBullish = last.close > last.open;
   const isPrevBullish = prev.close > prev.open;
 
+  // Contextual status for every run
+  const marketStatus = detectLatestCandleStatus(data);
+
   // 1. Doji
   if (bodySize < candleRange * 0.1) {
     return {
-      pattern: 'Doji',
+      pattern: `Doji (${marketStatus.status})`,
       type: 'NEUTRAL',
       status: 'CONFIRMED',
-      analysis: 'Se ha formado una vela Doji, indicando indecisión extrema en el mercado. El precio de apertura y cierre son casi idénticos.',
+      analysis: `Doji formado. ${marketStatus.analysis} Equilibrio temporal entre oferta y demanda.`,
       recommendation: 'WAIT',
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'Doji' }]
+        points: [{ time: last.time, price: last.high, label: 'DOJI' }]
       }
     };
   }
 
   // 2. Hammer (Bullish)
-  if (lowerWick > bodySize * 2 && upperWick < bodySize * 0.5 && !isBullish) {
+  if (lowerWick > bodySize * 2 && upperWick < bodySize * 0.5) {
+    const hammerType = isBullish ? 'Martillo Alcista' : 'Martillo de Reversión';
     return {
-      pattern: 'Martillo (Hammer)',
+      pattern: `${hammerType} - ESTRATEGIA: ACCIÓN DEL PRECIO`,
       type: 'BULLISH',
       status: 'CONFIRMED',
-      analysis: 'Martillo detectado tras una presión vendedora. La larga mecha inferior indica que los compradores están absorbiendo la oferta.',
+      analysis: `Martillo detectado. ${marketStatus.analysis} La mecha indica rechazo de precios bajos. Ideal para buscar entradas en largo tras confirmación de la siguiente vela.`,
       recommendation: 'LONG',
       entryPrice: last.close,
-      stopLoss: last.low * 0.995,
-      takeProfit: last.close * 1.02,
+      stopLoss: last.low * 0.998,
+      takeProfit: last.close * 1.015,
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: 'Hammer' }]
+        points: [{ time: last.time, price: last.low, label: 'MARTILLO' }]
       }
     };
   }
 
   // 3. Shooting Star (Bearish)
-  if (upperWick > bodySize * 2 && lowerWick < bodySize * 0.5 && isBullish) {
+  if (upperWick > bodySize * 2 && lowerWick < bodySize * 0.5) {
     return {
-      pattern: 'Estrella Fugaz (Shooting Star)',
+      pattern: 'Estrella Fugaz - ESTRATEGIA: RECHAZO DE RESISTENCIA',
       type: 'BEARISH',
       status: 'CONFIRMED',
-      analysis: 'Estrella fugaz detectada. La larga mecha superior indica un fuerte rechazo de los niveles altos por parte de los vendedores.',
+      analysis: `Estrella fugaz detectada. ${marketStatus.analysis} Rechazo masivo en la parte superior. Los vendedores han tomado el control del nivel de precio actual.`,
       recommendation: 'SHORT',
       entryPrice: last.close,
-      stopLoss: last.high * 1.005,
-      takeProfit: last.close * 0.98,
+      stopLoss: last.high * 1.002,
+      takeProfit: last.close * 0.985,
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'Shooting Star' }]
+        points: [{ time: last.time, price: last.high, label: 'ESTRELLA' }]
       }
     };
   }
@@ -97,96 +166,49 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
   const prevBodySize = Math.abs(prev.close - prev.open);
   if (!isPrevBullish && isBullish && last.close > prev.open && last.open < prev.close) {
     return {
-      pattern: 'Engulfing Alcista',
+      pattern: 'Engulfing Alcista - ESTRATEGIA: CAMBIO DE MOMENTUM',
       type: 'BULLISH',
       status: 'CONFIRMED',
-      analysis: `Patrón Envolvente Alcista confirmado en ${last.close.toFixed(2)}. El cuerpo de la vela actual cubre completamente la vela bajista anterior, sugiriendo un cambio de momentum.`,
+      analysis: `Envolvente Alcista detectada. ${marketStatus.analysis} Los compradores han envuelto completamente la vela previa, demostrando una fuerza impulsora renovada.`,
       recommendation: 'LONG',
       entryPrice: last.close,
-      stopLoss: prev.low * 0.995,
-      takeProfit: last.close * 1.03,
+      stopLoss: Math.min(last.low, prev.low) * 0.998,
+      takeProfit: last.close * 1.025,
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: 'Engulfing' }]
+        points: [{ time: last.time, price: last.low, label: 'ENVOLVENTE' }]
       }
     };
   }
   if (isPrevBullish && !isBullish && last.close < prev.open && last.open > prev.close) {
     return {
-      pattern: 'Engulfing Bajista',
+      pattern: 'Engulfing Bajista - ESTRATEGIA: AGOTAMIENTO COMPRADOR',
       type: 'BEARISH',
       status: 'CONFIRMED',
-      analysis: `Patrón Envolvente Bajista confirmado en ${last.close.toFixed(2)}. Los vendedores han tomado el control total, superando la fuerza de la vela alcista previa.`,
+      analysis: `Envolvente Bajista detectada. ${marketStatus.analysis} Fuerte señal de reversión. La oferta ha superado drásticamente a la demanda.`,
       recommendation: 'SHORT',
       entryPrice: last.close,
-      stopLoss: prev.high * 1.005,
-      takeProfit: last.close * 0.97,
+      stopLoss: Math.max(last.high, prev.high) * 1.002,
+      takeProfit: last.close * 0.975,
       visuals: {
         type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'Engulfing' }]
+        points: [{ time: last.time, price: last.high, label: 'ENVOLVENTE' }]
       }
     };
   }
 
-  // 5. Morning Star / Evening Star (3 candles)
-  const isPrev2Bearish = prev2.close < prev2.open;
-  const isPrev2Bullish = prev2.close > prev2.open;
-  const prev2BodySize = Math.abs(prev2.close - prev2.open);
-
-  // Morning Star
-  if (isPrev2Bearish && prevBodySize < prev2BodySize * 0.3 && isBullish && last.close > (prev2.open + prev2.close) / 2) {
-    return {
-      pattern: 'Estrella del Amanecer (Morning Star)',
-      type: 'BULLISH',
-      status: 'CONFIRMED',
-      analysis: 'Patrón Estrella del Amanecer detectado. Una vela bajista fuerte seguida de una vela de indecisión y una fuerte vela alcista indica una reversión de fondo.',
-      recommendation: 'LONG'
-    };
-  }
-
-  // Evening Star
-  if (isPrev2Bullish && prevBodySize < prev2BodySize * 0.3 && !isBullish && last.close < (prev2.open + prev2.close) / 2) {
-    return {
-      pattern: 'Estrella del Atardecer (Evening Star)',
-      type: 'BEARISH',
-      status: 'CONFIRMED',
-      analysis: 'Patrón Estrella del Atardecer detectado. La tendencia alcista ha perdido fuerza y los vendedores están entrando con agresividad.',
-      recommendation: 'SHORT'
-    };
-  }
-
-  // 6. Tweezer Tops / Bottoms
-  if (Math.abs(last.high - prev.high) < last.high * 0.0005 && upperWick > bodySize) {
-    return {
-      pattern: 'Tweezer Top',
-      type: 'BEARISH',
-      status: 'CONFIRMED',
-      analysis: `Tweezer Top detectado en ${last.high.toFixed(2)}. Dos velas consecutivas con el mismo máximo indican una resistencia muy fuerte.`,
-      recommendation: 'SHORT'
-    };
-  }
-  if (Math.abs(last.low - prev.low) < last.low * 0.0005 && lowerWick > bodySize) {
-    return {
-      pattern: 'Tweezer Bottom',
-      type: 'BULLISH',
-      status: 'CONFIRMED',
-      analysis: `Tweezer Bottom detectado en ${last.low.toFixed(2)}. Dos velas consecutivas con el mismo mínimo indican un soporte sólido.`,
-      recommendation: 'LONG'
-    };
-  }
-
-  // 5. Marubozu
-  if (bodySize > candleRange * 0.9 && bodySize > (data.slice(-20).reduce((acc, c) => acc + Math.abs(c.close - c.open), 0) / 20) * 1.5) {
-    return {
-      pattern: isBullish ? 'Marubozu Alcista' : 'Marubozu Bajista',
-      type: isBullish ? 'BULLISH' : 'BEARISH',
-      status: 'CONFIRMED',
-      analysis: `Vela Marubozu detectada. Una vela con cuerpo completo y casi sin mechas indica una dominancia absoluta de los ${isBullish ? 'compradores' : 'vendedores'}.`,
-      recommendation: isBullish ? 'LONG' : 'SHORT'
-    };
-  }
-
-  return null;
+  // Fallback if no specific pattern but want to show status
+  return {
+    pattern: marketStatus.status,
+    type: marketStatus.type,
+    status: 'CONFIRMED',
+    analysis: marketStatus.analysis,
+    recommendation: marketStatus.type === 'BULLISH' ? 'LONG' : (marketStatus.type === 'BEARISH' ? 'SHORT' : 'WAIT'),
+    visuals: {
+      type: 'MARKER',
+      points: [{ time: last.time, price: last.close, label: 'ESTADO' }]
+    }
+  };
 }
 
 /**
