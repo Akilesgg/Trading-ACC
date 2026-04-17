@@ -243,6 +243,19 @@ const WyckoffAnalyzer: React.FC = () => {
 
         const { visuals } = analysis;
 
+        // Add dynamic Recommendation Arrows on the latest candle for all active indicators
+        const latestTime = (data[data.length - 1].time / 1000) as UTCTimestamp;
+        const offsetMultiplier = Object.keys(rawAnalysis).indexOf(key) + 1;
+        
+        markers.push({
+          time: latestTime,
+          position: analysis.type === 'BULLISH' ? 'belowBar' : (analysis.type === 'BEARISH' ? 'aboveBar' : 'inBar'),
+          color: analysis.type === 'BULLISH' ? '#00ffa3' : (analysis.type === 'BEARISH' ? '#ff7162' : '#ffffff'),
+          shape: analysis.type === 'BULLISH' ? 'arrowUp' : (analysis.type === 'BEARISH' ? 'arrowDown' : 'square'),
+          text: `${analysis.pattern.split(' ')[0]} ${analysis.type === 'BULLISH' ? '↑' : (analysis.type === 'BEARISH' ? '↓' : '↔')}`,
+          size: 2
+        });
+
         if ((visuals.type === 'HORIZONTAL' || visuals.type === 'STRUCTURE') && visuals.price) {
           const line = candlestickSeriesRef.current!.createPriceLine({
             price: visuals.price,
