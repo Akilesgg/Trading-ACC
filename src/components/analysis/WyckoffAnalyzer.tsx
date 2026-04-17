@@ -287,8 +287,8 @@ const WyckoffAnalyzer: React.FC = () => {
 
         if (visuals.type === 'POLYLINE' && visuals.points) {
           const polySeries = chartRef.current!.addSeries(LineSeries, {
-            color: key === 'elliott' ? '#00e0ff' : '#ffffff',
-            lineWidth: key === 'elliott' ? 2 : 3,
+            color: '#ffffff',
+            lineWidth: 3,
             lineStyle: 0,
             priceLineVisible: false,
             lastValueVisible: false,
@@ -926,20 +926,41 @@ const WyckoffAnalyzer: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
-                className="p-5 rounded-xl bg-tertiary/15 backdrop-blur-md border border-tertiary/40 shadow-2xl"
+                className="p-6 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-2xl space-y-4"
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-4 h-4 text-tertiary" />
-                  <span className="text-[12px] font-black uppercase tracking-widest text-on-surface">Ondas de Elliott</span>
-                </div>
-                <p className="text-[12px] text-on-surface-variant leading-tight mb-3 font-medium">{activeElliott.analysis}</p>
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-[10px] font-black uppercase px-2 py-1 rounded",
-                    activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary" : "bg-secondary/20 text-secondary"
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-white" />
+                    <span className="text-[14px] font-black uppercase tracking-widest text-white">Ondas de Elliott</span>
+                  </div>
+                  <div className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+                    activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
                   )}>
-                    Recomendación: {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
-                  </span>
+                    {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
+                  </div>
+                </div>
+
+                {/* Mini Wave Visualization */}
+                <div className="flex items-end justify-between h-12 px-2 border-b border-white/5 pb-2">
+                  {[1, 2, 3, 4, 5, 'A', 'B', 'C'].map((label, i) => (
+                    <div key={i} className="flex flex-col items-center gap-1">
+                      <div className={cn(
+                        "w-1 rounded-t-full transition-all duration-500",
+                        i % 2 === 0 ? "h-6 bg-white/40" : "h-3 bg-white/20",
+                        activeElliott.visuals?.points?.some(p => p.label === String(label)) ? "bg-primary h-8" : ""
+                      )} />
+                      <span className="text-[8px] font-black text-white/40">{label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[12px] text-white/80 leading-relaxed font-medium">{activeElliott.analysis}</p>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                    <span className="text-[9px] uppercase text-white/40 block mb-1 font-bold">Recomendación Estratégica</span>
+                    <p className="text-[11px] text-white font-black">{activeElliott.recommendation === 'LONG' ? 'ENTRADA EN COMPRA (LONG)' : 'ENTRADA EN VENTA (SHORT)'}</p>
+                  </div>
                 </div>
               </motion.div>
             )}
