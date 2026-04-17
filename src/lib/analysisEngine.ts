@@ -138,8 +138,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       stopLoss: last.low * 0.998,
       takeProfit: last.close * 1.015,
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: 'MARTILLO' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: last.time, price: last.low, label: 'L' },
+          { time: last.time, price: Math.max(last.open, last.close), label: 'H' }
+        ]
       }
     };
   }
@@ -156,8 +159,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       stopLoss: last.high * 1.002,
       takeProfit: last.close * 0.985,
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'ESTRELLA' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: last.time, price: last.high, label: 'H' },
+          { time: last.time, price: Math.min(last.open, last.close), label: 'L' }
+        ]
       }
     };
   }
@@ -175,8 +181,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       stopLoss: Math.min(last.low, prev.low) * 0.998,
       takeProfit: last.close * 1.025,
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: 'ENVOLVENTE ALC' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: prev.time, price: prev.low, label: 'INICIO' },
+          { time: last.time, price: last.high, label: 'ENVOLVENTE' }
+        ]
       }
     };
   }
@@ -191,8 +200,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       stopLoss: Math.max(last.high, prev.high) * 1.002,
       takeProfit: last.close * 0.975,
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'ENVOLVENTE BAJ' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: prev.time, price: prev.high, label: 'INICIO' },
+          { time: last.time, price: last.low, label: 'ENVOLVENTE' }
+        ]
       }
     };
   }
@@ -211,8 +223,12 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       analysis: 'Patrón Morning Star detectado. Una vela bajista fuerte seguida de una de indecisión y una fuerte alcista. Indicativo de suelo y reversión.',
       recommendation: 'LONG',
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: 'MORNING STAR' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: prev2.time, price: prev2.high, label: 'INICIO' },
+          { time: prev.time, price: prev.low, label: 'ESTRELLA' },
+          { time: last.time, price: last.high, label: 'CONFIRMACIÓN' }
+        ]
       }
     };
   }
@@ -226,8 +242,12 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       analysis: 'Patrón Evening Star detectado. Agotamiento de tendencia alcista con entrada agresiva de vendedores.',
       recommendation: 'SHORT',
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: 'EVENING STAR' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: prev2.time, price: prev2.low, label: 'INICIO' },
+          { time: prev.time, price: prev.high, label: 'ESTRELLA' },
+          { time: last.time, price: last.low, label: 'CONFIRMACIÓN' }
+        ]
       }
     };
   }
@@ -245,8 +265,12 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       analysis: 'Tres velas alcistas consecutivas con cierres progresivamente más altos. Señal de momentum alcista muy fuerte.',
       recommendation: 'LONG',
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.low, label: '3 SOLDIERS' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: last3[0].time, price: last3[0].low, label: 'V1' },
+          { time: last3[1].time, price: last3[1].high, label: 'V2' },
+          { time: last3[2].time, price: last3[2].high, label: 'V3' }
+        ]
       }
     };
   }
@@ -259,8 +283,12 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       analysis: 'Tres velas bajistas consecutivas con cierres progresivamente más bajos. Señal de pánico o distribución agresiva.',
       recommendation: 'SHORT',
       visuals: {
-        type: 'MARKER',
-        points: [{ time: last.time, price: last.high, label: '3 CROWS' }]
+        type: 'STRUCTURE',
+        points: [
+          { time: last3[0].time, price: last3[0].high, label: 'V1' },
+          { time: last3[1].time, price: last3[1].low, label: 'V2' },
+          { time: last3[2].time, price: last3[2].low, label: 'V3' }
+        ]
       }
     };
   }

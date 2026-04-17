@@ -1387,41 +1387,55 @@ const WyckoffAnalyzer: React.FC = () => {
       </div>
     </div>
 
-    {/* Indicators and Analysis Section - Moved below chart */}
+    {/* Indicators and Analysis Section - Moved below chart and made sticky if context requires */}
     <div className="lg:col-span-12 space-y-8">
-      <div className="trading-card p-6 space-y-6 bg-surface-container-high/20 border-primary/10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="sticky bottom-0 z-40 bg-surface-container-high/40 backdrop-blur-xl -mx-8 px-8 py-6 border-t border-primary/20 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
               <Eye className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-[14px] font-black uppercase tracking-widest text-on-surface">Panel de Indicadores Técnicos</h3>
-              <p className="text-[10px] font-black text-on-surface-variant uppercase opacity-60">Activa o desactiva para visualizar señales en tiempo real</p>
+              <h3 className="text-[14px] font-black uppercase tracking-widest text-on-surface">Indicadores Técnicos</h3>
+              <p className="text-[9px] font-black text-on-surface-variant uppercase opacity-60">Control maestro de capas y señales</p>
             </div>
           </div>
-        </div>
-        
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          {indicators.map(ind => (
+          
+          <div className="flex flex-wrap justify-center gap-3 overflow-x-auto pb-1 max-w-full lg:max-w-[70%]">
+            {[
+              { id: "patterns", label: "PATRONES" },
+              { id: "candles", label: "VELAS" },
+              { id: "elliott", label: "ELLIOTT" },
+              { id: "wakeup", label: "WYCKOFF" },
+              { id: "macd", label: "MACD" },
+              { id: "supertrend", label: "STREND" },
+              { id: "bollinger", label: "BB" }
+            ].map(ind => {
+              const config = indicators.find(i => i.id === ind.id);
+              if (!config) return null;
+              return (
+                <button
+                  key={ind.id}
+                  onClick={() => toggleIndicator(ind.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all duration-300",
+                    config.enabled 
+                      ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(0,255,163,0.3)] text-primary" 
+                      : "bg-surface-container-high/60 border-outline-variant/20 text-on-surface-variant hover:border-outline-variant"
+                  )}
+                >
+                  <div className={cn("w-1.5 h-1.5 rounded-full", config.enabled ? "bg-primary animate-pulse" : "bg-outline-variant")} />
+                  {ind.label}
+                </button>
+              );
+            })}
             <button
-              key={ind.id}
-              onClick={() => toggleIndicator(ind.id)}
-              className={cn(
-                "flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300 group",
-                ind.enabled 
-                  ? "bg-primary/15 border-primary/40 text-primary shadow-[0_0_25px_rgba(0,255,163,0.2)] scale-[1.02]" 
-                  : "bg-surface-container-high/40 border-outline-variant/10 text-on-surface-variant hover:border-outline-variant/40 hover:bg-surface-container-high"
-              )}
+               onClick={() => setIsSearchOpen(true)}
+               className="flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant/20 bg-surface-container-high/60 text-on-surface-variant hover:text-white text-[9px] font-black uppercase transition-all"
             >
-              {ind.enabled ? (
-                <Eye className="w-4 h-4 animate-pulse" />
-              ) : (
-                <EyeOff className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
-              )}
-              {ind.name}
+              <Plus className="w-3 h-3" /> VER TODOS
             </button>
-          ))}
+          </div>
         </div>
       </div>
 
@@ -1507,22 +1521,43 @@ const WyckoffAnalyzer: React.FC = () => {
     </div>
 
     {/* Final Conclusion */}
-    <div className="grid grid-cols-1 gap-8">
+    <div className="grid grid-cols-1 gap-8 pt-12">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="trading-card p-8 bg-primary/5 border-primary/30 relative overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95 }}
+        whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }}
+        className="relative p-12 rounded-[50px] bg-[#0b0f14] border-2 border-primary/20 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -mr-32 -mt-32" />
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
-              <Brain className="w-6 h-6 text-primary" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-50" />
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -mr-64 -mt-64" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[120px] -ml-64 -mb-64" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
+          <div className="flex-shrink-0">
+            <div className="w-32 h-32 bg-primary/20 rounded-[40px] flex items-center justify-center border-2 border-primary/40 shadow-[0_0_50px_rgba(0,255,163,0.2)]">
+              <Brain className="w-16 h-16 text-primary" />
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tighter text-on-surface">Conclusión y Recomendación Final</h3>
           </div>
-          <div className="p-6 bg-surface-container-low/50 rounded-2xl border border-outline-variant/10">
-            <p className="text-base text-on-surface font-bold leading-relaxed italic">"{finalConclusion}"</p>
+          
+          <div className="flex-1 space-y-6 text-center md:text-left">
+            <div>
+              <h3 className="text-4xl font-black uppercase tracking-tighter text-white mb-2 leading-none">Conclusión Estructural</h3>
+              <p className="text-lg font-bold text-primary uppercase tracking-[0.2em] opacity-80">Recomendación Final Consolidada</p>
+            </div>
+            
+            <div className="p-8 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-md">
+              <p className="text-2xl text-white font-black leading-tight tracking-tight italic">
+                "{finalConclusion}"
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center md:justify-start gap-4">
+               {['Alta Confluencia', 'Análisis Multitemporal', 'IA Engine v4.0'].map(tag => (
+                 <span key={tag} className="px-5 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40">
+                   {tag}
+                 </span>
+               ))}
+            </div>
           </div>
         </div>
       </motion.div>
