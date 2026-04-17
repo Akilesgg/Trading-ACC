@@ -705,6 +705,59 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     };
   }
 
+  // 5. Liquidity Zones
+  const findLiquidityZones = (candles: Candle[]) => {
+    const zones: { price: number; strength: number }[] = [];
+    const priceBins: Record<string, number> = {};
+    const step = (Math.max(...highs) - Math.min(...lows)) / 50;
+
+    candles.forEach(c => {
+      const bin = (Math.floor(c.close / step) * step).toFixed(2);
+      priceBins[bin] = (priceBins[bin] || 0) + c.volume;
+    });
+
+    const sortedBins = Object.entries(priceBins).sort((a, b) => b[1] - a[1]);
+    return sortedBins.slice(0, 3).map(([price, vol]) => ({ price: parseFloat(price), strength: vol }));
+  };
+
+  const zones = findLiquidityZones(data);
+  raw['liquidity'] = {
+    pattern: 'Zonas de Liquidez',
+    type: 'NEUTRAL',
+    status: 'CONFIRMED',
+    analysis: `Detectadas zonas de alta liquidez en niveles clave. El precio tiende a ser atraído hacia estos bloques de órdenes.`,
+    recommendation: 'WAIT',
+    visuals: {
+      type: 'STRUCTURE',
+      points: zones.map(z => ({ time: data[data.length - 1].time, price: z.price, label: 'LIQUIDEZ' }))
+    }
+  };
+
+  // 6. Pivot Points (Standard)
+  const lastWindow = data.slice(-20);
+  const windowHigh = Math.max(...lastWindow.map(c => c.high));
+  const windowLow = Math.min(...lastWindow.map(c => c.low));
+  const windowClose = lastWindow[lastWindow.length - 1].close;
+  const pivot = (windowHigh + windowLow + windowClose) / 3;
+  const r1 = (2 * pivot) - windowLow;
+  const s1 = (2 * pivot) - windowHigh;
+
+  raw['pivots'] = {
+    pattern: 'Puntos Pivote',
+    type: 'NEUTRAL',
+    status: 'CONFIRMED',
+    analysis: `Puntos pivote calculados sobre el rango reciente. R1: ${r1.toFixed(2)}, S1: ${s1.toFixed(2)}.`,
+    recommendation: 'WAIT',
+    visuals: {
+      type: 'STRUCTURE',
+      points: [
+        { time: data[data.length - 1].time, price: pivot, label: 'PIVOTE' },
+        { time: data[data.length - 1].time, price: r1, label: 'RESISTENCIA' },
+        { time: data[data.length - 1].time, price: s1, label: 'SOPORTE' }
+      ]
+    }
+  };
+
   // Timeframe context
   const isScalping = ['1m', '3m', '5m'].includes(timeframe);
   const isSwing = ['4h', '1d'].includes(timeframe);

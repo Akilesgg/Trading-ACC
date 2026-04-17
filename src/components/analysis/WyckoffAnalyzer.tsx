@@ -119,6 +119,8 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "psar", name: "Parabolic SAR", enabled: false },
     { id: "elliott", name: "Ondas de Elliott", enabled: false },
     { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: false },
+    { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
+    { id: "pivots", name: "Puntos Pivote", enabled: false },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -1059,13 +1061,13 @@ const WyckoffAnalyzer: React.FC = () => {
     </div>
   </div>
 
-  {/* Chart and Phase */}
-  <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-    <div className="lg:col-span-12 space-y-6">
-      <div 
-        ref={chartContainerRef}
-        className="w-full h-[550px] rounded-xl bg-[#0b0f14] border border-outline-variant/10 relative"
-      >
+      {/* Chart and Phase */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-12 space-y-6">
+          <div 
+            ref={chartContainerRef}
+            className="w-full h-[800px] rounded-2xl bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
+          >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
@@ -1127,27 +1129,27 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         </div>
 
-        {/* Floating Analysis Boxes - Draggable UX */}
-        <div className="absolute inset-0 pointer-events-none z-20">
-          <AnimatePresence>
-            {activePatterns && indicators.find(i => i.id === 'patterns')?.enabled && (
-              <motion.div
-                drag
-                dragMomentum={false}
-                initial={{ opacity: 0, x: 20, y: 350 }}
-                animate={{ opacity: 1, x: 0, y: 350 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className={cn(
-                  "absolute bottom-4 right-4 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px] font-sans",
-                  activePatterns.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
-                  activePatterns.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
-                  "bg-surface-container-high/80 border-outline-variant/30"
-                )}
-              >
-                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[13px] font-black uppercase tracking-widest text-white">PATRÓN ESTRUCTURAL</span>
-                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
+      {/* Floating Analysis Boxes - Draggable UX */}
+      <div className="absolute inset-0 pointer-events-none z-20">
+        <AnimatePresence>
+          {activePatterns && indicators.find(i => i.id === 'patterns')?.enabled && (
+            <motion.div
+              drag
+              dragMomentum={false}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className={cn(
+                "absolute bottom-24 right-10 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px] font-sans z-[30]",
+                activePatterns.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
+                activePatterns.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
+                "bg-surface-container-high/80 border-outline-variant/30"
+              )}
+            >
+              <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[13px] font-black uppercase tracking-widest text-white">PATRÓN ESTRUCTURAL</span>
+                  <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
                       <RotateCcw size={14} className="text-white/40 hover:text-white" />
                     </button>
                   </div>
@@ -1180,11 +1182,11 @@ const WyckoffAnalyzer: React.FC = () => {
               <motion.div
                 drag
                 dragMomentum={false}
-                initial={{ opacity: 0, x: 20, y: 10 }}
-                animate={{ opacity: 1, x: 0, y: 10 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 className={cn(
-                  "absolute top-4 right-4 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px] font-sans",
+                  "absolute bottom-28 right-12 p-5 rounded-2xl backdrop-blur-xl border shadow-[0_20px_50px_rgba(0,0,0,0.3)] pointer-events-auto cursor-move max-w-[320px] font-sans z-[31]",
                   activeCandles.type === 'BULLISH' ? "bg-primary/10 border-primary/30" : 
                   activeCandles.type === 'BEARISH' ? "bg-secondary/10 border-secondary/30" : 
                   "bg-surface-container-high/80 border-outline-variant/30"
@@ -1225,10 +1227,10 @@ const WyckoffAnalyzer: React.FC = () => {
               <motion.div
                 drag
                 dragMomentum={false}
-                initial={{ opacity: 0, x: -350, y: 250 }}
-                animate={{ opacity: 1, x: 0, y: 250 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute top-4 left-4 p-6 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] pointer-events-auto cursor-move space-y-4 max-w-[320px]"
+                className="absolute bottom-14 right-14 p-6 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] pointer-events-auto cursor-move space-y-4 max-w-[320px] z-[32]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1276,10 +1278,10 @@ const WyckoffAnalyzer: React.FC = () => {
               <motion.div
                 drag
                 dragMomentum={false}
-                initial={{ opacity: 0, x: -350, y: 10 }}
-                animate={{ opacity: 1, x: 0, y: -100 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute middle-4 left-4 p-5 rounded-2xl bg-[#1e293b]/90 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px]"
+                className="absolute bottom-16 right-16 p-5 rounded-2xl bg-[#1e293b]/90 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px] z-[33]"
               >
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
                   <div className="flex items-center gap-2">
@@ -1315,10 +1317,10 @@ const WyckoffAnalyzer: React.FC = () => {
               <motion.div
                 drag
                 dragMomentum={false}
-                initial={{ opacity: 0, x: -350, y: 10 }}
-                animate={{ opacity: 1, x: 0, y: 10 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute bottom-4 left-4 p-5 rounded-2xl bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px]"
+                className="absolute bottom-20 right-20 p-5 rounded-2xl bg-[#0f172a]/80 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[320px] z-[34]"
               >
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
                   <div className="flex items-center gap-2">
@@ -1351,10 +1353,11 @@ const WyckoffAnalyzer: React.FC = () => {
                 key={ind.id}
                 drag
                 dragMomentum={false}
-                initial={{ opacity: 0, x: 20, y: 350 + (idx * 160) }}
-                animate={{ opacity: 1, x: 0, y: 350 + (idx * 160) }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute p-5 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[300px] z-20"
+                style={{ bottom: 80 + (idx * 40), right: 20 + (idx * 40) }}
+                className="absolute p-5 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto cursor-move max-w-[300px] z-[35]"
               >
                 <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
                   <div className="flex items-center gap-2">
@@ -1408,6 +1411,8 @@ const WyckoffAnalyzer: React.FC = () => {
               { id: "elliott", label: "ELLIOTT" },
               { id: "wakeup", label: "WYCKOFF" },
               { id: "macd", label: "MACD" },
+              { id: "liquidity", label: "LIQUIDEZ" },
+              { id: "pivots", label: "PIVOTS" },
               { id: "supertrend", label: "STREND" },
               { id: "bollinger", label: "BB" }
             ].map(ind => {
