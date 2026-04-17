@@ -20,7 +20,7 @@ export interface AnalysisResult {
   visuals?: {
     price?: number;
     points?: { time: number; price: number; label?: string }[];
-    type: 'HORIZONTAL' | 'MARKER' | 'STRUCTURE' | 'POLYLINE';
+    type: 'HORIZONTAL' | 'MARKER' | 'STRUCTURE' | 'POLYLINE' | 'LIQUIDITY' | 'PIVOT';
   };
 }
 
@@ -728,7 +728,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     analysis: `Detectadas zonas de alta liquidez en niveles clave. El precio tiende a ser atraído hacia estos bloques de órdenes.`,
     recommendation: 'WAIT',
     visuals: {
-      type: 'STRUCTURE',
+      type: 'LIQUIDITY',
       points: zones.map(z => ({ time: data[data.length - 1].time, price: z.price, label: 'LIQUIDEZ' }))
     }
   };
@@ -749,11 +749,11 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     analysis: `Puntos pivote calculados sobre el rango reciente. R1: ${r1.toFixed(2)}, S1: ${s1.toFixed(2)}.`,
     recommendation: 'WAIT',
     visuals: {
-      type: 'STRUCTURE',
+      type: 'PIVOT',
       points: [
         { time: data[data.length - 1].time, price: pivot, label: 'PIVOTE' },
-        { time: data[data.length - 1].time, price: r1, label: 'RESISTENCIA' },
-        { time: data[data.length - 1].time, price: s1, label: 'SOPORTE' }
+        { time: data[data.length - 1].time, price: r1, label: 'TECHOS' },
+        { time: data[data.length - 1].time, price: s1, label: 'SUELOS' }
       ]
     }
   };

@@ -693,6 +693,8 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'elliott') currentElliott = analysis;
 
         const { visuals } = analysis;
+        const isLiquidity = key === 'liquidity' || visuals.type === 'LIQUIDITY';
+        const isPivots = key === 'pivots' || visuals.type === 'PIVOT';
 
         // Add dynamic Recommendation Arrows on the latest candle for all active indicators
         const latestTime = (chartData[chartData.length - 1].time / 1000) as UTCTimestamp;
@@ -705,6 +707,39 @@ const WyckoffAnalyzer: React.FC = () => {
           text: `${analysis.pattern.split(' ')[0]} ${analysis.type === 'BULLISH' ? '↑' : (analysis.type === 'BEARISH' ? '↓' : '↔')}`,
           size: 2
         });
+
+        if (isLiquidity) {
+          visuals.points?.forEach(pt => {
+            // Create a "thick" zone using multiple lines for visual impact
+            for (let offset = -0.0001; offset <= 0.0001; offset += 0.0001) {
+              const line = candlestickSeriesRef.current!.createPriceLine({
+                price: pt.price * (1 + offset),
+                color: 'rgba(255, 77, 77, 0.4)', // Red dimmed
+                lineWidth: 2,
+                lineStyle: 0, // Solid
+                axisLabelVisible: true,
+                title: 'BLOQUE LIQUIDEZ',
+              });
+              priceLinesRef.current.push(line);
+            }
+          });
+          return;
+        }
+
+        if (isPivots) {
+          visuals.points?.forEach(pt => {
+            const line = candlestickSeriesRef.current!.createPriceLine({
+              price: pt.price,
+              color: '#3b82f6', // Bright Blue
+              lineWidth: 2,
+              lineStyle: 0, // Solid
+              axisLabelVisible: true,
+              title: pt.label || 'PUNTO PIVOTE',
+            });
+            priceLinesRef.current.push(line);
+          });
+          return;
+        }
 
         if ((visuals.type === 'HORIZONTAL' || visuals.type === 'STRUCTURE') && visuals.price) {
           const line = candlestickSeriesRef.current!.createPriceLine({
@@ -892,9 +927,9 @@ const WyckoffAnalyzer: React.FC = () => {
   }, [chartData, selectedTimeframe, indicators, indicatorAnalysis, macdData, refreshTrigger, selectedSymbol, rawAnalysisData]);
 
   return (
-    <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10">
-      {/* Strategy Selector */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10 relative">
+      {/* Strategy Selector - Now at the top for quick context */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
         {strategies.map((strat) => {
           const isActive = activeStrategies.includes(strat.id);
           const signal = strategySignals[strat.id];
@@ -990,83 +1025,77 @@ const WyckoffAnalyzer: React.FC = () => {
           );
         })}
       </div>
-
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center border border-primary/20">
-            <TrendingUp className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-        <h2 className="text-2xl font-black uppercase tracking-tighter text-on-surface">Analizador Wyckoff & Indicadores</h2>
-        <p className="text-[11px] font-black text-on-surface-variant uppercase tracking-widest opacity-80">Teoría de Ciclos de Mercado y Análisis Técnico</p>
-      </div>
-    </div>
-
-    <div className="flex flex-wrap items-center gap-4">
-      {/* Asset Selector */}
-      <div className="relative">
-        <button
-          onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className="bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-on-surface flex items-center gap-3 min-w-[180px]"
-        >
-          {selectedAsset && <img src={selectedAsset.image} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />}
-          {selectedSymbol}
-          <ChevronDown className="w-4 h-4 ml-auto" />
-        </button>
-        {isSearchOpen && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-surface-container-high border border-outline-variant/10 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto p-2">
-            <div className="p-2 border-b border-outline-variant/10 mb-2 flex items-center gap-2">
-              <Search className="w-3 h-3 text-on-surface-variant" />
-              <input 
-                className="bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase w-full"
-                placeholder="Buscar..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
+      {/* Floating Asset Search & Timeframe - Always visible on top of chart */}
+      <div className="sticky top-6 z-[60] flex justify-center mb-[-68px] pointer-events-none">
+        <div className="flex flex-wrap items-center gap-4 bg-[#0b0f14]/80 backdrop-blur-2xl px-6 py-3 rounded-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto">
+          <div className="flex items-center gap-4 border-r border-white/10 pr-4">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <div className="hidden sm:block">
+              <h2 className="text-[14px] font-black uppercase tracking-tighter text-white">Terminal IA</h2>
             </div>
-            {filteredAssets.map(asset => (
-              <button
-                key={asset.id}
-                onClick={() => { setSelectedSymbol(asset.id); setIsSearchOpen(false); }}
-                className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-black uppercase hover:bg-primary/10 flex items-center gap-3"
-              >
-                <img src={asset.image} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />
-                {asset.id}
-              </button>
-            ))}
-            {searchQuery && !filteredAssets.find(a => a.id.toLowerCase() === searchQuery.toLowerCase()) && (
-              <div className="mt-2 pt-2 border-t border-outline-variant/10">
-                <p className="text-[8px] text-on-surface-variant uppercase font-black px-2 mb-1">No encontrado en lista</p>
-                <button
-                  onClick={() => { setSelectedSymbol(searchQuery.toUpperCase()); setIsSearchOpen(false); }}
-                  className="w-full text-left px-3 py-2 rounded-lg text-[10px] font-black uppercase bg-primary/20 text-primary hover:bg-primary/30 flex items-center justify-between"
-                >
-                  <span>Analizar "{searchQuery.toUpperCase()}"</span>
-                  <Activity className="w-3 h-3" />
-                </button>
-              </div>
-            )}
           </div>
-        )}
-      </div>
 
-      {/* Timeframe Selector */}
-      <select 
-        value={selectedTimeframe}
-        onChange={e => setSelectedTimeframe(e.target.value)}
-        className="bg-surface-container-high border border-outline-variant/10 rounded-xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-on-surface outline-none"
-      >
-        {["1m", "3m", "5m", "15m", "1h", "4h", "1d"].map(tf => <option key={tf} value={tf}>{tf.toUpperCase()}</option>)}
-      </select>
-    </div>
-  </div>
+          <div className="flex items-center gap-4">
+            {/* Asset Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-3 min-w-[160px] hover:bg-white/10 transition-all font-sans"
+              >
+                {selectedAsset && <img src={selectedAsset.image} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />}
+                {selectedSymbol}
+                <ChevronDown className={cn("w-3 h-3 ml-auto transition-transform", isSearchOpen && "rotate-180")} />
+              </button>
+              {isSearchOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0b0f14] border border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[70] max-h-60 overflow-y-auto p-2 backdrop-blur-3xl">
+                  <div className="p-2 border-b border-white/5 mb-2 flex items-center gap-2">
+                    <Search className="w-3 h-3 text-white/40" />
+                    <input 
+                      className="bg-transparent border-none focus:ring-0 text-[10px] font-black uppercase w-full text-white font-sans"
+                      placeholder="Buscar..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+                  {filteredAssets.map(asset => (
+                    <button
+                      key={asset.id}
+                      onClick={() => { setSelectedSymbol(asset.id); setIsSearchOpen(false); }}
+                      className="w-full text-left px-3 py-2 rounded-lg text-[9px] font-black uppercase text-white/70 hover:bg-primary/20 hover:text-white flex items-center gap-3 transition-colors font-sans"
+                    >
+                      <img src={asset.image} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />
+                      {asset.id}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Timeframe Selector */}
+            <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
+              {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
+                <button
+                  key={tf}
+                  onClick={() => setSelectedTimeframe(tf)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all font-sans",
+                    selectedTimeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-white/40 hover:text-white"
+                  )}
+                >
+                  {tf}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Chart and Phase */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-12 space-y-6">
           <div 
             ref={chartContainerRef}
-            className="w-full h-[800px] rounded-2xl bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
+            className="w-full h-[800px] rounded-[2.5rem] bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
           >
         {loading && (
           <div className="absolute inset-0 bg-surface/40 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -1390,21 +1419,21 @@ const WyckoffAnalyzer: React.FC = () => {
       </div>
     </div>
 
-    {/* Indicators and Analysis Section - Moved below chart and made sticky if context requires */}
+    {/* Indicators and Analysis Section - Floating Control Panel */}
     <div className="lg:col-span-12 space-y-8">
-      <div className="sticky bottom-0 z-40 bg-surface-container-high/40 backdrop-blur-xl -mx-8 px-8 py-6 border-t border-primary/20 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
+      <div className="sticky bottom-10 z-[60] flex justify-center mt-[-100px] pointer-events-none">
+        <div className="bg-[#0b0f14]/90 backdrop-blur-3xl px-8 py-5 rounded-[2rem] border border-white/10 shadow-[0_-20px_80px_rgba(0,0,0,0.6)] pointer-events-auto flex items-center gap-10">
+          <div className="flex items-center gap-4 pr-6 border-r border-white/5">
             <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
               <Eye className="w-5 h-5 text-primary" />
             </div>
-            <div>
-              <h3 className="text-[14px] font-black uppercase tracking-widest text-on-surface">Indicadores Técnicos</h3>
-              <p className="text-[9px] font-black text-on-surface-variant uppercase opacity-60">Control maestro de capas y señales</p>
+            <div className="hidden lg:block">
+              <h3 className="text-[12px] font-black uppercase tracking-widest text-white">CONTROLES</h3>
+              <p className="text-[8px] font-black text-white/40 uppercase">Capas inteligentes</p>
             </div>
           </div>
           
-          <div className="flex flex-wrap justify-center gap-3 overflow-x-auto pb-1 max-w-full lg:max-w-[70%]">
+          <div className="flex flex-wrap items-center gap-3">
             {[
               { id: "patterns", label: "PATRONES" },
               { id: "candles", label: "VELAS" },
@@ -1423,23 +1452,17 @@ const WyckoffAnalyzer: React.FC = () => {
                   key={ind.id}
                   onClick={() => toggleIndicator(ind.id)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all duration-300",
+                    "flex items-center gap-3 px-5 py-2.5 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all duration-300",
                     config.enabled 
-                      ? "bg-primary/20 border-primary shadow-[0_0_15px_rgba(0,255,163,0.3)] text-primary" 
-                      : "bg-surface-container-high/60 border-outline-variant/20 text-on-surface-variant hover:border-outline-variant"
+                      ? "bg-primary/20 border-primary text-primary shadow-[0_0_20px_rgba(0,255,163,0.4)]" 
+                      : "bg-white/5 border-white/10 text-white/40 hover:text-white"
                   )}
                 >
-                  <div className={cn("w-1.5 h-1.5 rounded-full", config.enabled ? "bg-primary animate-pulse" : "bg-outline-variant")} />
+                  <div className={cn("w-2 h-2 rounded-full", config.enabled ? "bg-primary animate-pulse" : "bg-white/10")} />
                   {ind.label}
                 </button>
               );
             })}
-            <button
-               onClick={() => setIsSearchOpen(true)}
-               className="flex items-center gap-2 px-4 py-2 rounded-full border border-outline-variant/20 bg-surface-container-high/60 text-on-surface-variant hover:text-white text-[9px] font-black uppercase transition-all"
-            >
-              <Plus className="w-3 h-3" /> VER TODOS
-            </button>
           </div>
         </div>
       </div>
