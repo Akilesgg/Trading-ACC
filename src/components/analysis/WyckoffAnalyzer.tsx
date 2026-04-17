@@ -118,9 +118,9 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "vwap", name: "VWAP", enabled: false },
     { id: "psar", name: "Parabolic SAR", enabled: false },
     { id: "elliott", name: "Ondas de Elliott", enabled: false },
-    { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: false },
-    { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
-    { id: "pivots", name: "Puntos Pivote", enabled: false },
+    { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: true },
+    { id: "liquidity", name: "Zonas de Liquidez", enabled: true },
+    { id: "pivots", name: "Puntos Pivote", enabled: true },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -228,6 +228,9 @@ const WyckoffAnalyzer: React.FC = () => {
       const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
 
+      const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
+      const pivotsEnabled = indicators.find(i => i.id === 'pivots')?.enabled;
+
       let currentPatterns: AnalysisResult | null = null;
       let currentCandles: AnalysisResult | null = null;
       let currentElliott: AnalysisResult | null = null;
@@ -240,6 +243,8 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'candles' && !candlesEnabled) return;
         if (key === 'elliott' && !elliottEnabled) return;
         if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
+        if ((key === 'liquidity' || analysis.visuals.type === 'LIQUIDITY') && !liquidityEnabled) return;
+        if ((key === 'pivots' || analysis.visuals.type === 'PIVOT') && !pivotsEnabled) return;
 
         if (key === 'patterns') {
           currentPatterns = analysis;
@@ -674,6 +679,8 @@ const WyckoffAnalyzer: React.FC = () => {
       const candlesEnabled = indicators.find(i => i.id === 'candles')?.enabled;
       const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
+      const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
+      const pivotsEnabled = indicators.find(i => i.id === 'pivots')?.enabled;
 
       let currentPatterns: AnalysisResult | null = null;
       let currentCandles: AnalysisResult | null = null;
@@ -695,6 +702,24 @@ const WyckoffAnalyzer: React.FC = () => {
         const { visuals } = analysis;
         const isLiquidity = key === 'liquidity' || visuals.type === 'LIQUIDITY';
         const isPivots = key === 'pivots' || visuals.type === 'PIVOT';
+
+        if (isLiquidity && !liquidityEnabled) return;
+        if (isPivots && !pivotsEnabled) return;
+
+        // Current price lines for patterns and candles
+        if ((key === 'patterns' || key === 'candles') && visuals.price) {
+          const lineColor = key === 'patterns' ? '#00ffa3' : '#ffffff';
+          const lineTitle = `${analysis.pattern.toUpperCase()} DETECTADO`;
+          const line = candlestickSeriesRef.current!.createPriceLine({
+            price: visuals.price,
+            color: lineColor,
+            lineWidth: 2,
+            lineStyle: 1, // Dotted
+            axisLabelVisible: true,
+            title: lineTitle,
+          });
+          priceLinesRef.current.push(line);
+        }
 
         // Add dynamic Recommendation Arrows on the latest candle for all active indicators
         const latestTime = (chartData[chartData.length - 1].time / 1000) as UTCTimestamp;
@@ -1421,29 +1446,33 @@ const WyckoffAnalyzer: React.FC = () => {
 
     {/* Indicators and Analysis Section - Floating Control Panel */}
     <div className="lg:col-span-12 space-y-8">
-      <div className="sticky bottom-10 z-[60] flex justify-center mt-[-100px] pointer-events-none">
-        <div className="bg-[#0b0f14]/90 backdrop-blur-3xl px-8 py-5 rounded-[2rem] border border-white/10 shadow-[0_-20px_80px_rgba(0,0,0,0.6)] pointer-events-auto flex items-center gap-10">
-          <div className="flex items-center gap-4 pr-6 border-r border-white/5">
-            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/30">
-              <Eye className="w-5 h-5 text-primary" />
+      <div className="sticky bottom-24 z-[60] flex justify-center mt-[-100px] pointer-events-none">
+        <motion.div 
+          drag
+          dragConstraints={{ left: -500, right: 500, top: -500, bottom: 50 }}
+          className="bg-[#0b0f14]/95 backdrop-blur-3xl px-8 py-5 rounded-[2.5rem] border border-white/20 shadow-[0_-20px_100px_rgba(0,0,0,0.8)] pointer-events-auto flex items-center gap-10"
+        >
+          <div className="flex items-center gap-4 pr-6 border-r border-white/10 shrink-0">
+            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 shadow-[0_0_20px_rgba(0,255,163,0.2)]">
+              <Eye className="w-6 h-6 text-primary" />
             </div>
-            <div className="hidden lg:block">
-              <h3 className="text-[12px] font-black uppercase tracking-widest text-white">CONTROLES</h3>
-              <p className="text-[8px] font-black text-white/40 uppercase">Capas inteligentes</p>
+            <div className="hidden xl:block">
+              <h3 className="text-[13px] font-black uppercase tracking-widest text-white leading-none mb-1">CONTROLES IA</h3>
+              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Capas inteligentes</p>
             </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
             {[
-              { id: "patterns", label: "PATRONES" },
-              { id: "candles", label: "VELAS" },
-              { id: "elliott", label: "ELLIOTT" },
-              { id: "wakeup", label: "WYCKOFF" },
-              { id: "macd", label: "MACD" },
-              { id: "liquidity", label: "LIQUIDEZ" },
-              { id: "pivots", label: "PIVOTS" },
-              { id: "supertrend", label: "STREND" },
-              { id: "bollinger", label: "BB" }
+              { id: "patterns", label: "PATRONES", color: 'primary' },
+              { id: "candles", label: "VELAS", color: 'primary' },
+              { id: "elliott", label: "ELLIOTT", color: 'primary' },
+              { id: "wakeup", label: "WYCKOFF", color: 'primary' },
+              { id: "macd", label: "MACD", color: 'primary' },
+              { id: "liquidity", label: "LIQUIDEZ", color: 'secondary' },
+              { id: "pivots", label: "TECHO/SUELO", color: 'secondary' },
+              { id: "supertrend", label: "STREND", color: 'primary' },
+              { id: "bollinger", label: "BB", color: 'primary' }
             ].map(ind => {
               const config = indicators.find(i => i.id === ind.id);
               if (!config) return null;
@@ -1452,19 +1481,34 @@ const WyckoffAnalyzer: React.FC = () => {
                   key={ind.id}
                   onClick={() => toggleIndicator(ind.id)}
                   className={cn(
-                    "flex items-center gap-3 px-5 py-2.5 rounded-2xl border text-[9px] font-black uppercase tracking-widest transition-all duration-300",
+                    "flex items-center gap-3 px-6 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                     config.enabled 
-                      ? "bg-primary/20 border-primary text-primary shadow-[0_0_20px_rgba(0,255,163,0.4)]" 
-                      : "bg-white/5 border-white/10 text-white/40 hover:text-white"
+                      ? ind.color === 'secondary' 
+                        ? "bg-secondary/20 border-secondary text-secondary shadow-[0_0_25px_rgba(255,113,98,0.4)] scale-105"
+                        : "bg-primary/20 border-primary text-primary shadow-[0_0_25px_rgba(0,255,163,0.4)] scale-105"
+                      : "bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10"
                   )}
                 >
-                  <div className={cn("w-2 h-2 rounded-full", config.enabled ? "bg-primary animate-pulse" : "bg-white/10")} />
+                  <div className={cn(
+                    "w-2.5 h-2.5 rounded-full", 
+                    config.enabled 
+                      ? ind.color === 'secondary' ? "bg-secondary animate-pulse" : "bg-primary animate-pulse" 
+                      : "bg-white/20"
+                  )} />
                   {ind.label}
                 </button>
               );
             })}
           </div>
-        </div>
+          <div className="pl-6 border-l border-white/10 cursor-grab active:cursor-grabbing">
+             <div className="grid grid-cols-2 gap-1.5 opacity-40 hover:opacity-100 transition-opacity">
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+             </div>
+          </div>
+        </motion.div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1551,39 +1595,50 @@ const WyckoffAnalyzer: React.FC = () => {
     {/* Final Conclusion */}
     <div className="grid grid-cols-1 gap-8 pt-12">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 50 }}
+        whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
-        className="relative p-12 rounded-[50px] bg-[#0b0f14] border-2 border-primary/20 shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden"
+        className="relative p-8 md:p-16 rounded-[40px] md:rounded-[60px] bg-[#0b0f14] border-2 border-primary/30 shadow-[0_50px_120px_rgba(0,0,0,0.9)]"
       >
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-50" />
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -mr-64 -mt-64" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-secondary/10 rounded-full blur-[120px] -ml-64 -mb-64" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 opacity-60" />
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[150px] -mr-80 -mt-80" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-secondary/15 rounded-full blur-[150px] -ml-80 -mb-80" />
         
-        <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-          <div className="flex-shrink-0">
-            <div className="w-32 h-32 bg-primary/20 rounded-[40px] flex items-center justify-center border-2 border-primary/40 shadow-[0_0_50px_rgba(0,255,163,0.2)]">
-              <Brain className="w-16 h-16 text-primary" />
+        <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-12 max-w-7xl mx-auto">
+          <div className="flex-shrink-0 relative group">
+            <div className="absolute inset-0 bg-primary/20 rounded-[45px] blur-2xl group-hover:bg-primary/40 transition-all duration-700" />
+            <div className="w-32 h-32 md:w-40 md:h-40 bg-surface-container-high rounded-[45px] flex items-center justify-center border-2 border-primary/50 shadow-2xl relative z-10 transition-transform duration-700 group-hover:scale-110">
+              <Brain className="w-16 h-16 md:w-20 md:h-20 text-primary drop-shadow-[0_0_15px_rgba(0,255,163,0.5)]" />
             </div>
           </div>
           
-          <div className="flex-1 space-y-6 text-center md:text-left">
-            <div>
-              <h3 className="text-4xl font-black uppercase tracking-tighter text-white mb-2 leading-none">Conclusión Estructural</h3>
-              <p className="text-lg font-bold text-primary uppercase tracking-[0.2em] opacity-80">Recomendación Final Consolidada</p>
+          <div className="flex-1 space-y-8 text-center md:text-left">
+            <div className="space-y-2">
+              <div className="flex items-center justify-center md:justify-start gap-4 mb-2">
+                <span className="w-12 h-1 px-1 bg-primary rounded-full" />
+                <h3 className="text-3xl md:text-5xl font-black uppercase tracking-tighter text-white leading-none">Veredicto Maestro</h3>
+                <span className="w-12 h-1 px-1 bg-primary rounded-full" />
+              </div>
+              <p className="text-sm md:text-lg font-black text-primary uppercase tracking-[0.4em] opacity-90">Consolidación de Inteligencia Artificial v5.0</p>
             </div>
             
-            <div className="p-8 bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-md">
-              <p className="text-2xl text-white font-black leading-tight tracking-tight italic">
+            <div className="p-10 md:p-14 bg-white/[0.03] rounded-[40px] border border-white/10 backdrop-blur-3xl shadow-inner relative group/box overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover/box:opacity-100 transition-opacity duration-1000" />
+              <p className="text-xl md:text-4xl text-white font-black leading-tight tracking-tight italic relative z-10 hyphens-auto break-words">
                 "{finalConclusion}"
               </p>
             </div>
 
-            <div className="flex flex-wrap justify-center md:justify-start gap-4">
-               {['Alta Confluencia', 'Análisis Multitemporal', 'IA Engine v4.0'].map(tag => (
-                 <span key={tag} className="px-5 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/40">
-                   {tag}
-                 </span>
+            <div className="flex flex-wrap justify-center md:justify-start gap-5">
+               {[
+                 { text: 'Alta Confluencia', icon: <Target className="w-4 h-4" /> },
+                 { text: 'Filtro de Ruido Activo', icon: <Zap className="w-4 h-4" /> },
+                 { text: 'Protocolo de Seguridad', icon: <CheckCircle2 className="w-4 h-4" /> }
+               ].map(tag => (
+                 <div key={tag.text} className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/[0.05] border border-white/10 text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-default">
+                   {tag.icon}
+                   {tag.text}
+                 </div>
                ))}
             </div>
           </div>
