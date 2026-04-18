@@ -105,24 +105,16 @@ const WyckoffAnalyzer: React.FC = () => {
   const [recommendation, setRecommendation] = useState<string>("");
   
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
-    { id: "patterns", name: "Patrones Detectados", enabled: false },
+    { id: "patterns", name: "Patrones de Precios", enabled: false },
     { id: "candles", name: "Velas Japonesas", enabled: false },
-    { id: "macd", name: "MACD", enabled: false },
-    { id: "rsi", name: "RSI", enabled: false },
-    { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
-    { id: "atr", name: "ATR", enabled: false },
-    { id: "ichimoku", name: "Ichimoku Cloud", enabled: false },
-    { id: "volprofile", name: "Volume Profile", enabled: false },
-    { id: "stochrsi", name: "Stochastic RSI", enabled: false },
-    { id: "supertrend", name: "Supertrend", enabled: false },
-    { id: "vwap", name: "VWAP", enabled: false },
-    { id: "psar", name: "Parabolic SAR", enabled: false },
     { id: "elliott", name: "Ondas de Elliott", enabled: false },
-    { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: true },
-    { id: "liquidity", name: "Zonas de Liquidez", enabled: true },
-    { id: "pivots", name: "Pivote Central", enabled: true },
-    { id: "levels", name: "Techos y Suelos", enabled: true },
-    { id: "ai_pro", name: "✦✦", enabled: true },
+    { id: "wakeup", name: "Fases de Wyckoff", enabled: false },
+    { id: "macd", name: "MACD Avanzado", enabled: false },
+    { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
+    { id: "levels", name: "Techo/Suelo", enabled: false },
+    { id: "supertrend", name: "Supertrend IA", enabled: false },
+    { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
+    { id: "ai_pro", name: "Análisis ✦✦", enabled: false }
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -206,21 +198,9 @@ const WyckoffAnalyzer: React.FC = () => {
       console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
       console.log("[DEBUG] Análisis Real de Velas:", realAnalysis['candles']);
 
-      // 1. Clear old visual patterns
-      if (candlestickSeriesRef.current) {
-        priceLinesRef.current.forEach(line => candlestickSeriesRef.current!.removePriceLine(line));
-        priceLinesRef.current = [];
-        
-        Object.values(polylineSeriesRef.current).forEach(series => {
-          chartRef.current?.removeSeries(series);
-        });
-        polylineSeriesRef.current = {};
-
-        if (!markersPluginRef.current) {
-          markersPluginRef.current = createSeriesMarkers(candlestickSeriesRef.current);
-        }
-        markersPluginRef.current.setMarkers([]);
-      }
+      // 1. Technical Analysis Engine
+      setIndicatorAnalysis(realAnalysis);
+      setRawAnalysisData(rawAnalysis);
 
       // 2. Draw new visual patterns
       const markers: SeriesMarker<UTCTimestamp>[] = [];
@@ -231,7 +211,6 @@ const WyckoffAnalyzer: React.FC = () => {
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
 
       const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
-      const pivotsEnabled = indicators.find(i => i.id === 'pivots')?.enabled;
       const levelsEnabled = indicators.find(i => i.id === 'levels')?.enabled;
 
       let currentPatterns: AnalysisResult | null = null;
@@ -247,9 +226,9 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'elliott' && !elliottEnabled) return;
         if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
         
-        // Handle Pivots and Levels separately
-        if (key === 'pivots' || analysis.visuals.type === 'PIVOT') {
-          if (!pivotsEnabled && !levelsEnabled) return;
+        // Handle Levels separately
+        if (key === 'levels' || analysis.visuals.type === 'PIVOT') {
+          if (!levelsEnabled) return;
         }
         
         if ((key === 'liquidity' || analysis.visuals.type === 'LIQUIDITY') && !liquidityEnabled) return;
@@ -688,7 +667,6 @@ const WyckoffAnalyzer: React.FC = () => {
       const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
       const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
-      const pivotsEnabled = indicators.find(i => i.id === 'pivots')?.enabled;
       const levelsEnabled = indicators.find(i => i.id === 'levels')?.enabled;
 
       let currentPatterns: AnalysisResult | null = null;
@@ -710,14 +688,10 @@ const WyckoffAnalyzer: React.FC = () => {
 
         const { visuals } = analysis;
         const isLiquidity = key === 'liquidity' || visuals.type === 'LIQUIDITY';
-        const isPivots = key === 'pivots' || visuals.type === 'PIVOT';
+        const isLevels = key === 'levels' || visuals.type === 'PIVOT';
 
         if (isLiquidity && !liquidityEnabled) return;
-        
-        // Handle Pivots and Levels separately
-        if (isPivots) {
-          if (!pivotsEnabled && !levelsEnabled) return;
-        }
+        if (isLevels && !levelsEnabled) return;
 
         // Current price lines for patterns and candles
         if ((key === 'patterns' || key === 'candles') && visuals.price) {
@@ -734,6 +708,43 @@ const WyckoffAnalyzer: React.FC = () => {
           priceLinesRef.current.push(line);
         }
 
+        // ENTRY/SL/TP logic
+        if (analysis.entryPrice && (key === 'patterns' || key === 'candles')) {
+          const entryLine = candlestickSeriesRef.current!.createPriceLine({
+            price: analysis.entryPrice,
+            color: '#00ffa3',
+            lineWidth: 2,
+            lineStyle: 0,
+            axisLabelVisible: true,
+            title: `ENTRADA: $${analysis.entryPrice.toLocaleString()}`,
+          });
+          priceLinesRef.current.push(entryLine);
+
+          if (analysis.stopLoss) {
+            const slLine = candlestickSeriesRef.current!.createPriceLine({
+              price: analysis.stopLoss,
+              color: '#ff7162',
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: `SL: $${analysis.stopLoss.toLocaleString()}`,
+            });
+            priceLinesRef.current.push(slLine);
+          }
+
+          if (analysis.takeProfit) {
+            const tpLine = candlestickSeriesRef.current!.createPriceLine({
+              price: analysis.takeProfit,
+              color: '#00e0ff',
+              lineWidth: 1,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: `TP: $${analysis.takeProfit.toLocaleString()}`,
+            });
+            priceLinesRef.current.push(tpLine);
+          }
+        }
+
         // Add dynamic Recommendation Arrows on the latest candle for all active indicators
         const latestTime = (chartData[chartData.length - 1].time / 1000) as UTCTimestamp;
         
@@ -746,41 +757,72 @@ const WyckoffAnalyzer: React.FC = () => {
           size: 2
         });
 
-        if (isLiquidity) {
-          visuals.points?.forEach(pt => {
-            // Create a "thick" zone using multiple lines for visual impact
-            for (let offset = -0.0001; offset <= 0.0001; offset += 0.0001) {
-              const line = candlestickSeriesRef.current!.createPriceLine({
-                price: pt.price * (1 + offset),
-                color: 'rgba(255, 77, 77, 0.4)', // Red dimmed
+        if (key === 'liquidity' && visuals.points) {
+          visuals.points.forEach(pt => {
+            const basePrice = pt.price;
+            // Higher liquidity zones will be slightly more prominent
+            const range = 0.0008; 
+            for (let i = -6; i <= 6; i++) {
+              const absVal = Math.abs(i);
+              const opacity = (1 - absVal / 7) * 0.45;
+              const priceLine = candlestickSeriesRef.current!.createPriceLine({
+                price: basePrice * (1 + (i * range / 6)),
+                color: `rgba(255, 0, 0, ${opacity.toFixed(3)})`,
                 lineWidth: 2,
-                lineStyle: 0, // Solid
-                axisLabelVisible: true,
-                title: 'BLOQUE LIQUIDEZ',
+                lineStyle: 0,
+                axisLabelVisible: i === 0,
+                title: i === 0 ? 'LIQUIDEZ CRÍTICA' : '',
               });
-              priceLinesRef.current.push(line);
+              priceLinesRef.current.push(priceLine);
             }
           });
           return;
         }
 
-        if (isPivots) {
-          visuals.points?.forEach(pt => {
-            const isMainPivot = pt.label === 'PIVOTE';
-            const isLevel = pt.label === 'TECHOS' || pt.label === 'SUELOS';
-            
-            if (isMainPivot && !pivotsEnabled) return;
-            if (isLevel && !levelsEnabled) return;
-
+        if (key === 'levels' && visuals.points) {
+          visuals.points.forEach(pt => {
+            if (pt.label === 'PIVOTE') return; // Skip central pivot as requested
             const line = candlestickSeriesRef.current!.createPriceLine({
               price: pt.price,
-              color: isLevel ? '#3b82f6' : '#ffffff',
-              lineWidth: isLevel ? 2 : 1,
-              lineStyle: isLevel ? 0 : 2, 
+              color: '#38bdf8',
+              lineWidth: 2,
+              lineStyle: 0,
               axisLabelVisible: true,
-              title: pt.label || 'PUNTO PIVOTE',
+              title: pt.label || 'NIVEL CLAVE',
             });
             priceLinesRef.current.push(line);
+          });
+          return;
+        }
+
+        if (key === 'elliott' && visuals.points) {
+          const polySeries = chartRef.current!.addSeries(LineSeries, {
+            color: '#ffffff',
+            lineWidth: 2,
+            lineStyle: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+          });
+          
+          const lineData = visuals.points.map(pt => ({
+            time: (pt.time / 1000) as UTCTimestamp,
+            value: pt.price
+          }));
+          
+          polySeries.setData(lineData);
+          polylineSeriesRef.current[key] = polySeries;
+
+          visuals.points.forEach(pt => {
+            if (pt.label) {
+              markers.push({
+                time: (pt.time / 1000) as UTCTimestamp,
+                position: pt.price > chartData[chartData.length-1].close ? 'aboveBar' : 'belowBar',
+                color: '#ffffff',
+                shape: 'circle',
+                text: pt.label,
+                size: 2
+              });
+            }
           });
           return;
         }
@@ -1551,7 +1593,6 @@ const WyckoffAnalyzer: React.FC = () => {
               { id: "levels", label: "TECHO/SUELO", color: 'secondary' },
               { id: "supertrend", label: "STREND", color: 'primary' },
               { id: "bollinger", label: "BB", color: 'primary' },
-              { id: "pivots", label: "PIVOTE", color: 'secondary' },
               { id: "ai_pro", label: "✦✦", color: 'primary' }
             ].map(ind => {
               const config = indicators.find(i => i.id === ind.id);
