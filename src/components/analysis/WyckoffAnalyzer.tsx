@@ -825,9 +825,10 @@ const WyckoffAnalyzer: React.FC = () => {
 
           visuals.points.forEach(pt => {
             if (pt.label) {
+              const isPeak = ['1', '3', '5', 'B', 'H', 'Pico'].some(l => pt.label!.includes(l));
               markers.push({
                 time: (pt.time / 1000) as UTCTimestamp,
-                position: pt.price > chartData[chartData.length-1].close ? 'aboveBar' : 'belowBar',
+                position: isPeak ? 'aboveBar' : 'belowBar',
                 color: '#ffffff',
                 shape: 'circle',
                 text: pt.label,
@@ -1181,71 +1182,7 @@ const WyckoffAnalyzer: React.FC = () => {
           );
         })}
       </div>
-      {/* Floating Asset Search & Timeframe - Always visible on top of chart */}
-      <div className="sticky top-6 z-[60] flex justify-center mb-[-68px] pointer-events-none">
-        <div className="flex flex-wrap items-center gap-4 bg-[#0b0f14]/80 backdrop-blur-2xl px-6 py-3 rounded-2xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto">
-          <div className="flex items-center gap-4 border-r border-white/10 pr-4">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <div className="hidden sm:block">
-              <h2 className="text-[14px] font-black uppercase tracking-tighter text-white">Terminal IA</h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Asset Selector */}
-            <div className="relative">
-              <button
-                onClick={() => setIsSearchOpen(!isSearchOpen)}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white flex items-center gap-3 min-w-[160px] hover:bg-white/10 transition-all font-sans"
-              >
-                {selectedAsset && <img src={selectedAsset.image} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />}
-                {selectedSymbol}
-                <ChevronDown className={cn("w-3 h-3 ml-auto transition-transform", isSearchOpen && "rotate-180")} />
-              </button>
-              {isSearchOpen && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-[#0b0f14] border border-white/10 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-[70] max-h-60 overflow-y-auto p-2 backdrop-blur-3xl">
-                  <div className="p-2 border-b border-white/5 mb-2 flex items-center gap-2">
-                    <Search className="w-3 h-3 text-white/40" />
-                    <input 
-                      className="bg-transparent border-none focus:ring-0 text-[10px] font-black uppercase w-full text-white font-sans"
-                      placeholder="Buscar..."
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                    />
-                  </div>
-                  {filteredAssets.map(asset => (
-                    <button
-                      key={asset.id}
-                      onClick={() => { setSelectedSymbol(asset.id); setIsSearchOpen(false); }}
-                      className="w-full text-left px-3 py-2 rounded-lg text-[9px] font-black uppercase text-white/70 hover:bg-primary/20 hover:text-white flex items-center gap-3 transition-colors font-sans"
-                    >
-                      <img src={asset.image} className="w-4 h-4 rounded-full" referrerPolicy="no-referrer" />
-                      {asset.id}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Timeframe Selector */}
-            <div className="flex bg-white/5 rounded-xl p-1 border border-white/10">
-              {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
-                <button
-                  key={tf}
-                  onClick={() => setSelectedTimeframe(tf)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-[9px] font-black uppercase transition-all font-sans",
-                    selectedTimeframe === tf ? "bg-primary text-on-primary shadow-lg shadow-primary/20" : "text-white/40 hover:text-white"
-                  )}
-                >
-                  {tf}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
+      
       {/* Chart and Phase */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-12 space-y-6">
@@ -1253,22 +1190,95 @@ const WyckoffAnalyzer: React.FC = () => {
             ref={chartContainerRef}
             className="w-full h-[800px] rounded-[2.5rem] bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
           >
-            {/* Floating Asset Overlay */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+            {/* Draggable Command Center Overlay */}
+            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto">
               <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b0f14]/80 backdrop-blur-xl border border-white/10 px-6 py-2 rounded-2xl flex items-center gap-4 shadow-2xl"
+                drag
+                dragMomentum={false}
+                dragConstraints={chartContainerRef}
+                initial={{ opacity: 0, scale: 0.9, y: -20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                className="bg-[#0b0f14]/90 backdrop-blur-2xl border border-white/20 p-1.5 rounded-[2rem] flex items-center gap-4 shadow-[0_20px_80px_rgba(0,0,0,0.8)] cursor-move min-w-[420px]"
               >
-                <div className="flex items-center gap-2 pr-4 border-r border-white/10">
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[14px] font-black tracking-tighter text-white uppercase">{selectedSymbol.replace('USDT', '')}</span>
+                {/* Asset Info & Selector Trigger */}
+                <div className="flex items-center gap-3 pl-4 pr-5 border-r border-white/10">
+                  <div className="relative">
+                    <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
+                    <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-primary animate-ping opacity-40" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[15px] font-black tracking-tighter text-white uppercase leading-none">{selectedSymbol.replace('USDT', '')}</span>
+                    <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{selectedAsset?.name || 'CRYPTO ASSET'}</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsSearchOpen(!isSearchOpen)}
+                    className="ml-2 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                  >
+                    <Search size={14} className="text-white/60" />
+                  </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-white/40" />
-                  <span className="text-[13px] font-black text-white/60 tabular-nums">{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
-                  <span className="bg-white/5 px-2 py-0.5 rounded text-[10px] font-black text-white/40">{selectedTimeframe}</span>
+
+                {/* Timeframe Commands */}
+                <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-[1.5rem]">
+                  {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
+                    <button
+                      key={tf}
+                      onClick={() => setSelectedTimeframe(tf)}
+                      className={cn(
+                        "w-10 h-10 rounded-full text-[10px] font-black uppercase transition-all duration-300",
+                        selectedTimeframe === tf 
+                          ? "bg-primary text-black shadow-[0_0_15px_rgba(0,255,163,0.4)]" 
+                          : "text-white/40 hover:text-white hover:bg-white/5"
+                      )}
+                    >
+                      {tf}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Live Clock */}
+                <div className="flex items-center gap-3 pr-4 pl-2 opacity-60">
+                  <Clock size={14} className="text-primary" />
+                  <span className="text-[12px] font-black text-white tabular-nums tracking-tighter">{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+
+                {/* Search Dropdown (Contained) */}
+                <AnimatePresence>
+                  {isSearchOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute top-full left-0 right-0 mt-4 bg-[#0b0f14]/95 backdrop-blur-3xl border border-white/20 rounded-3xl p-4 shadow-2xl z-[110] max-h-[400px] overflow-y-auto"
+                    >
+                      <div className="relative mb-3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
+                        <input 
+                          className="bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-[11px] font-black uppercase w-full text-white placeholder:text-white/20 focus:border-primary/50 outline-none"
+                          placeholder="BUSCAR SÍMBOLO..."
+                          value={searchQuery}
+                          onChange={e => setSearchQuery(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        {filteredAssets.slice(0, 15).map(asset => (
+                          <button
+                            key={asset.id}
+                            onClick={() => { setSelectedSymbol(asset.id); setIsSearchOpen(false); }}
+                            className="w-full text-left px-4 py-3 rounded-xl text-[10px] font-black uppercase text-white/70 hover:bg-primary hover:text-black flex items-center justify-between group transition-all"
+                          >
+                            <div className="flex items-center gap-3">
+                              <img src={asset.image} className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+                              <span>{asset.id}</span>
+                            </div>
+                            <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px]">SELECCIONAR</span>
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             </div>
         {loading && (
@@ -1374,6 +1384,7 @@ const WyckoffAnalyzer: React.FC = () => {
             <motion.div
               drag
               dragMomentum={false}
+              dragConstraints={chartContainerRef}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
@@ -1414,9 +1425,47 @@ const WyckoffAnalyzer: React.FC = () => {
                   </div>
                 )}
               </motion.div>
-            )}
+          )}
 
-            {activeCandles && indicators.find(i => i.id === 'candles')?.enabled && (
+          {activeElliott && indicators.find(i => i.id === 'elliott')?.enabled && (
+             <motion.div
+               drag
+               dragMomentum={false}
+               dragConstraints={chartContainerRef}
+               initial={{ opacity: 0, x: 20 }}
+               animate={{ opacity: 1, x: 0 }}
+               exit={{ opacity: 0, x: 20 }}
+               className="absolute bottom-24 left-10 p-5 rounded-2xl backdrop-blur-xl border border-white/20 bg-[#0b0f14]/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto cursor-move max-w-[320px] font-sans z-[30]"
+             >
+               <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
+                 <div className="flex items-center gap-2">
+                   <Activity className="w-4 h-4 text-primary" />
+                   <span className="text-[13px] font-black uppercase tracking-widest text-white">ONDAS DE ELLIOTT</span>
+                 </div>
+                 <div className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase">
+                   {activeElliott.pattern}
+                 </div>
+               </div>
+               <p className="text-[14px] text-on-surface-variant leading-relaxed mb-4 font-medium">{activeElliott.analysis}</p>
+               <div className="space-y-3">
+                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-primary block mb-1">Recomendación Maestra</span>
+                    <p className="text-[12px] font-bold text-white uppercase tracking-tight">{activeElliott.recommendation === 'LONG' ? 'POSICIÓN LARGA - BUSCAR COMPRAS' : 'POSICIÓN CORTA - BUSCAR RECHAZO'}</p>
+                 </div>
+                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 italic text-[11px] text-on-surface-variant/70">
+                   <Info size={14} />
+                   <span>Vigilar niveles 1-5 y A-B-C para confirmación estructural.</span>
+                 </div>
+               </div>
+             </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Candlestick Analysis Overlay */}
+      <div className="absolute inset-0 pointer-events-none z-20">
+        <AnimatePresence>
+          {activeCandles && indicators.find(i => i.id === 'candles')?.enabled && (
               <motion.div
                 drag
                 dragMomentum={false}
