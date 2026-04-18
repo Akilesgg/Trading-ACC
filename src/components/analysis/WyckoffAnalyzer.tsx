@@ -973,92 +973,151 @@ const WyckoffAnalyzer: React.FC = () => {
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10 relative">
       {/* Strategy Selector - Now at the top for quick context */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
         {strategies.map((strat) => {
           const isActive = activeStrategies.includes(strat.id);
           const signal = strategySignals[strat.id];
           
           return (
-            <div key={strat.id} className="flex flex-col gap-3">
+            <div key={strat.id} className="flex flex-col gap-4">
               <button
                 onClick={() => toggleStrategy(strat.id)}
                 className={cn(
-                  "flex flex-col p-4 rounded-2xl border transition-all text-left group relative overflow-hidden h-full",
+                  "flex flex-col p-6 rounded-3xl border transition-all text-left group relative overflow-hidden h-full",
                   isActive 
-                    ? "bg-primary/10 border-primary/40 shadow-lg shadow-primary/5" 
-                    : "bg-surface-container-high/40 border-outline-variant/10 hover:border-outline-variant/30 opacity-60"
+                    ? "bg-primary/10 border-primary/50 shadow-[0_0_30px_rgba(0,255,163,0.1)] scale-[1.02]" 
+                    : "bg-surface-container-high/20 border-white/5 hover:border-white/10 opacity-70"
                 )}
               >
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-4 mb-4">
                   <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center border",
-                    isActive ? "bg-primary/20 border-primary/30 text-primary" : "bg-surface/50 border-outline-variant/20 text-on-surface-variant"
+                    "w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-transform duration-500 group-hover:rotate-12",
+                    isActive ? "bg-primary/20 border-primary/40 text-primary shadow-[0_0_15px_rgba(0,255,163,0.3)]" : "bg-white/5 border-white/10 text-white/40"
                   )}>
                     {strat.icon}
                   </div>
-                  <span className={cn(
-                    "text-[11px] font-black uppercase tracking-widest",
-                    isActive ? "text-primary" : "text-on-surface"
-                  )}>
-                    {strat.name}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className={cn(
+                      "text-[14px] font-black uppercase tracking-[0.1em] leading-tight",
+                      isActive ? "text-primary" : "text-white"
+                    )}>
+                      {strat.name}
+                    </span>
+                    <span className="text-[10px] uppercase font-black tracking-widest text-white/40 mt-1">Estrategia Activa</span>
+                  </div>
                 </div>
-                <p className="text-[10px] text-on-surface-variant font-medium leading-tight mb-1">{strat.description}</p>
-                <p className="text-[9px] text-on-surface-variant/60 italic leading-tight">{strat.logic}</p>
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <span className="text-[10px] uppercase font-black text-primary/60 tracking-widest block">Objetivo</span>
+                    <p className="text-[13px] text-white/80 font-medium leading-relaxed">{strat.description}</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <span className="text-[10px] uppercase font-black text-white/40 tracking-widest block mb-2">Lógica de Ejecución</span>
+                    <p className="text-[12px] text-white/60 italic leading-snug">{strat.logic}</p>
+                  </div>
+                </div>
+
                 {isActive && (
-                  <motion.div layoutId={`strat-active-${strat.id}`} className="absolute bottom-0 left-0 right-0 h-1 bg-primary" />
+                  <motion.div layoutId={`strat-active-indicator-${strat.id}`} className="absolute bottom-0 left-0 right-0 h-1.5 bg-primary shadow-[0_-5px_15px_rgba(0,255,163,0.5)]" />
                 )}
               </button>
 
               <AnimatePresence>
-                {isActive && signal && (
+                {isActive && (
                   <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, scale: 0.95, y: -20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -20 }}
                     className={cn(
-                      "p-4 rounded-xl border text-[10px] font-medium",
-                      signal.viable ? "bg-primary/5 border-primary/20" : "bg-secondary/5 border-secondary/20"
+                      "p-6 rounded-[2rem] border-2 shadow-2xl relative overflow-hidden",
+                      signal?.viable 
+                        ? "bg-[#0b0f14]/80 border-primary/30 backdrop-blur-3xl" 
+                        : "bg-[#1a0a0a]/80 border-secondary/30 backdrop-blur-3xl"
                     )}
                   >
-                    {!signal.viable ? (
-                      <div className="flex items-center gap-2 text-secondary font-black uppercase tracking-widest">
-                        <X className="w-3 h-3" /> Estrategia Rechazada
-                        <p className="text-[9px] lowercase font-normal opacity-80 mt-1 block">{signal.reason}</p>
+                    {!signal ? (
+                      <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                        <RefreshCw className="w-8 h-8 text-primary/40 animate-spin" />
+                        <span className="text-[11px] font-black uppercase tracking-widest text-white/40">Sincronizando con el mercado...</span>
+                      </div>
+                    ) : !signal.viable ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 text-secondary">
+                          <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center border border-secondary/40">
+                            <X size={16} />
+                          </div>
+                          <span className="text-[13px] font-black uppercase tracking-widest">Sin Señal Clara</span>
+                        </div>
+                        <div className="p-4 rounded-xl bg-secondary/5 border border-secondary/10">
+                          <p className="text-[12px] text-secondary/80 font-medium italic">"{signal.reason}"</p>
+                        </div>
+                        <div className="flex items-center justify-center p-4 border border-white/5 rounded-2xl opacity-20">
+                           <EyeOff className="w-6 h-6" />
+                        </div>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between border-b border-outline-variant/10 pb-2">
-                          <span className="text-primary font-black uppercase tracking-widest">Recomendación Activa</span>
-                          <span className="text-on-surface-variant font-black">{selectedTimeframe}</span>
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                          <div className="flex items-center gap-2">
+                             <Target className="w-5 h-5 text-primary" />
+                             <span className="text-[13px] font-black uppercase tracking-widest text-white">Setup Optimizado</span>
+                          </div>
+                          <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-black border border-primary/30 uppercase">{selectedTimeframe}</span>
                         </div>
-                        <p className="italic text-on-surface-variant leading-tight">"{signal.reason}"</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <span className="text-[8px] uppercase opacity-50 block">Entrada</span>
-                            <span className="font-black text-on-surface">${signal.entry.toLocaleString()}</span>
-                          </div>
-                          <div>
-                            <span className="text-[8px] uppercase opacity-50 block">Stop Loss</span>
-                            <span className="font-black text-secondary">${signal.sl.toLocaleString()}</span>
-                          </div>
+
+                        <div className="space-y-2">
+                           <span className="text-[10px] uppercase font-black text-white/30 tracking-widest block">Análisis de la IA Analyst</span>
+                           <p className="text-[13px] text-white font-medium leading-relaxed italic">"{signal.reason}"</p>
                         </div>
-                        <div className="grid grid-cols-3 gap-1">
-                          <div className="bg-primary/10 p-1 rounded text-center">
-                            <span className="text-[7px] block opacity-60">TP1</span>
-                            <span className="font-black text-[9px]">${signal.tp1.toLocaleString()}</span>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/40 transition-colors group">
+                            <span className="text-[10px] uppercase font-black text-white/40 tracking-widest block mb-1 group-hover:text-primary transition-colors">Entrada</span>
+                            <span className="text-xl font-black text-white">${signal.entry.toLocaleString()}</span>
                           </div>
-                          <div className="bg-primary/10 p-1 rounded text-center">
-                            <span className="text-[7px] block opacity-60">TP2</span>
-                            <span className="font-black text-[9px]">${signal.tp2.toLocaleString()}</span>
-                          </div>
-                          <div className="bg-primary/10 p-1 rounded text-center">
-                            <span className="text-[7px] block opacity-60">TP3</span>
-                            <span className="font-black text-[9px]">${signal.tp3.toLocaleString()}</span>
+                          <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/10 hover:border-secondary transition-colors group">
+                            <span className="text-[10px] uppercase font-black text-secondary/60 tracking-widest block mb-1 group-hover:text-secondary transition-colors">Stop Loss</span>
+                            <span className="text-xl font-black text-secondary">${signal.sl.toLocaleString()}</span>
                           </div>
                         </div>
-                        <div className="h-12 w-full mt-2 opacity-50 bg-primary/5 rounded flex items-center justify-center">
-                          <Activity className="w-4 h-4 text-primary animate-pulse" />
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 rounded-xl bg-primary/5 border border-white/5">
+                            <span className="text-[9px] uppercase font-black text-white/30 block mb-1">Riesgo / Beneficio</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px] font-black text-primary">1 : {((Math.abs(signal.tp3 - signal.entry)) / (Math.abs(signal.entry - signal.sl))).toFixed(2)}</span>
+                              <TrendingUp className="w-3 h-3 text-primary opacity-50" />
+                            </div>
+                          </div>
+                          <div className="p-3 rounded-xl bg-primary/5 border border-white/5">
+                            <span className="text-[9px] uppercase font-black text-white/30 block mb-1">Confianza Multicapa</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px] font-black text-white">85%</span>
+                              <div className="flex gap-0.5">
+                                {[1, 2, 3, 4, 5].map(i => <div key={i} className={cn("w-1 h-3 rounded-full", i < 5 ? "bg-primary" : "bg-white/10")} />)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          {[
+                            { label: 'TP 1', val: signal.tp1 },
+                            { label: 'TP 2', val: signal.tp2 },
+                            { label: 'TP 3', val: signal.tp3 }
+                          ].map((tp, i) => (
+                            <div key={i} className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center relative overflow-hidden group">
+                              <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <span className="text-[9px] font-black text-primary uppercase block mb-1">{tp.label}</span>
+                              <span className="text-[13px] font-black text-white relative z-10">${tp.val.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="flex items-center justify-center p-4 bg-primary/5 rounded-2xl border border-primary/10 group">
+                           <Activity className="w-6 h-6 text-primary animate-pulse group-hover:scale-125 transition-transform" />
                         </div>
                       </div>
                     )}
@@ -1481,7 +1540,7 @@ const WyckoffAnalyzer: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-2 max-w-[1200px] justify-center">
+          <div className="flex flex-wrap items-center gap-1.5 max-w-[1400px] justify-center">
             {[
               { id: "patterns", label: "PATRONES", color: 'primary' },
               { id: "candles", label: "VELAS", color: 'primary' },
@@ -1502,16 +1561,16 @@ const WyckoffAnalyzer: React.FC = () => {
                   key={ind.id}
                   onClick={() => toggleIndicator(ind.id)}
                   className={cn(
-                    "flex items-center gap-3 px-6 py-4 rounded-2xl border text-[13px] font-black uppercase tracking-widest transition-all duration-300",
+                    "flex items-center gap-2 px-4 py-3 rounded-2xl border text-[13px] font-black uppercase tracking-widest transition-all duration-300",
                     config.enabled 
                       ? ind.color === 'secondary' 
-                        ? "bg-secondary/20 border-secondary text-secondary shadow-[0_0_25px_rgba(255,113,98,0.4)] scale-105"
-                        : "bg-primary/20 border-primary text-primary shadow-[0_0_25px_rgba(0,255,163,0.4)] scale-105"
+                        ? "bg-secondary/20 border-secondary text-secondary shadow-[0_0_20px_rgba(255,113,98,0.3)] scale-105"
+                        : "bg-primary/20 border-primary text-primary shadow-[0_0_20px_rgba(0,255,163,0.3)] scale-105"
                       : "bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10"
                   )}
                 >
                   <div className={cn(
-                    "w-3 h-3 rounded-full", 
+                    "w-2.5 h-2.5 rounded-full", 
                     config.enabled 
                       ? ind.color === 'secondary' ? "bg-secondary animate-pulse" : "bg-primary animate-pulse" 
                       : "bg-white/20"
