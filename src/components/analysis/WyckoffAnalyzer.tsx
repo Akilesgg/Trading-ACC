@@ -110,7 +110,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
     { id: "patterns", name: "Patrones de Precios", enabled: false },
     { id: "candles", name: "Velas Japonesas", enabled: false },
-    { id: "elliott", name: "Ondas de Elliott", enabled: false },
+    { id: "elliott", name: "HELIO (Elliott)", enabled: false },
     { id: "wakeup", name: "Fases de Wyckoff", enabled: false },
     { id: "macd", name: "MACD Avanzado", enabled: false },
     { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
@@ -771,18 +771,20 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'liquidity' && visuals.points) {
           visuals.points.forEach(pt => {
             const basePrice = pt.price;
-            // Higher liquidity zones will be slightly more prominent
-            const range = 0.0008; 
-            for (let i = -6; i <= 6; i++) {
+            // Higher liquidity zones will be represented by multiple lines to simulate a dense red rectangle
+            const density = 8;
+            const spread = 0.0015; 
+            for (let i = -density; i <= density; i++) {
               const absVal = Math.abs(i);
-              const opacity = (1 - absVal / 7) * 0.45;
+              // Darker red in the center, fading towards edges
+              const opacity = (1 - absVal / (density + 1)) * 0.8;
               const priceLine = candlestickSeriesRef.current!.createPriceLine({
-                price: basePrice * (1 + (i * range / 6)),
+                price: basePrice * (1 + (i * spread / density)),
                 color: `rgba(255, 0, 0, ${opacity.toFixed(3)})`,
-                lineWidth: 2,
+                lineWidth: 4, // Thicker for better "box" feel
                 lineStyle: 0,
                 axisLabelVisible: i === 0,
-                title: i === 0 ? 'LIQUIDEZ CRÍTICA' : '',
+                title: i === 0 ? 'LIQUIDEZ ALTA' : '',
               });
               priceLinesRef.current.push(priceLine);
             }
@@ -809,7 +811,7 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'elliott' && visuals.points) {
           const polySeries = chartRef.current!.addSeries(LineSeries, {
             color: '#ffffff',
-            lineWidth: 2,
+            lineWidth: 3,
             lineStyle: 0,
             priceLineVisible: false,
             lastValueVisible: false,
@@ -822,19 +824,19 @@ const WyckoffAnalyzer: React.FC = () => {
           
           polySeries.setData(lineData);
           polylineSeriesRef.current[key] = polySeries;
-
-          visuals.points.forEach(pt => {
-            if (pt.label) {
-              const isPeak = ['1', '3', '5', 'B', 'H', 'Pico'].some(l => pt.label!.includes(l));
-              markers.push({
-                time: (pt.time / 1000) as UTCTimestamp,
-                position: isPeak ? 'aboveBar' : 'belowBar',
-                color: '#ffffff',
-                shape: 'circle',
-                text: pt.label,
-                size: 2
-              });
-            }
+          
+          visuals.points.forEach((pt, idx) => {
+            const label = pt.label || (idx < 5 ? (idx + 1).toString() : String.fromCharCode(65 + (idx - 5)));
+            const isPeak = ['1', '3', '5', 'B', 'H', 'Pico'].some(l => label.includes(l));
+            
+            markers.push({
+              time: (pt.time / 1000) as UTCTimestamp,
+              position: isPeak ? 'aboveBar' : 'belowBar',
+              color: '#ffffff',
+              shape: 'circle',
+              text: label,
+              size: 2
+            });
           });
           return;
         }
@@ -1190,45 +1192,44 @@ const WyckoffAnalyzer: React.FC = () => {
             ref={chartContainerRef}
             className="w-full h-[800px] rounded-[2.5rem] bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
           >
-            {/* Draggable Command Center Overlay */}
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] pointer-events-auto">
+            {/* Draggable Command Center Overlay - Fixed to screen for absolute persistence */}
+            <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] pointer-events-none w-full flex justify-center">
               <motion.div 
                 drag
                 dragMomentum={false}
-                dragConstraints={chartContainerRef}
+                dragConstraints={{ left: -500, right: 500, top: 0, bottom: 500 }}
                 initial={{ opacity: 0, scale: 0.9, y: -20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                className="bg-[#0b0f14]/90 backdrop-blur-2xl border border-white/20 p-1.5 rounded-[2rem] flex items-center gap-4 shadow-[0_20px_80px_rgba(0,0,0,0.8)] cursor-move min-w-[420px]"
+                className="bg-[#0b0f14]/95 backdrop-blur-3xl border border-white/30 p-2 rounded-[2.5rem] flex items-center gap-4 shadow-[0_25px_100px_rgba(0,0,0,0.9)] cursor-move min-w-[450px] pointer-events-auto"
               >
                 {/* Asset Info & Selector Trigger */}
-                <div className="flex items-center gap-3 pl-4 pr-5 border-r border-white/10">
+                <div className="flex items-center gap-3 pl-5 pr-6 border-r border-white/10">
                   <div className="relative">
-                    <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-                    <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-primary animate-ping opacity-40" />
+                    <div className="w-3 h-3 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(0,255,163,0.5)]" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[15px] font-black tracking-tighter text-white uppercase leading-none">{selectedSymbol.replace('USDT', '')}</span>
-                    <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em]">{selectedAsset?.name || 'CRYPTO ASSET'}</span>
+                    <span className="text-[16px] font-black tracking-tighter text-white uppercase leading-none">{selectedSymbol.replace('USDT', '')}</span>
+                    <span className="text-[9px] font-black text-white/40 uppercase tracking-[0.2em]">{selectedAsset?.name || 'CRYPTO ASSET'}</span>
                   </div>
                   <button 
                     onClick={() => setIsSearchOpen(!isSearchOpen)}
-                    className="ml-2 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                    className="ml-3 p-2.5 rounded-2xl bg-white/5 hover:bg-primary hover:text-black transition-all group"
                   >
-                    <Search size={14} className="text-white/60" />
+                    <Search size={16} className="text-white/60 group-hover:text-black" />
                   </button>
                 </div>
 
                 {/* Timeframe Commands */}
-                <div className="flex items-center gap-1.5 bg-white/5 p-1 rounded-[1.5rem]">
+                <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-[2rem] border border-white/5">
                   {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
                     <button
                       key={tf}
                       onClick={() => setSelectedTimeframe(tf)}
                       className={cn(
-                        "w-10 h-10 rounded-full text-[10px] font-black uppercase transition-all duration-300",
+                        "w-11 h-11 rounded-full text-[11px] font-black uppercase transition-all duration-300",
                         selectedTimeframe === tf 
-                          ? "bg-primary text-black shadow-[0_0_15px_rgba(0,255,163,0.4)]" 
-                          : "text-white/40 hover:text-white hover:bg-white/5"
+                          ? "bg-primary text-black shadow-[0_0_20px_rgba(0,255,163,0.5)] scale-110" 
+                          : "text-white/40 hover:text-white hover:bg-white/10"
                       )}
                     >
                       {tf}
@@ -1236,10 +1237,12 @@ const WyckoffAnalyzer: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Live Clock */}
-                <div className="flex items-center gap-3 pr-4 pl-2 opacity-60">
-                  <Clock size={14} className="text-primary" />
-                  <span className="text-[12px] font-black text-white tabular-nums tracking-tighter">{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                {/* Status Indicator */}
+                <div className="flex items-center gap-3 pr-6 pl-2">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-black text-primary uppercase">LIVE</span>
+                    <span className="text-[12px] font-black text-white/60 tabular-nums tracking-tighter">{new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
                 </div>
 
                 {/* Search Dropdown (Contained) */}
@@ -1440,7 +1443,7 @@ const WyckoffAnalyzer: React.FC = () => {
                <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
                  <div className="flex items-center gap-2">
                    <Activity className="w-4 h-4 text-primary" />
-                   <span className="text-[13px] font-black uppercase tracking-widest text-white">ONDAS DE ELLIOTT</span>
+                   <span className="text-[13px] font-black uppercase tracking-widest text-white">ANÁLISIS HELIO</span>
                  </div>
                  <div className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase">
                    {activeElliott.pattern}
