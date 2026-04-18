@@ -188,14 +188,15 @@ const WyckoffAnalyzer: React.FC = () => {
     setLoading(true);
     try {
       const klines = await fetchKlines(selectedSymbol, selectedTimeframe, 1000);
-      setData(klines);
-      setZoomRange({ start: Math.max(0, klines.length - 50), end: klines.length - 1 });
+      const sortedKlines = [...klines].sort((a, b) => a.time - b.time);
+      setData(sortedKlines);
+      setZoomRange({ start: Math.max(0, sortedKlines.length - 50), end: sortedKlines.length - 1 });
       const ticker = await fetchTicker(selectedSymbol);
       
       const aiResponse = await analyzeMarket(selectedSymbol, ticker.price, ticker.priceChangePercent);
       
       // Real Technical Analysis Engine
-      const { results: realAnalysis, raw: rawAnalysis, indicators: indicatorData } = analyzeMarketData(klines as Candle[], selectedTimeframe);
+      const { results: realAnalysis, raw: rawAnalysis, indicators: indicatorData } = analyzeMarketData(sortedKlines as Candle[], selectedTimeframe);
       setMacdData(indicatorData.macd || null);
       
       console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
@@ -826,8 +827,10 @@ const WyckoffAnalyzer: React.FC = () => {
           polylineSeriesRef.current[key] = polySeries;
           
           visuals.points.forEach((pt, idx) => {
-            const label = pt.label || (idx < 5 ? (idx + 1).toString() : String.fromCharCode(65 + (idx - 5)));
-            const isPeak = ['1', '3', '5', 'B', 'H', 'Pico'].some(l => label.includes(l));
+            // Force 1-5, A-C numbering for structural clarity
+            const labels = ['1', '2', '3', '4', '5', 'A', 'B', 'C', 'D', 'E'];
+            const label = labels[idx] || (idx + 1).toString();
+            const isPeak = ['1', '3', '5', 'B', 'D'].includes(label);
             
             markers.push({
               time: (pt.time / 1000) as UTCTimestamp,
@@ -920,36 +923,36 @@ const WyckoffAnalyzer: React.FC = () => {
       setActiveElliott(currentElliott);
     }
 
-    // 4. Update Other Indicator Series (BB, Supertrend, etc)
-    const indicatorConfigs = [
-      { id: 'bollinger_upper', key: 'upperBB', color: '#00e0ff', dash: [3, 3] },
-      { id: 'bollinger_lower', key: 'lowerBB', color: '#00e0ff', dash: [3, 3] },
-      { id: 'supertrend', key: 'supertrend', color: '#ffcc00', dash: [] },
-      { id: 'vwap', key: 'vwap', color: '#ff00ff', dash: [] },
-    ];
+      // 4. Update Other Indicator Series (BB, Supertrend, etc)
+      const indicatorConfigs = [
+        { id: 'bollinger_upper', key: 'upperBB', color: '#00e0ff', dash: [3, 3] },
+        { id: 'bollinger_lower', key: 'lowerBB', color: '#00e0ff', dash: [3, 3] },
+        { id: 'supertrend', key: 'supertrend', color: '#ffcc00', dash: [] },
+        { id: 'vwap', key: 'vwap', color: '#ff00ff', dash: [] },
+      ];
 
-    indicatorConfigs.forEach(config => {
-      const isEnabled = config.id.startsWith('bollinger') 
-        ? indicators.find(i => i.id === 'bollinger')?.enabled 
-        : indicators.find(i => i.id === config.id)?.enabled || config.id === 'wakeup';
+      indicatorConfigs.forEach(config => {
+        const isEnabled = config.id.startsWith('bollinger') 
+          ? indicators.find(i => i.id === 'bollinger')?.enabled 
+          : indicators.find(i => i.id === config.id)?.enabled || config.id === 'wakeup';
 
-      if (isEnabled) {
-        if (!indicatorSeriesRef.current[config.id]) {
-          indicatorSeriesRef.current[config.id] = chartRef.current!.addSeries(LineSeries, {
-            color: config.color,
-            lineWidth: config.id === 'wakeup' ? 3 : 2,
-            lineStyle: config.dash.length ? 2 : 0,
-            priceLineVisible: false,
-            lastValueVisible: false,
-            title: config.id === 'wakeup' ? 'Línea Base Wyckoff' : undefined,
-          });
-        }
-        const lineData = chartData.map(d => ({
-          time: (d.time / 1000) as UTCTimestamp,
-          value: d[config.key],
-        }));
-        (indicatorSeriesRef.current[config.id] as ISeriesApi<"Line">).setData(lineData);
-      } else if (indicatorSeriesRef.current[config.id]) {
+        if (isEnabled) {
+          if (!indicatorSeriesRef.current[config.id]) {
+            indicatorSeriesRef.current[config.id] = chartRef.current!.addSeries(LineSeries, {
+              color: config.color,
+              lineWidth: config.id === 'wakeup' ? 3 : 2,
+              lineStyle: config.dash.length ? 2 : 0,
+              priceLineVisible: false,
+              lastValueVisible: false,
+              title: config.id === 'wakeup' ? 'Línea Base Wyckoff' : undefined,
+            });
+          }
+          const lineData = chartData.map(d => ({
+            time: (d.time / 1000) as UTCTimestamp,
+            value: d[config.key],
+          })).sort((a, b) => (a.time as number) - (b.time as number));
+          (indicatorSeriesRef.current[config.id] as ISeriesApi<"Line">).setData(lineData);
+        } else if (indicatorSeriesRef.current[config.id]) {
         chartRef.current!.removeSeries(indicatorSeriesRef.current[config.id]);
         delete indicatorSeriesRef.current[config.id];
       }
@@ -1680,7 +1683,53 @@ const WyckoffAnalyzer: React.FC = () => {
       </div>
     </div>
 
-    {/* Indicators and Analysis Section - Floating Control Panel */}
+            {/* Indicators and Analysis Section - Floating Control Panel */}
+            <AnimatePresence>
+              {indicators.find(i => i.id === 'ai_pro')?.enabled && (
+                <motion.div
+                  drag
+                  dragMomentum={false}
+                  initial={{ opacity: 0, x: -100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  className="absolute top-1/2 left-20 -translate-y-1/2 p-8 rounded-[3rem] bg-black/95 backdrop-blur-3xl border-4 border-primary shadow-[0_50px_100px_rgba(0,0,0,0.9)] pointer-events-auto cursor-move max-w-[450px] z-[100]"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary animate-pulse shadow-[0_0_30px_rgba(0,255,163,0.5)]">
+                      <Brain className="w-6 h-6 text-primary" />
+                    </div>
+                    <div className="flex flex-col">
+                      <h3 className="text-[20px] font-black tracking-tighter text-white uppercase leading-none">MODO DIODO IA</h3>
+                      <span className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Análisis Profundo Activo</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="p-5 rounded-3xl bg-white/5 border border-white/10">
+                      <span className="text-[10px] font-black text-white/40 uppercase tracking-widest block mb-2">Resumen Operativo</span>
+                      <p className="text-[15px] text-white/90 font-bold leading-relaxed">{wyckoffExplanation}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-2xl bg-primary/10 border border-primary/20">
+                        <span className="text-[9px] font-black text-primary uppercase block mb-1">RECO PRINCIPAL</span>
+                        <span className="text-[14px] font-black text-white">{recommendation}</span>
+                      </div>
+                      <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                        <span className="text-[9px] font-black text-white/40 uppercase block mb-1">CONFLUENCIA</span>
+                        <span className="text-[14px] font-black text-primary">ALTA (✦✦)</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 italic text-[12px] text-white/60 leading-relaxed">
+                      Este "Diodo" de inteligencia procesa 1,000 barras en tiempo real usando el motor Helio para detectar manipulaciones institucionales en {selectedTimeframe}.
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Indicators and Analysis Section - Floating Control Panel */}
     <div className="lg:col-span-12 space-y-8">
       <div className="sticky bottom-24 z-[60] flex justify-center mt-[-100px] pointer-events-none">
         <motion.div 
@@ -1702,14 +1751,14 @@ const WyckoffAnalyzer: React.FC = () => {
             {[
               { id: "patterns", label: "PATRONES", color: 'primary' },
               { id: "candles", label: "VELAS", color: 'primary' },
-              { id: "elliott", label: "ELLIOTT", color: 'primary' },
+              { id: "elliott", label: "HELIO", color: 'primary' },
               { id: "wakeup", label: "WYCKOFF", color: 'primary' },
               { id: "macd", label: "MACD", color: 'primary' },
               { id: "liquidity", label: "LIQUIDEZ", color: 'secondary' },
               { id: "levels", label: "TECHO/SUELO", color: 'secondary' },
               { id: "supertrend", label: "STREND", color: 'primary' },
               { id: "bollinger", label: "BB", color: 'primary' },
-              { id: "ai_pro", label: "✦✦", color: 'primary' }
+              { id: "ai_pro", label: "ANÁLISIS DIODO", color: 'secondary' }
             ].map(ind => {
               const config = indicators.find(i => i.id === ind.id);
               if (!config) return null;
