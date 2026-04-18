@@ -120,7 +120,9 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "elliott", name: "Ondas de Elliott", enabled: false },
     { id: "wakeup", name: "Esquema Wyckoff (ZigZag)", enabled: true },
     { id: "liquidity", name: "Zonas de Liquidez", enabled: true },
-    { id: "pivots", name: "Puntos Pivote", enabled: true },
+    { id: "pivots", name: "Pivote Central", enabled: true },
+    { id: "levels", name: "Techos y Suelos", enabled: true },
+    { id: "ai_pro", name: "✦✦", enabled: true },
   ]);
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
@@ -230,6 +232,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
       const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
       const pivotsEnabled = indicators.find(i => i.id === 'pivots')?.enabled;
+      const levelsEnabled = indicators.find(i => i.id === 'levels')?.enabled;
 
       let currentPatterns: AnalysisResult | null = null;
       let currentCandles: AnalysisResult | null = null;
@@ -243,8 +246,13 @@ const WyckoffAnalyzer: React.FC = () => {
         if (key === 'candles' && !candlesEnabled) return;
         if (key === 'elliott' && !elliottEnabled) return;
         if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
+        
+        // Handle Pivots and Levels separately
+        if (key === 'pivots' || analysis.visuals.type === 'PIVOT') {
+          if (!pivotsEnabled && !levelsEnabled) return;
+        }
+        
         if ((key === 'liquidity' || analysis.visuals.type === 'LIQUIDITY') && !liquidityEnabled) return;
-        if ((key === 'pivots' || analysis.visuals.type === 'PIVOT') && !pivotsEnabled) return;
 
         if (key === 'patterns') {
           currentPatterns = analysis;
@@ -681,6 +689,7 @@ const WyckoffAnalyzer: React.FC = () => {
       const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
       const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
       const pivotsEnabled = indicators.find(i => i.id === 'pivots')?.enabled;
+      const levelsEnabled = indicators.find(i => i.id === 'levels')?.enabled;
 
       let currentPatterns: AnalysisResult | null = null;
       let currentCandles: AnalysisResult | null = null;
@@ -704,7 +713,11 @@ const WyckoffAnalyzer: React.FC = () => {
         const isPivots = key === 'pivots' || visuals.type === 'PIVOT';
 
         if (isLiquidity && !liquidityEnabled) return;
-        if (isPivots && !pivotsEnabled) return;
+        
+        // Handle Pivots and Levels separately
+        if (isPivots) {
+          if (!pivotsEnabled && !levelsEnabled) return;
+        }
 
         // Current price lines for patterns and candles
         if ((key === 'patterns' || key === 'candles') && visuals.price) {
@@ -753,11 +766,17 @@ const WyckoffAnalyzer: React.FC = () => {
 
         if (isPivots) {
           visuals.points?.forEach(pt => {
+            const isMainPivot = pt.label === 'PIVOTE';
+            const isLevel = pt.label === 'TECHOS' || pt.label === 'SUELOS';
+            
+            if (isMainPivot && !pivotsEnabled) return;
+            if (isLevel && !levelsEnabled) return;
+
             const line = candlestickSeriesRef.current!.createPriceLine({
               price: pt.price,
-              color: '#3b82f6', // Bright Blue
-              lineWidth: 2,
-              lineStyle: 0, // Solid
+              color: isLevel ? '#3b82f6' : '#ffffff',
+              lineWidth: isLevel ? 2 : 1,
+              lineStyle: isLevel ? 0 : 2, 
               axisLabelVisible: true,
               title: pt.label || 'PUNTO PIVOTE',
             });
@@ -1424,13 +1443,13 @@ const WyckoffAnalyzer: React.FC = () => {
                 </div>
                 <div className="space-y-3">
                   {indicatorAnalysis[ind.id]?.split('\n\n').map((line, idx2) => (
-                    <div key={idx2} className="text-[12px] text-white/80 leading-relaxed font-medium">
+                    <div key={idx2} className="text-[13px] text-white/80 leading-relaxed font-medium">
                       {line.startsWith('**ANÁLISIS:**') ? (
-                        <p><span className="text-primary font-black uppercase text-[9px] tracking-wider mr-2">Análisis:</span> {line.replace('**ANÁLISIS:**', '')}</p>
+                        <p><span className="text-primary font-black uppercase text-[10px] tracking-wider mr-2">Análisis:</span> {line.replace('**ANÁLISIS:**', '')}</p>
                       ) : line.startsWith('**RECOMENDACIÓN:**') ? (
                         <div className="mt-2 p-3 rounded-xl bg-primary/10 border border-primary/20">
-                          <span className="text-primary font-black uppercase text-[9px] tracking-wider block mb-1">Recomendación:</span>
-                          <span className="text-white font-black uppercase text-[12px]">{line.replace('**RECOMENDACIÓN:**', '')}</span>
+                          <span className="text-primary font-black uppercase text-[10px] tracking-wider block mb-1">Recomendación:</span>
+                          <span className="text-white font-black uppercase text-[13px]">{line.replace('**RECOMENDACIÓN:**', '')}</span>
                         </div>
                       ) : <p>{line}</p>}
                     </div>
@@ -1450,19 +1469,19 @@ const WyckoffAnalyzer: React.FC = () => {
         <motion.div 
           drag
           dragConstraints={{ left: -500, right: 500, top: -500, bottom: 50 }}
-          className="bg-[#0b0f14]/95 backdrop-blur-3xl px-8 py-5 rounded-[2.5rem] border border-white/20 shadow-[0_-20px_100px_rgba(0,0,0,0.8)] pointer-events-auto flex items-center gap-10"
+          className="bg-[#0b0f14]/95 backdrop-blur-3xl px-6 py-4 rounded-[2.5rem] border border-white/20 shadow-[0_-20px_100px_rgba(0,0,0,0.8)] pointer-events-auto flex items-center gap-6"
         >
-          <div className="flex items-center gap-4 pr-6 border-r border-white/10 shrink-0">
-            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center border border-primary/40 shadow-[0_0_20px_rgba(0,255,163,0.2)]">
-              <Eye className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-3 pr-4 border-r border-white/10 shrink-0">
+            <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center border border-primary/40 shadow-[0_0_20px_rgba(0,255,163,0.2)]">
+              <Eye className="w-5 h-5 text-primary" />
             </div>
             <div className="hidden xl:block">
-              <h3 className="text-[13px] font-black uppercase tracking-widest text-white leading-none mb-1">CONTROLES IA</h3>
-              <p className="text-[9px] font-black text-white/40 uppercase tracking-widest">Capas inteligentes</p>
+              <h3 className="text-[11px] font-black uppercase tracking-widest text-white leading-none mb-1">CONTROLES IA</h3>
+              <p className="text-[8px] font-black text-white/40 uppercase tracking-widest">Capas inteligentes</p>
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 max-w-[1200px] justify-center">
             {[
               { id: "patterns", label: "PATRONES", color: 'primary' },
               { id: "candles", label: "VELAS", color: 'primary' },
@@ -1470,9 +1489,11 @@ const WyckoffAnalyzer: React.FC = () => {
               { id: "wakeup", label: "WYCKOFF", color: 'primary' },
               { id: "macd", label: "MACD", color: 'primary' },
               { id: "liquidity", label: "LIQUIDEZ", color: 'secondary' },
-              { id: "pivots", label: "TECHO/SUELO", color: 'secondary' },
+              { id: "levels", label: "TECHO/SUELO", color: 'secondary' },
               { id: "supertrend", label: "STREND", color: 'primary' },
-              { id: "bollinger", label: "BB", color: 'primary' }
+              { id: "bollinger", label: "BB", color: 'primary' },
+              { id: "pivots", label: "PIVOTE", color: 'secondary' },
+              { id: "ai_pro", label: "✦✦", color: 'primary' }
             ].map(ind => {
               const config = indicators.find(i => i.id === ind.id);
               if (!config) return null;
@@ -1481,7 +1502,7 @@ const WyckoffAnalyzer: React.FC = () => {
                   key={ind.id}
                   onClick={() => toggleIndicator(ind.id)}
                   className={cn(
-                    "flex items-center gap-3 px-6 py-3 rounded-2xl border text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                    "flex items-center gap-3 px-6 py-4 rounded-2xl border text-[13px] font-black uppercase tracking-widest transition-all duration-300",
                     config.enabled 
                       ? ind.color === 'secondary' 
                         ? "bg-secondary/20 border-secondary text-secondary shadow-[0_0_25px_rgba(255,113,98,0.4)] scale-105"
@@ -1490,7 +1511,7 @@ const WyckoffAnalyzer: React.FC = () => {
                   )}
                 >
                   <div className={cn(
-                    "w-2.5 h-2.5 rounded-full", 
+                    "w-3 h-3 rounded-full", 
                     config.enabled 
                       ? ind.color === 'secondary' ? "bg-secondary animate-pulse" : "bg-primary animate-pulse" 
                       : "bg-white/20"
@@ -1534,8 +1555,8 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
 
           <div className="p-6 rounded-2xl bg-surface/50 border border-outline-variant/10">
-            <span className="text-[9px] uppercase opacity-50 block mb-2 font-black tracking-widest">Explicación Estructural</span>
-            <p className="text-[12px] text-on-surface-variant leading-relaxed font-medium">
+            <span className="text-[10px] uppercase opacity-50 block mb-2 font-black tracking-widest">Explicación Estructural</span>
+            <p className="text-[13px] text-on-surface-variant leading-relaxed font-medium">
               {wyckoffExplanation || "El motor de IA está procesando los datos históricos para identificar la fase del ciclo de mercado..."}
             </p>
           </div>
@@ -1560,17 +1581,17 @@ const WyckoffAnalyzer: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(0,255,163,0.5)]" />
-                  <span className="text-[12px] font-black uppercase tracking-widest text-primary">{ind.name}</span>
+                  <span className="text-[13px] font-black uppercase tracking-widest text-primary">{ind.name}</span>
                 </div>
                 <CheckCircle2 className="w-4 h-4 text-primary" />
               </div>
               <div className="space-y-4">
                 {indicatorAnalysis[ind.id]?.split('\n\n').map((line, idx) => (
-                  <p key={idx} className="text-[12px] text-on-surface-variant leading-relaxed font-medium">
+                  <p key={idx} className="text-[13px] text-on-surface-variant leading-relaxed font-medium">
                     {line.startsWith('**ANÁLISIS:**') ? (
-                      <><span className="text-primary font-black uppercase text-[10px] tracking-wider mr-2">Análisis:</span> {line.replace('**ANÁLISIS:**', '')}</>
+                      <><span className="text-primary font-black uppercase text-[11px] tracking-wider mr-2">Análisis:</span> {line.replace('**ANÁLISIS:**', '')}</>
                     ) : line.startsWith('**RECOMENDACIÓN:**') ? (
-                      <><span className="text-primary font-black uppercase text-[10px] tracking-wider mr-2">Recomendación:</span> {line.replace('**RECOMENDACIÓN:**', '')}</>
+                      <><span className="text-primary font-black uppercase text-[11px] tracking-wider mr-2">Recomendación:</span> {line.replace('**RECOMENDACIÓN:**', '')}</>
                     ) : line}
                   </p>
                 ))}
