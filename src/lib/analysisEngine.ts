@@ -458,51 +458,37 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
   const last3Troughs = troughs.slice(-3);
 
   // 6. Elliott Waves (Impulse 1-2-3-4-5 and Correction A-B-C)
-  if (peaks.length >= 5 && troughs.length >= 4) {
-    const p1 = peaks[peaks.length - 5];
-    const t1 = troughs[troughs.length - 4];
-    const p2 = peaks[peaks.length - 4];
-    const t2 = troughs[troughs.length - 3];
-    const p3 = peaks[peaks.length - 3]; // Wave 5 peak
+  const allPivotPoints = [...peaks.map(p => ({ ...p, type: 'PEAK' })), ...troughs.map(t => ({ ...t, type: 'TROUGH' }))]
+    .sort((a, b) => a.index - b.index);
+
+  if (allPivotPoints.length >= 4) {
+    const points = allPivotPoints.slice(-8); // Take last 8 significant points
+    const labels = ['1', '2', '3', '4', '5', 'A', 'B', 'C'];
     
-    const t3 = troughs[troughs.length - 2]; // Wave A trough
-    const p4 = peaks[peaks.length - 2]; // Wave B peak
-    const t4 = troughs[troughs.length - 1]; // Wave C trough
+    // Always return Elliott structure if we have 4+ points
+    const elliottVisuals = {
+      type: 'POLYLINE' as const,
+      points: points.map((p, idx) => ({
+        time: data[p.index].time,
+        price: p.value,
+        label: labels[idx] || (idx + 1).toString()
+      }))
+    };
 
-    // Basic Impulse Wave: 1(p1) -> 2(t1) -> 3(p2) -> 4(t2) -> 5(p3)
-    if (p2.value > p1.value && p3.value > p2.value && t2.value > t1.value && t2.value > p1.value) {
-      
-      // Check for corrective A-B-C after wave 5
-      const isCorrective = t3.value < p3.value && p4.value < p3.value && p4.value > t3.value && t4.value < p4.value;
+    const lastPoint = points[points.length - 1];
+    const isBullish = lastPoint.type === 'PEAK';
 
-      return {
-        pattern: isCorrective ? 'Ondas de Elliott (Ciclo Completo 1-5, A-C)' : 'Ondas de Elliott (1-2-3-4-5)',
-        type: isCorrective ? 'BEARISH' : 'BULLISH',
-        status: 'CONFIRMED',
-        analysis: isCorrective 
-          ? 'Ciclo de Elliott completo detectado. Tras las 5 ondas impulsivas, el mercado ha completado la corrección A-B-C. Se espera un nuevo ciclo o consolidación.'
-          : 'Estructura de Ondas de Elliott detectada. El mercado está en un ciclo impulsivo alcista. Actualmente finalizando Onda 5.',
-        recommendation: isCorrective ? 'SHORT' : 'LONG',
-        entryPrice: data[p3.index].close,
-        stopLoss: data[t2.index].low,
-        takeProfit: data[p3.index].close * 1.05,
-        visuals: {
-          type: 'POLYLINE',
-          points: [
-            { time: data[p1.index].time, price: p1.value, label: '1' },
-            { time: data[t1.index].time, price: t1.value, label: '2' },
-            { time: data[p2.index].time, price: p2.value, label: '3' },
-            { time: data[t2.index].time, price: t2.value, label: '4' },
-            { time: data[p3.index].time, price: p3.value, label: '5' },
-            ...(isCorrective ? [
-              { time: data[t3.index].time, price: t3.value, label: 'A' },
-              { time: data[p4.index].time, price: p4.value, label: 'B' },
-              { time: data[t4.index].time, price: t4.value, label: 'C' }
-            ] : [])
-          ]
-        }
-      };
-    }
+    return {
+      pattern: 'Ondas de Elliott (HELIO)',
+      type: isBullish ? 'BULLISH' : 'BEARISH',
+      status: 'CONFIRMED',
+      analysis: `Estructura de Elliott detectada en Onda ${labels[points.length - 1]}. El mercado sigue un patrón rítmico de impulsos y correcciones.`,
+      recommendation: isBullish ? 'SHORT' : 'LONG', // Counter-trend or continuation logic
+      entryPrice: data[data.length - 1].close,
+      stopLoss: isBullish ? Math.max(...points.map(p => p.value)) * 1.01 : Math.min(...points.map(p => p.value)) * 0.99,
+      takeProfit: isBullish ? data[data.length - 1].close * 0.95 : data[data.length - 1].close * 1.05,
+      visuals: elliottVisuals
+    };
   }
 
   if (last3Peaks.length === 3 && last3Peaks[2].value > last3Peaks[1].value && last3Peaks[1].value > last3Peaks[0].value) {

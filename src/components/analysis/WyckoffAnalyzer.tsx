@@ -647,7 +647,7 @@ const WyckoffAnalyzer: React.FC = () => {
       high: d.high,
       low: d.low,
       close: d.close,
-    }));
+    })).sort((a, b) => (a.time as number) - (b.time as number));
     candlestickSeriesRef.current.setData(formattedData);
 
     if (lastSymbolRef.current !== selectedSymbol || lastTimeframeRef.current !== selectedTimeframe) {
@@ -811,8 +811,8 @@ const WyckoffAnalyzer: React.FC = () => {
 
         if (key === 'elliott' && visuals.points) {
           const polySeries = chartRef.current!.addSeries(LineSeries, {
-            color: '#ffffff',
-            lineWidth: 3,
+            color: '#ffffff', // Blanco puro
+            lineWidth: 2,
             lineStyle: 0,
             priceLineVisible: false,
             lastValueVisible: false,
@@ -821,15 +821,13 @@ const WyckoffAnalyzer: React.FC = () => {
           const lineData = visuals.points.map(pt => ({
             time: (pt.time / 1000) as UTCTimestamp,
             value: pt.price
-          }));
+          })).sort((a, b) => (a.time as number) - (b.time as number));
           
           polySeries.setData(lineData);
           polylineSeriesRef.current[key] = polySeries;
           
-          visuals.points.forEach((pt, idx) => {
-            // Force 1-5, A-C numbering for structural clarity
-            const labels = ['1', '2', '3', '4', '5', 'A', 'B', 'C', 'D', 'E'];
-            const label = labels[idx] || (idx + 1).toString();
+          visuals.points.forEach((pt) => {
+            const label = pt.label || '?';
             const isPeak = ['1', '3', '5', 'B', 'D'].includes(label);
             
             markers.push({
@@ -1441,28 +1439,84 @@ const WyckoffAnalyzer: React.FC = () => {
                initial={{ opacity: 0, x: 20 }}
                animate={{ opacity: 1, x: 0 }}
                exit={{ opacity: 0, x: 20 }}
-               className="absolute bottom-24 left-10 p-5 rounded-2xl backdrop-blur-xl border border-white/20 bg-[#0b0f14]/80 shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto cursor-move max-w-[320px] font-sans z-[30]"
+               className="absolute bottom-14 right-14 p-6 rounded-[2.5rem] backdrop-blur-3xl border-2 border-white/30 bg-[#0b0f14]/90 shadow-[0_40px_80px_rgba(0,0,0,0.8)] pointer-events-auto cursor-move w-[380px] font-sans z-[30]"
              >
-               <div className="flex items-center justify-between mb-3 border-b border-white/5 pb-2">
-                 <div className="flex items-center gap-2">
-                   <Activity className="w-4 h-4 text-primary" />
-                   <span className="text-[13px] font-black uppercase tracking-widest text-white">ANÁLISIS HELIO</span>
-                 </div>
-                 <div className="px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase">
-                   {activeElliott.pattern}
-                 </div>
-               </div>
-               <p className="text-[14px] text-on-surface-variant leading-relaxed mb-4 font-medium">{activeElliott.analysis}</p>
-               <div className="space-y-3">
-                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/20">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary block mb-1">Recomendación Maestra</span>
-                    <p className="text-[12px] font-bold text-white uppercase tracking-tight">{activeElliott.recommendation === 'LONG' ? 'POSICIÓN LARGA - BUSCAR COMPRAS' : 'POSICIÓN CORTA - BUSCAR RECHAZO'}</p>
-                 </div>
-                 <div className="flex items-center gap-2 p-2 rounded-lg bg-white/5 italic text-[11px] text-on-surface-variant/70">
-                   <Info size={14} />
-                   <span>Vigilar niveles 1-5 y A-B-C para confirmación estructural.</span>
-                 </div>
-               </div>
+                <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/20">
+                      <Brain className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-[14px] font-black uppercase tracking-[0.2em] text-white leading-tight">HELIO · ELLIOTT WAVES</h3>
+                      <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{activeElliott?.type === 'BULLISH' ? 'Tendencia Alcista' : 'Tendencia Bajista'}</span>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "px-3 py-1 rounded-full text-[10px] font-black uppercase border",
+                    activeElliott?.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border-secondary/30"
+                  )}>
+                    {activeElliott?.type}
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Wave Diagram Mini */}
+                  <div className="flex items-end justify-between px-4 h-16 mb-4">
+                    {['1', '2', '3', '4', '5', 'A', 'B', 'C'].map((wave, i) => {
+                      const isActive = activeElliott?.visuals?.points?.[activeElliott.visuals.points.length - 1]?.label === wave;
+                      return (
+                        <div key={wave} className="flex flex-col items-center gap-2">
+                          <div className={cn(
+                            "w-1 rounded-t-full transition-all duration-500",
+                            isActive ? "bg-primary h-12 shadow-[0_0_15px_#00ffa3]" : "bg-white/10 h-6",
+                            i % 2 === 0 ? "mt-4" : "mb-4"
+                          )} />
+                          <span className={cn("text-[10px] font-black", isActive ? "text-primary scale-125" : "text-white/20")}>{wave}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+                      <span className="text-[11px] font-black text-white/40 uppercase tracking-widest block mb-2">Estado de la Onda</span>
+                      <p className="text-[14px] text-white leading-relaxed font-bold italic">
+                        {activeElliott?.analysis}
+                      </p>
+                    </div>
+
+                    <div className="p-5 rounded-3xl bg-primary/10 border-2 border-primary/30 shadow-[inset_0_0_30px_rgba(0,255,163,0.1)]">
+                       <div className="flex items-center gap-2 mb-3">
+                         <Zap size={16} className="text-primary" />
+                         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">RECOMENDACIÓN DE ENTRADA</span>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 gap-2 mb-4">
+                          <div className="flex justify-between items-center text-[13px]">
+                            <span className="text-white/40 font-black uppercase">Entrada</span>
+                            <span className="text-white font-black">${activeElliott?.entryPrice?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[13px]">
+                            <span className="text-secondary/60 font-black uppercase">Stop Loss</span>
+                            <span className="text-secondary font-black">${activeElliott?.stopLoss?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[13px]">
+                            <span className="text-primary/60 font-black uppercase">Take Profit</span>
+                            <span className="text-primary font-black">${activeElliott?.takeProfit?.toLocaleString()}</span>
+                          </div>
+                       </div>
+
+                       <p className="text-[12px] font-medium text-white/80 leading-relaxed border-t border-primary/10 pt-3">
+                         {activeElliott?.recommendation === 'LONG' ? '⚡ Buscar compras en niveles de retroceso. Estructura impulsiva potente.' : '⚡ Buscar rechazo. La estructura sugiere una onda correctiva en curso.'}
+                       </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 justify-center">
+                      <Info size={14} className="text-white/40" />
+                      <span className="text-[11px] text-white/40 font-black uppercase tracking-widest">Confirma con volumen antes de entrar</span>
+                    </div>
+                  </div>
+                </div>
              </motion.div>
           )}
         </AnimatePresence>
