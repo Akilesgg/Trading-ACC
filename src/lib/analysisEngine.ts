@@ -719,27 +719,44 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     }
   };
 
-  // 6. Pivot Points (Standard)
-  const lastWindow = data.slice(-20);
-  const windowHigh = Math.max(...lastWindow.map(c => c.high));
-  const windowLow = Math.min(...lastWindow.map(c => c.low));
-  const windowClose = lastWindow[lastWindow.length - 1].close;
-  const pivot = (windowHigh + windowLow + windowClose) / 3;
-  const r1 = (2 * pivot) - windowLow;
-  const s1 = (2 * pivot) - windowHigh;
+  // 6. Support and Resistance Levels (Techo/Suelo Reales)
+  const windowSize = Math.max(5, Math.floor(data.length / 15));
+  const detectedPeaks = [];
+  const detectedTroughs = [];
 
-  raw['pivots'] = {
-    pattern: 'Puntos Pivote',
+  for (let i = windowSize; i < highs.length - windowSize; i++) {
+    const sliceH = highs.slice(i - windowSize, i + windowSize + 1);
+    const sliceL = lows.slice(i - windowSize, i + windowSize + 1);
+    if (highs[i] === Math.max(...sliceH)) detectedPeaks.push(highs[i]);
+    if (lows[i] === Math.min(...sliceL)) detectedTroughs.push(lows[i]);
+  }
+
+  const clusterLevels = (levels: number[]) => {
+    const clustered: number[] = [];
+    levels.sort((a, b) => a - b).forEach(l => {
+      const existing = clustered.find(c => Math.abs(c - l) / l < 0.003);
+      if (!existing) clustered.push(l);
+    });
+    return clustered;
+  };
+
+  const finalResistances = clusterLevels(detectedPeaks.filter(p => p > data[data.length-1].close)).slice(0, 3);
+  const finalSupports = clusterLevels(detectedTroughs.filter(t => t < data[data.length-1].close)).reverse().slice(0, 3);
+
+  raw['levels'] = {
+    pattern: 'Techos/Suelos Reales',
     type: 'NEUTRAL',
     status: 'CONFIRMED',
-    analysis: `Puntos pivote calculados sobre el rango reciente. R1: ${r1.toFixed(2)}, S1: ${s1.toFixed(2)}.`,
+    analysis: `Análisis de niveles estructurales. Resistencias en ${finalResistances.map(r => r.toFixed(2)).join(', ')}. Soportes en ${finalSupports.map(s => s.toFixed(2)).join(', ')}.`,
     recommendation: 'WAIT',
+    entryPrice: finalSupports[0] || 0,
+    stopLoss: (finalSupports[0] || 0) * 0.993,
+    takeProfit: finalResistances[0] || 0,
     visuals: {
       type: 'PIVOT',
       points: [
-        { time: data[data.length - 1].time, price: pivot, label: 'PIVOTE' },
-        { time: data[data.length - 1].time, price: r1, label: 'TECHOS' },
-        { time: data[data.length - 1].time, price: s1, label: 'SUELOS' }
+        ...finalResistances.map((r, i) => ({ time: data[data.length-1].time, price: r, label: `R${i+1}` })),
+        ...finalSupports.map((s, i) => ({ time: data[data.length-1].time, price: s, label: `S${i+1}` }))
       ]
     }
   };

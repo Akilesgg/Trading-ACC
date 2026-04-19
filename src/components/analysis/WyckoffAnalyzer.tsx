@@ -127,6 +127,78 @@ const WyckoffAnalyzer: React.FC = () => {
   const [activeElliott, setActiveElliott] = useState<AnalysisResult | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [rawAnalysisData, setRawAnalysisData] = useState<Record<string, any>>({});
+  const [drawingTool, setDrawingTool] = useState<'none'|'hline'|'trendline'|'text'|'erase'>('none');
+  const [drawnLines, setDrawnLines] = useState<any[]>([]);
+  const drawnSeriesRef = useRef<any[]>([]);
+  const drawingInProgressRef = useRef<any>(null);
+
+  const clearDrawings = () => {
+    drawnLines.forEach(l => {
+      try { candlestickSeriesRef.current?.removePriceLine(l); } catch(e) {}
+    });
+    drawnSeriesRef.current.forEach(s => {
+      try { chartRef.current?.removeSeries(s); } catch(e) {}
+    });
+    setDrawnLines([]);
+    drawnSeriesRef.current = [];
+    setDrawingTool('none');
+  };
+
+  useEffect(() => {
+    if (!chartRef.current || !candlestickSeriesRef.current) return;
+    
+    const chart = chartRef.current;
+    
+    const handleChartClick = (param: any) => {
+      if (!param.point || !param.time || drawingTool === 'none') return;
+      const price = candlestickSeriesRef.current!.coordinateToPrice(param.point.y);
+      if (!price) return;
+
+      if (drawingTool === 'hline') {
+        const line = candlestickSeriesRef.current!.createPriceLine({
+          price,
+          color: '#ffffff',
+          lineWidth: 2,
+          lineStyle: 0,
+          axisLabelVisible: true,
+          title: 'H-Line'
+        });
+        setDrawnLines(prev => [...prev, line]);
+      } else if (drawingTool === 'trendline') {
+        if (!drawingInProgressRef.current) {
+          drawingInProgressRef.current = { time: param.time, price };
+        } else {
+          const trendSeries = chart.addSeries(LineSeries, { 
+            color: '#ffffff', 
+            lineWidth: 2,
+            priceLineVisible: false,
+            lastValueVisible: false
+          });
+          trendSeries.setData([
+            { time: drawingInProgressRef.current.time, value: drawingInProgressRef.current.price },
+            { time: param.time, value: price }
+          ]);
+          drawnSeriesRef.current.push(trendSeries);
+          drawingInProgressRef.current = null;
+        }
+      } else if (drawingTool === 'text') {
+        const text = prompt("Ingrese nota:");
+        if (text) {
+          const line = candlestickSeriesRef.current!.createPriceLine({
+            price,
+            color: 'rgba(255, 255, 255, 0.2)', // Faint color
+            lineWidth: 1,
+            axisLabelVisible: false,
+            title: text
+          });
+          setDrawnLines(prev => [...prev, line]);
+        }
+      }
+    };
+
+    chart.subscribeClick(handleChartClick);
+    return () => chart.unsubscribeClick(handleChartClick);
+  }, [drawingTool]);
 
   const handleManualRefresh = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -793,16 +865,17 @@ const WyckoffAnalyzer: React.FC = () => {
           return;
         }
 
-        if (key === 'levels' && visuals.points) {
-          visuals.points.forEach(pt => {
-            if (pt.label === 'PIVOTE') return; // Skip central pivot as requested
+        if (analysis.visuals.type === 'PIVOT' || key === 'levels') {
+          visuals.points.forEach((pt: any) => {
+            const isRes = pt.label.startsWith('R');
+            const color = isRes ? '#ff7162' : '#00ffa3';
             const line = candlestickSeriesRef.current!.createPriceLine({
               price: pt.price,
-              color: '#38bdf8',
+              color,
               lineWidth: 2,
-              lineStyle: 0,
+              lineStyle: 2,
               axisLabelVisible: true,
-              title: pt.label || 'NIVEL CLAVE',
+              title: `${pt.label} $${pt.price.toLocaleString()}`
             });
             priceLinesRef.current.push(line);
           });
@@ -811,7 +884,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
         if (key === 'elliott' && visuals.points) {
           const polySeries = chartRef.current!.addSeries(LineSeries, {
-            color: '#ffffff', // Blanco puro
+            color: '#ffffff',
             lineWidth: 2,
             lineStyle: 0,
             priceLineVisible: false,
@@ -828,16 +901,51 @@ const WyckoffAnalyzer: React.FC = () => {
           
           visuals.points.forEach((pt) => {
             const label = pt.label || '?';
-            const isPeak = ['1', '3', '5', 'B', 'D'].includes(label);
+            const isImpulse = ['1', '3', '5'].includes(label);
+            const isCorrection = ['2', '4', 'A', 'C'].includes(label);
+            const isB = label === 'B';
+
+            let color = '#ffffff';
+            if (isImpulse) color = '#00ffa3';
+            if (isCorrection) color = '#ff7162';
             
+            // Marker
             markers.push({
               time: (pt.time / 1000) as UTCTimestamp,
-              position: isPeak ? 'aboveBar' : 'belowBar',
-              color: '#ffffff',
+              position: (isImpulse || isB) ? 'aboveBar' : 'belowBar',
+              color,
               shape: 'circle',
               text: label,
-              size: 2
+              size: 3
             });
+
+            // Price Line
+            const pLine = polySeries.createPriceLine({
+              price: pt.price,
+              color,
+              lineWidth: 1,
+              lineStyle: 2, // Dashed
+              axisLabelVisible: true,
+              title: `Onda ${label}`
+            });
+            priceLinesRef.current.push(pLine);
+          });
+          return;
+        }
+
+        if (analysis.visuals.type === 'PIVOT') {
+          visuals.points.forEach((pt: any) => {
+            const isRes = pt.label.startsWith('R');
+            const color = isRes ? '#ff7162' : '#00ffa3';
+            const line = candlestickSeriesRef.current!.createPriceLine({
+              price: pt.price,
+              color,
+              lineWidth: 2,
+              lineStyle: 2,
+              axisLabelVisible: true,
+              title: `${pt.label} $${pt.price.toLocaleString()}`
+            });
+            priceLinesRef.current.push(line);
           });
           return;
         }
@@ -1193,6 +1301,27 @@ const WyckoffAnalyzer: React.FC = () => {
             ref={chartContainerRef}
             className="w-full h-[800px] rounded-[2.5rem] bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
           >
+            {/* Drawing Toolbar */}
+            <div className="absolute top-4 right-4 flex items-center gap-1 p-1 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 z-[40]">
+              {[
+                { id: 'hline', icon: '—', label: 'H-Line' },
+                { id: 'trendline', icon: '↗', label: 'Trend' },
+                { id: 'text', icon: 'T', label: 'Text' },
+                { id: 'erase', icon: '✕', label: 'Clear' }
+              ].map(tool => (
+                <button
+                  key={tool.id}
+                  onClick={() => tool.id === 'erase' ? clearDrawings() : setDrawingTool(prev => prev === tool.id ? 'none' : tool.id as any)}
+                  className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center text-[16px] font-bold transition-all",
+                    drawingTool === tool.id ? "bg-primary/20 text-primary border border-primary/40" : "text-white/40 hover:text-white"
+                  )}
+                  title={tool.label}
+                >
+                  {tool.icon}
+                </button>
+              ))}
+            </div>
             {/* Draggable Command Center Overlay - Fixed to screen for absolute persistence */}
             <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] pointer-events-none w-full flex justify-center">
               <motion.div 
