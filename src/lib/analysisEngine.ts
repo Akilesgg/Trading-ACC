@@ -675,21 +675,21 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     const descriptions: Record<string, string> = {
       '1': 'CONFLUENCIA ELLIOTT: Inicio del primer impulso motriz institucional. Se detecta una ruptura estructural de la tendencia previa con un incremento marginal en el volumen de negociación. La psicología del mercado aún es de duda, lo que ofrece un ratio riesgo/beneficio excepcional para entradas anticipadas.',
       '2': 'CONFLUENCIA ELLIOTT: Fase de retroceso correctivo técnico (Pullback). El precio está mitigando el desequilibrio generado por la Onda 1 sin invalidar su origen. Es una zona de "compra de valor" donde las manos fuertes acumulan posiciones antes de la expansión más agresiva del ciclo.',
-      '3': 'CONFLUENCIA ELLIOTT: Estamos en la "Onda Maestra", la fase de expansión más potente y extendida del ciclo Helio. Se caracteriza por un momentum vertical impulsado por gap institucional. Es imperativo mantener posiciones largas ya que el precio suele alcanzar extensiones de 1.618 Fibonacci.',
+      '3': 'CONFLUENCIA ELLIOTT: Estamos en la "Onda Maestra", la fase de expansión más potente y extendida del ciclo Helium-3. Se caracteriza por un momentum vertical impulsado por gap institucional. Es imperativo mantener posiciones largas ya que el precio suele alcanzar extensiones de 1.618 Fibonacci.',
       '4': 'CONFLUENCIA ELLIOTT: Consolidación lateral compleja. El mercado está respirando tras el rally de la Onda 3. Se observa una rotación de liquidez y toma de beneficios parcial. Mientras el precio no penetre el territorio de la Onda 1, la estructura impulsiva permanece intacta y lista para el impulso final.',
       '5': 'CONFLUENCIA ELLIOTT: Quinta onda de agotamiento en curso. El precio marca nuevos máximos pero con divergencias bajistas en el oscilador MACD. Se recomienda cautela extrema y ajuste de stop-loss a niveles protectores (Trail SL), ya que el ciclo motriz está llegando a su clímax.',
       'A': 'CONFLUENCIA ELLIOTT: Primera señal de capitulación institucional. La pérdida de la línea de tendencia de la Onda 5 confirma el inicio del ciclo correctivo ABC. El sentimiento alcista está atrapado y se espera que la oferta domine las próximas sesiones.',
       'B': 'CONFLUENCIA ELLIOTT: Rebote técnico de trampa alcista (Dead Cat Bounce). El precio intenta recuperar niveles previos pero sin volumen de respaldo. Es el punto óptimo para cerrar largos remanentes o iniciar coberturas cortas antes de la capitulación final de la Onda C.',
-      'C': 'CONFLUENCIA ELLIOTT: Fase final de purga de liquidez. La Onda C suele expandirse con fuerza hasta niveles de soporte macro, eliminando el exceso de apalancamiento del ciclo anterior. Una vez finalizada, se espera el inicio de un nuevo ciclo de acumulación Helio.'
+      'C': 'CONFLUENCIA ELLIOTT: Fase final de purga de liquidez. La Onda C suele expandirse con fuerza hasta niveles de soporte macro, eliminando el exceso de apalancamiento del ciclo anterior. Una vez finalizada, se espera el inicio de un nuevo ciclo de acumulación Helium-3.'
     };
 
     const isBull = finalWaves.filter(w => ['1', '3', '5'].includes(w.label)).length >= finalWaves.filter(w => ['A', 'C'].includes(w.label)).length;
 
     raw['elliott'] = {
-      pattern: 'Ondas de Elliott (Helio)',
+      pattern: 'Ondas de Elliott (Helium-3)',
       type: isBull ? 'BULLISH' : 'BEARISH',
       status: 'CONFIRMED',
-      analysis: descriptions[lastPoint.label] || 'Ciclo de Elliott en desarrollo.',
+      analysis: descriptions[lastPoint.label] || 'Ciclo de Elliott Helium-3 en desarrollo.',
       recommendation: isBull ? 'LONG' : 'SHORT',
       entryPrice: et[et.length - 1]?.price || data[data.length-1].close,
       stopLoss: (et[et.length - 2]?.price || data[data.length-1].low) * 0.995,

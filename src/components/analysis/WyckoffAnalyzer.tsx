@@ -892,7 +892,7 @@ const WyckoffAnalyzer: React.FC = () => {
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
 
-            // POINT-ON-LINE LABELS: Ultra-prominent labels at the midpoint of EACH wave segment
+            // POINT-ON-LINE LABELS: Thicker and more visible text attached to the Helium-3 structure
             const midTimeValue = (prevPt.time + pt.time) / 2;
             const nearestCandle = chartData.reduce((prev, curr) => 
               Math.abs(curr.time - midTimeValue) < Math.abs(prev.time - midTimeValue) ? curr : prev
@@ -902,14 +902,14 @@ const WyckoffAnalyzer: React.FC = () => {
             markers.push({
               time: (nearestCandle.time / 1000) as UTCTimestamp,
               position: 'inBar',
-              color: '#00ffa3', // Bright Cyan
+              color: '#ffff00', // Matches active line for consistency
               shape: 'circle',
-              text: lineLabel,
-              size: 4 // Large marker
+              text: `ONDA ${lineLabel}`,
+              size: 2
             });
           });
 
-          // Vertex markers: Large white labels
+          // Vertex markers: High-visibility labels on the corresponding bars
           visuals.points.forEach((pt, i) => {
             const label = pt.label || '?';
             const isAbove = ['1', '3', '5', 'B'].includes(label);
@@ -919,7 +919,7 @@ const WyckoffAnalyzer: React.FC = () => {
               position: isAbove ? 'aboveBar' : 'belowBar',
               color: '#ffffff',
               shape: 'square',
-              text: label,
+              text: `【 ${label} 】`, // Even more prominent brackets
               size: 4
             });
 
@@ -1675,28 +1675,28 @@ const WyckoffAnalyzer: React.FC = () => {
               </motion.div>
             )}
 
-            {activeElliott && indicators.find(i => i.id === 'elliott')?.enabled && (
-               <motion.div
-                 drag
-                 dragMomentum={false}
-                 dragConstraints={chartContainerRef}
-                 initial={{ opacity: 0, scale: 0.9, x: 100 }}
-                 animate={{ opacity: 1, scale: 1, x: 0 }}
-                 exit={{ opacity: 0, scale: 0.9 }}
-                 className="absolute bottom-10 right-10 p-0 rounded-[2.5rem] backdrop-blur-3xl border-2 border-white/20 bg-[#0b0f14]/95 shadow-[0_40px_120px_rgba(0,0,0,0.9)] pointer-events-auto cursor-move w-[420px] z-[50] overflow-hidden"
-               >
-                  {/* Panel Header */}
-                  <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-primary/5 to-transparent">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(0,255,163,0.1)]">
-                          <Brain className="w-7 h-7 text-primary" />
-                        </div>
-                        <div className="flex flex-col">
-                          <h3 className="text-[16px] font-black uppercase tracking-[0.2em] text-white leading-tight">HELIO · ELLIOTT WAVES</h3>
-                          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1 opacity-60">SISTEMA DE ANÁLISIS DE ONDAS</span>
-                        </div>
-                      </div>
+             {activeElliott && indicators.find(i => i.id === 'elliott')?.enabled && (
+                <motion.div
+                  drag
+                  dragMomentum={false}
+                  dragConstraints={chartContainerRef}
+                  initial={{ opacity: 0, scale: 0.9, y: 50 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="absolute top-24 right-10 p-0 rounded-[2.5rem] backdrop-blur-3xl border-2 border-primary/50 bg-[#0b0f14]/95 shadow-[0_40px_120px_rgba(0,0,0,0.6)] pointer-events-auto cursor-move w-[420px] z-[80] overflow-hidden"
+                >
+                   {/* Panel Header */}
+                   <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-primary/10 to-transparent">
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                         <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center border-2 border-primary shadow-[0_0_20px_rgba(0,255,163,0.3)]">
+                           <Brain className="w-7 h-7 text-primary" />
+                         </div>
+                         <div className="flex flex-col">
+                           <h3 className="text-[16px] font-black uppercase tracking-[0.2em] text-white leading-tight">HELIUM-3 · ELLIOTT WAVES</h3>
+                           <span className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">SISTEMA CUÁNTICO DE ANÁLISIS</span>
+                         </div>
+                       </div>
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "w-fit h-fit px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border",
