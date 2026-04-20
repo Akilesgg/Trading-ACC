@@ -891,8 +891,21 @@ const WyckoffAnalyzer: React.FC = () => {
             ].sort((a,b) => (a.time as number) - (b.time as number));
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
+
+            // MIDPOINT LABEL for the line segment identification
+            const midTime = (prevPt.time + pt.time) / 2;
+            const label = pt.label || '?';
+            markers.push({
+              time: (midTime / 1000) as UTCTimestamp,
+              position: 'inBar',
+              color: '#ffffff',
+              shape: 'square',
+              text: label, // Just the ID for cleaner look on segments
+              size: 1
+            });
           });
 
+          // Vertex markers and price lines
           visuals.points.forEach((pt, i) => {
             const isLast = i === visuals.points.length - 1;
             const label = pt.label || '?';
@@ -908,7 +921,7 @@ const WyckoffAnalyzer: React.FC = () => {
               color,
               shape: 'square',
               text: label,
-              size: 2
+              size: 4 // Larger vertex labels
             });
 
             const pLine = candlestickSeriesRef.current!.createPriceLine({
@@ -917,7 +930,7 @@ const WyckoffAnalyzer: React.FC = () => {
               lineWidth: 1,
               lineStyle: 2,
               axisLabelVisible: true,
-              title: `${label}${isLast ? ' (ACTUAL)' : ''}`
+              title: `${label}`
             });
             priceLinesRef.current.push(pLine);
           });
