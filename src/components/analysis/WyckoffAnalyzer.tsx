@@ -906,9 +906,9 @@ const WyckoffAnalyzer: React.FC = () => {
               time: (pt.time / 1000) as UTCTimestamp,
               position: isAbove ? 'aboveBar' : 'belowBar',
               color,
-              shape: 'circle',
+              shape: 'square',
               text: label,
-              size: 3
+              size: 2
             });
 
             const pLine = candlestickSeriesRef.current!.createPriceLine({
@@ -1224,7 +1224,9 @@ const WyckoffAnalyzer: React.FC = () => {
                              <Target className="w-5 h-5 text-primary" />
                              <span className="text-[13px] font-black uppercase tracking-widest text-white">Setup Optimizado</span>
                           </div>
-                          <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-[10px] font-black border border-primary/30 uppercase">{selectedTimeframe}</span>
+                          <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary text-[10px] font-black border border-primary/30 uppercase flex items-center justify-center">
+                            {selectedTimeframe}
+                          </div>
                         </div>
 
                         <div className="space-y-2">
@@ -1278,16 +1280,16 @@ const WyckoffAnalyzer: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-3 gap-2">
                           {[
                             { label: 'TP 1', val: signal.tp1 },
                             { label: 'TP 2', val: signal.tp2 },
                             { label: 'TP 3', val: signal.tp3 }
                           ].map((tp, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-center relative overflow-hidden group">
+                            <div key={i} className="py-2 px-1 rounded-xl bg-primary/10 border border-primary/20 text-center relative overflow-hidden group">
                               <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              <span className="text-[9px] font-black text-primary uppercase block mb-1">{tp.label}</span>
-                              <span className="text-[13px] font-black text-white relative z-10">${tp.val.toLocaleString()}</span>
+                              <span className="text-[8px] font-black text-primary uppercase block">{tp.label}</span>
+                              <span className="text-[12px] font-black text-white relative z-10">${tp.val.toLocaleString()}</span>
                             </div>
                           ))}
                         </div>
