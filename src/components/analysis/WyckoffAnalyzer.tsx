@@ -1613,9 +1613,9 @@ const WyckoffAnalyzer: React.FC = () => {
                       <span className="text-[10px] uppercase opacity-40 block font-black mb-1">Objetivo (TP)</span>
                       <span className="text-[14px] font-bold text-primary font-mono">${activePatterns.takeProfit?.toLocaleString()}</span>
                     </div>
-                 {/* Redundant Elliott Box Removed */}                  </div>
-                </div>
-             </motion.div>
+                  </div>
+                )}
+              </motion.div>
           )}
         </AnimatePresence>
       </div>
