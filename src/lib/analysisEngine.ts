@@ -663,10 +663,13 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
       }
     }
 
-    const finalWaves = filteredWaves.slice(-8).map((p, i) => ({
+    const wavesToLabel = filteredWaves.slice(-9); 
+    const labels = ['', '1', '2', '3', '4', '5', 'A', 'B', 'C'];
+    
+    const finalWaves = wavesToLabel.map((p, i) => ({
       ...p,
-      label: waveLabels[i]
-    }));
+      label: labels[i]
+    })).filter(w => w.label !== '');
 
     const lastPoint = finalWaves[finalWaves.length - 1];
     const descriptions: Record<string, string> = {
@@ -680,7 +683,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
       'C': 'CONFLUENCIA ELLIOTT: Fase final de purga de liquidez. La Onda C suele expandirse con fuerza hasta niveles de soporte macro, eliminando el exceso de apalancamiento del ciclo anterior. Una vez finalizada, se espera el inicio de un nuevo ciclo de acumulación Helio.'
     };
 
-    const isBull = finalWaves.filter(w => ['1', '3', '5'].includes(w.label)).length > finalWaves.filter(w => ['A', 'C'].includes(w.label)).length;
+    const isBull = finalWaves.filter(w => ['1', '3', '5'].includes(w.label)).length >= finalWaves.filter(w => ['A', 'C'].includes(w.label)).length;
 
     raw['elliott'] = {
       pattern: 'Ondas de Elliott (Helio)',

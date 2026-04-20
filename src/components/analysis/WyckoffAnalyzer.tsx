@@ -891,29 +891,15 @@ const WyckoffAnalyzer: React.FC = () => {
             ].sort((a,b) => (a.time as number) - (b.time as number));
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
-
-            // MIDPOINT LABEL for the line segment identification
-            const midTime = (prevPt.time + pt.time) / 2;
-            const label = pt.label || '?';
-            markers.push({
-              time: (midTime / 1000) as UTCTimestamp,
-              position: 'inBar',
-              color: '#ffffff',
-              shape: 'square',
-              text: `Onda ${label}`, // More explicit labeling on lines
-              size: 1
-            });
           });
 
           // Vertex markers and price lines
           visuals.points.forEach((pt, i) => {
-            const isLast = i === visuals.points.length - 1;
             const label = pt.label || '?';
+            // Determine if it's a peak or trough for positioning
             const isAbove = ['1', '3', '5', 'B'].includes(label);
 
-            let color = '#ffffff';
-            if (['1', '3', '5'].includes(label)) color = '#00ffa3';
-            if (['2', '4', 'A', 'C'].includes(label)) color = '#ff7162';
+            const color = '#ffffff'; // White labels like the image
             
             markers.push({
               time: (pt.time / 1000) as UTCTimestamp,
@@ -921,12 +907,12 @@ const WyckoffAnalyzer: React.FC = () => {
               color,
               shape: 'square',
               text: label,
-              size: 4 // Larger vertex labels
+              size: 4 // Large labels
             });
 
             const pLine = candlestickSeriesRef.current!.createPriceLine({
               price: pt.price,
-              color,
+              color: 'rgba(255, 255, 255, 0.4)', // Subtle white line
               lineWidth: 1,
               lineStyle: 2,
               axisLabelVisible: true,
