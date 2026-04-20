@@ -619,6 +619,9 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   const raw: Record<string, AnalysisResult> = {};
   const indicatorData: any = {};
 
+  const highs = data.map(d => d.high);
+  const lows = data.map(d => d.low);
+
   // 1. Candlestick Analysis
   const candlePattern = detectCandlestickPatterns(data);
   if (candlePattern) {
@@ -633,12 +636,66 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   if (chartPattern) {
     results['patterns'] = `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`;
     raw['patterns'] = chartPattern;
-    
-    if (chartPattern.pattern.includes('Elliott')) {
-      raw['elliott'] = chartPattern;
-    }
   } else {
     results['patterns'] = `**ANÁLISIS:** Estructura neutral actualmente.\n\n**RECOMENDACIÓN:** ESPERAR`;
+  }
+
+  // --- INDEPENDENT ELLIOTT WAVES BLOCK ---
+  const elliottWindow = Math.max(5, Math.floor(data.length / 20));
+  const ep = [];
+  const et = [];
+  for (let i = elliottWindow; i < highs.length - elliottWindow; i++) {
+    const sH = highs.slice(i - elliottWindow, i + elliottWindow + 1);
+    const sL = lows.slice(i - elliottWindow, i + elliottWindow + 1);
+    if (highs[i] === Math.max(...sH)) ep.push({ index: i, time: data[i].time, price: highs[i], type: 'PEAK' });
+    if (lows[i] === Math.min(...sL)) et.push({ index: i, time: data[i].time, price: lows[i], type: 'TROUGH' });
+  }
+
+  const allPoints = [...ep, ...et].sort((a, b) => a.index - b.index);
+  if (allPoints.length >= 4) {
+    const waveLabels = ['1', '2', '3', '4', '5', 'A', 'B', 'C'];
+    const filteredWaves = [];
+    let lastType = null;
+    for (const p of allPoints) {
+      if (p.type !== lastType) {
+        filteredWaves.push(p);
+        lastType = p.type;
+      }
+    }
+
+    const finalWaves = filteredWaves.slice(-8).map((p, i) => ({
+      ...p,
+      label: waveLabels[i]
+    }));
+
+    const lastPoint = finalWaves[finalWaves.length - 1];
+    const descriptions: Record<string, string> = {
+      '1': 'Inicio del impulso alcista. Volumen bajo, pocos participantes.',
+      '2': 'Corrección del impulso. No rompe el inicio de Onda 1.',
+      '3': 'La más fuerte. Alta participación institucional y mayor volumen.',
+      '4': 'Corrección lateral. No entra en territorio de Onda 1.',
+      '5': 'Impulso final. Divergencia en osciladores. Agotamiento próximo.',
+      'A': 'Inicio corrección tras ciclo impulsivo. Primera señal bajista.',
+      'B': 'Rebote correctivo. Posible trampa alcista.',
+      'C': 'Corrección final. Suele igualar la longitud de Onda A.'
+    };
+
+    const isBull = finalWaves.filter(w => ['1', '3', '5'].includes(w.label)).length > finalWaves.filter(w => ['A', 'C'].includes(w.label)).length;
+
+    raw['elliott'] = {
+      pattern: 'Ondas de Elliott (Helio)',
+      type: isBull ? 'BULLISH' : 'BEARISH',
+      status: 'CONFIRMED',
+      analysis: descriptions[lastPoint.label] || 'Ciclo de Elliott en desarrollo.',
+      recommendation: isBull ? 'LONG' : 'SHORT',
+      entryPrice: et[et.length - 1]?.price || data[data.length-1].close,
+      stopLoss: (et[et.length - 2]?.price || data[data.length-1].low) * 0.995,
+      takeProfit: ep[ep.length - 1]?.price || data[data.length-1].high * 1.02,
+      visuals: {
+        type: 'POLYLINE',
+        points: finalWaves.map(w => ({ time: w.time, price: w.price, label: w.label }))
+      }
+    };
   }
 
   // 3. MACD Analysis
@@ -660,8 +717,6 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   }
 
   // 4. Wyckoff Schematic
-  const highs = data.map(d => d.high);
-  const lows = data.map(d => d.low);
   const findMajorPoints = (arrH: number[], arrL: number[], window = 15) => {
     const points = [];
     for (let i = window; i < arrH.length - window; i++) {
@@ -725,10 +780,10 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   const detectedTroughs = [];
 
   for (let i = windowSize; i < highs.length - windowSize; i++) {
-    const sliceH = highs.slice(i - windowSize, i + windowSize + 1);
-    const sliceL = lows.slice(i - windowSize, i + windowSize + 1);
-    if (highs[i] === Math.max(...sliceH)) detectedPeaks.push(highs[i]);
-    if (lows[i] === Math.min(...sliceL)) detectedTroughs.push(lows[i]);
+    const sH = highs.slice(i - windowSize, i + windowSize + 1);
+    const sL = lows.slice(i - windowSize, i + windowSize + 1);
+    if (highs[i] === Math.max(...sH)) detectedPeaks.push(highs[i]);
+    if (lows[i] === Math.min(...sL)) detectedTroughs.push(lows[i]);
   }
 
   const clusterLevels = (levels: number[]) => {
@@ -740,18 +795,20 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     return clustered;
   };
 
-  const finalResistances = clusterLevels(detectedPeaks.filter(p => p > data[data.length-1].close)).slice(0, 3);
-  const finalSupports = clusterLevels(detectedTroughs.filter(t => t < data[data.length-1].close)).reverse().slice(0, 3);
+  const currentClose = data[data.length - 1].close;
+  const finalResistances = clusterLevels(detectedPeaks.filter(p => p > currentClose)).slice(0, 3);
+  const finalSupports = clusterLevels(detectedTroughs.filter(t => t < currentClose)).reverse().slice(0, 3);
+
+  // Fallback to basic pivots if empty
+  if (finalResistances.length === 0) finalResistances.push(Math.max(...highs.slice(-20)));
+  if (finalSupports.length === 0) finalSupports.push(Math.min(...lows.slice(-20)));
 
   raw['levels'] = {
     pattern: 'Techos/Suelos Reales',
     type: 'NEUTRAL',
     status: 'CONFIRMED',
-    analysis: `Análisis de niveles estructurales. Resistencias en ${finalResistances.map(r => r.toFixed(2)).join(', ')}. Soportes en ${finalSupports.map(s => s.toFixed(2)).join(', ')}.`,
+    analysis: `Niveles estructurales calculados por algoritmo Helio. R: ${finalResistances.length}, S: ${finalSupports.length}.`,
     recommendation: 'WAIT',
-    entryPrice: finalSupports[0] || 0,
-    stopLoss: (finalSupports[0] || 0) * 0.993,
-    takeProfit: finalResistances[0] || 0,
     visuals: {
       type: 'PIVOT',
       points: [

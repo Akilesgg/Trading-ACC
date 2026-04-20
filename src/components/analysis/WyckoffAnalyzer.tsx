@@ -127,7 +127,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const [activeElliott, setActiveElliott] = useState<AnalysisResult | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [rawAnalysisData, setRawAnalysisData] = useState<Record<string, any>>({});
-  const [drawingTool, setDrawingTool] = useState<'none'|'hline'|'trendline'|'text'|'erase'>('none');
+  const [drawingTool, setDrawingTool] = useState<'none'|'hline'|'trendline'|'erase'>('none');
   const [drawnLines, setDrawnLines] = useState<any[]>([]);
   const drawnSeriesRef = useRef<any[]>([]);
   const drawingInProgressRef = useRef<any>(null);
@@ -180,18 +180,6 @@ const WyckoffAnalyzer: React.FC = () => {
           ]);
           drawnSeriesRef.current.push(trendSeries);
           drawingInProgressRef.current = null;
-        }
-      } else if (drawingTool === 'text') {
-        const text = prompt("Ingrese nota:");
-        if (text) {
-          const line = candlestickSeriesRef.current!.createPriceLine({
-            price,
-            color: 'rgba(255, 255, 255, 0.2)', // Faint color
-            lineWidth: 1,
-            axisLabelVisible: false,
-            title: text
-          });
-          setDrawnLines(prev => [...prev, line]);
         }
       }
     };
@@ -883,69 +871,71 @@ const WyckoffAnalyzer: React.FC = () => {
         }
 
         if (key === 'elliott' && visuals.points) {
-          const polySeries = chartRef.current!.addSeries(LineSeries, {
-            color: '#ffffff',
-            lineWidth: 2,
-            lineStyle: 0,
-            priceLineVisible: false,
-            lastValueVisible: false,
+          visuals.points.forEach((pt, i) => {
+            if (i === 0) return;
+            const prevPt = visuals.points[i - 1];
+            const isLast = i === visuals.points.length - 1;
+            const color = isLast 
+              ? (analysis.type === 'BULLISH' ? '#00ffa3' : '#ff7162') 
+              : '#ffffff';
+            
+            const segment = chartRef.current!.addSeries(LineSeries, {
+              color,
+              lineWidth: isLast ? 3 : 2,
+              priceLineVisible: false,
+              lastValueVisible: false,
+            });
+            const segmentData = [
+              { time: (prevPt.time / 1000) as UTCTimestamp, value: prevPt.price },
+              { time: (pt.time / 1000) as UTCTimestamp, value: pt.price }
+            ].sort((a,b) => (a.time as number) - (b.time as number));
+            segment.setData(segmentData);
+            polylineSeriesRef.current[`elliott_${i}`] = segment;
           });
-          
-          const lineData = visuals.points.map(pt => ({
-            time: (pt.time / 1000) as UTCTimestamp,
-            value: pt.price
-          })).sort((a, b) => (a.time as number) - (b.time as number));
-          
-          polySeries.setData(lineData);
-          polylineSeriesRef.current[key] = polySeries;
-          
-          const elliottMarkers: any[] = [];
-          
-          visuals.points.forEach((pt) => {
+
+          visuals.points.forEach((pt, i) => {
+            const isLast = i === visuals.points.length - 1;
             const label = pt.label || '?';
-            const isImpulse = ['1', '3', '5'].includes(label);
-            const isCorrection = ['2', '4', 'A', 'C'].includes(label);
+            const isAbove = ['1', '3', '5', 'B'].includes(label);
 
             let color = '#ffffff';
-            if (isImpulse) color = '#00ffa3';
-            if (isCorrection) color = '#ff7162';
+            if (['1', '3', '5'].includes(label)) color = '#00ffa3';
+            if (['2', '4', 'A', 'C'].includes(label)) color = '#ff7162';
             
-            // Dedicated Marker for the Line Series to ensure it's "ON" the line
-            elliottMarkers.push({
+            markers.push({
               time: (pt.time / 1000) as UTCTimestamp,
-              position: 'inBar',
+              position: isAbove ? 'aboveBar' : 'belowBar',
               color,
               shape: 'circle',
               text: label,
-              size: 2
+              size: 3
             });
 
-            // Price Line for context
-            const pLine = polySeries.createPriceLine({
+            const pLine = candlestickSeriesRef.current!.createPriceLine({
               price: pt.price,
               color,
               lineWidth: 1,
-              lineStyle: 2, // Dashed
+              lineStyle: 2,
               axisLabelVisible: true,
-              title: `Onda ${label}`
+              title: `Onda ${label}${isLast ? ' ◄ ACTUAL' : ''}`
             });
             priceLinesRef.current.push(pLine);
           });
-
-          // Sort and set markers directly on the polyline series
-          elliottMarkers.sort((a, b) => (a.time as number) - (b.time as number));
-          (polySeries as any).setMarkers(elliottMarkers);
           return;
         }
 
-        if (analysis.visuals.type === 'PIVOT') {
+        if (analysis.visuals.type === 'PIVOT' || key === 'levels') {
+          const cPrice = chartData.length ? chartData[chartData.length-1].close : 0;
           visuals.points.forEach((pt: any) => {
             const isRes = pt.label.startsWith('R');
             const color = isRes ? '#ff7162' : '#00ffa3';
+            const dist = Math.abs(pt.price - cPrice) / cPrice;
+            const isNearest = dist < 0.02;
+
             const line = candlestickSeriesRef.current!.createPriceLine({
               price: pt.price,
               color,
-              lineWidth: 2,
+              lineWidth: isNearest ? 2 : 1,
               lineStyle: 2,
               axisLabelVisible: true,
               title: `${pt.label} $${pt.price.toLocaleString()}`
@@ -1311,7 +1301,6 @@ const WyckoffAnalyzer: React.FC = () => {
               {[
                 { id: 'hline', icon: '—', label: 'H-Line' },
                 { id: 'trendline', icon: '↗', label: 'Trend' },
-                { id: 'text', icon: 'T', label: 'Text' },
                 { id: 'erase', icon: '✕', label: 'Clear' }
               ].map(tool => (
                 <button
@@ -1711,46 +1700,94 @@ const WyckoffAnalyzer: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute bottom-14 right-14 p-6 rounded-2xl bg-[#0f172a]/90 backdrop-blur-xl border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.5)] pointer-events-auto cursor-move space-y-4 max-w-[320px] z-[32]"
+                className="absolute bottom-14 right-14 p-0 rounded-[2rem] bg-[#0b0f14]/95 backdrop-blur-3xl border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.8)] pointer-events-auto cursor-move w-[400px] z-[32] overflow-hidden"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-white animate-pulse" />
-                    <span className="text-[14px] font-black uppercase tracking-widest text-white">ELLIOTT WAVES</span>
-                    <button onClick={handleManualRefresh} className="hover:rotate-180 transition-transform duration-500">
-                      <RotateCcw size={14} className="text-white/40 hover:text-white" />
-                    </button>
-                  </div>
-                  <div className={cn(
-                    "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                    activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
-                  )}>
-                    {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
-                  </div>
-                </div>
-
-                {/* Mini Wave Visualization */}
-                <div className="flex items-end justify-between h-14 px-2 border-b border-white/5 pb-2">
-                  {[1, 2, 3, 4, 5, 'A', 'B', 'C'].map((label, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1">
-                      <div className={cn(
-                        "w-1.5 rounded-t-full transition-all duration-500",
-                        i % 2 === 0 ? "h-6 bg-white/20" : "h-3 bg-white/10",
-                        activeElliott.visuals?.points?.some(p => p.label === String(label)) ? "bg-primary h-8 shadow-[0_0_10px_rgba(0,255,163,0.5)]" : ""
-                      )} />
-                      <span className="text-[8px] font-black text-white/40">{label}</span>
+                {/* Panel Header */}
+                <div className="p-6 pb-4 border-b border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[15px] font-black tracking-tighter text-white uppercase leading-none">HELIO · ELLIOTT WAVES</span>
+                      <span className="text-[11px] font-black text-white/40 uppercase tracking-widest mt-1 opacity-60">{activeElliott.pattern}</span>
                     </div>
-                  ))}
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
+                        activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
+                      )}>
+                        {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
+                      </div>
+                      <button onClick={handleManualRefresh} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white">
+                        <RotateCcw size={16} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  <p className="text-[14px] text-white/80 leading-relaxed font-medium font-sans">{activeElliott.analysis}</p>
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/10 bg-gradient-to-br from-white/5 to-transparent">
-                    <span className="text-[10px] uppercase text-white/40 block mb-1 font-black">RECOMENDACIÓN DE ENTRADA</span>
-                    <p className="text-[14px] text-white font-black leading-tight">
-                      {activeElliott.recommendation === 'LONG' ? '🚀 LONG en inicio de onda 3' : '📉 SHORT en onda C'}
-                    </p>
+                {/* Wave Visualization Bar */}
+                <div className="p-6 py-4 bg-white/5 border-b border-white/10">
+                  <div className="flex items-end justify-between h-16 gap-1 mb-3">
+                    {['1', '2', '3', '4', '5', 'A', 'B', 'C'].map((label, i) => {
+                      const points = activeElliott.visuals?.points || [];
+                      const pointIndex = points.findIndex(p => p.label === label);
+                      const isFound = pointIndex !== -1;
+                      const isCurrent = isFound && pointIndex === points.length - 1;
+                      const isCompleted = isFound && !isCurrent;
+                      
+                      const heights = [32, 16, 48, 24, 40, 28, 20, 32];
+                      const height = heights[i];
+                      
+                      return (
+                        <div key={label} className="flex-1 flex flex-col items-center gap-2">
+                          <div 
+                            className={cn(
+                              "w-full rounded-t-lg transition-all duration-700 relative",
+                              isCurrent ? (activeElliott.type === 'BULLISH' ? "bg-primary shadow-[0_0_20px_#00ffa3]" : "bg-secondary shadow-[0_0_20px_#ff7162]") : 
+                              isCompleted ? "bg-white/70" : "bg-white/5"
+                            )}
+                            style={{ height: `${height}px` }}
+                          >
+                            {isCurrent && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
+                          </div>
+                          <span className={cn("text-[10px] font-black", isFound ? "text-white" : "text-white/20")}>{label}</span>
+                        </div>
+                      );
+                    })}
                   </div>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] text-center">
+                    Blanco = completadas | <span className="text-primary">Color = onda actual</span>
+                  </p>
+                </div>
+
+                {/* Current State Detail */}
+                <div className="p-6 space-y-5">
+                  <div>
+                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest block mb-1.5">ESTADO ACTUAL</span>
+                    <p className="text-[14px] text-white font-medium leading-relaxed italic">{activeElliott.analysis}</p>
+                  </div>
+
+                  <div className="p-5 rounded-[1.5rem] bg-white/[0.03] border border-white/10 space-y-4">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">RECOMENDACIÓN DE ENTRADA</span>
+                      <p className="text-[15px] text-white font-black">{activeElliott.recommendation === 'LONG' ? '⚡ EXPOSICIÓN ALCISTA · COMPRA CONFIRMADA' : '⚡ LIMITAR EXPOSICIÓN · BUSCAR CORTOS'}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                        <span className="text-[8px] font-black text-white/40 uppercase block mb-1">ENTRADA</span>
+                        <span className="text-[13px] font-black text-white">${activeElliott.entryPrice?.toLocaleString()}</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-secondary/10 border border-secondary/20">
+                        <span className="text-[8px] font-black text-secondary uppercase block mb-1">STOP LOSS</span>
+                        <span className="text-[13px] font-black text-secondary">${activeElliott.stopLoss?.toLocaleString()}</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
+                        <span className="text-[8px] font-black text-primary uppercase block mb-1">T. PROFIT</span>
+                        <span className="text-[13px] font-black text-primary">${activeElliott.takeProfit?.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="text-[10px] font-medium text-white/20 italic text-center leading-tight">Las líneas blancas marcan ondas completadas.<br/>La línea de color marca la onda activa.</p>
                 </div>
               </motion.div>
             )}
