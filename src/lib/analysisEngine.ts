@@ -479,7 +479,7 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
     const isBullish = lastPoint.type === 'PEAK';
 
     return {
-      pattern: 'Ondas de Elliott (HELIO)',
+      pattern: 'Ondas de Elliott (HELIUM-3)',
       type: isBullish ? 'BULLISH' : 'BEARISH',
       status: 'CONFIRMED',
       analysis: `Estructura de Elliott detectada en Onda ${labels[points.length - 1]}. El mercado sigue un patrón rítmico de impulsos y correcciones.`,
@@ -810,7 +810,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     pattern: 'Techos/Suelos Reales',
     type: 'NEUTRAL',
     status: 'CONFIRMED',
-    analysis: `Niveles estructurales calculados por algoritmo Helio. R: ${finalResistances.length}, S: ${finalSupports.length}.`,
+    analysis: `Niveles estructurales calculados por algoritmo Helium-3. R: ${finalResistances.length}, S: ${finalSupports.length}.`,
     recommendation: 'WAIT',
     visuals: {
       type: 'PIVOT',

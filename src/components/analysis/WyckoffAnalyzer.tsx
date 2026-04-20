@@ -110,7 +110,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const [indicators, setIndicators] = useState<IndicatorConfig[]>([
     { id: "patterns", name: "Patrones de Precios", enabled: false },
     { id: "candles", name: "Velas Japonesas", enabled: false },
-    { id: "elliott", name: "HELIO (Elliott)", enabled: false },
+    { id: "elliott", name: "Helium-3 (Elliott)", enabled: true },
     { id: "wakeup", name: "Fases de Wyckoff", enabled: false },
     { id: "macd", name: "MACD Avanzado", enabled: false },
     { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
@@ -902,14 +902,14 @@ const WyckoffAnalyzer: React.FC = () => {
             markers.push({
               time: (nearestCandle.time / 1000) as UTCTimestamp,
               position: 'inBar',
-              color: '#ffff00', // Matches active line for consistency
+              color: '#ffff00', // Yellow to match the line exactly
               shape: 'circle',
-              text: `ONDA ${lineLabel}`,
+              text: `[${lineLabel}]`, // Just the label in brackets for extreme clarity
               size: 2
             });
           });
 
-          // Vertex markers: High-visibility labels on the corresponding bars
+          // Vertex markers: Ultra-prominent labels
           visuals.points.forEach((pt, i) => {
             const label = pt.label || '?';
             const isAbove = ['1', '3', '5', 'B'].includes(label);
@@ -919,8 +919,8 @@ const WyckoffAnalyzer: React.FC = () => {
               position: isAbove ? 'aboveBar' : 'belowBar',
               color: '#ffffff',
               shape: 'square',
-              text: `【 ${label} 】`, // Even more prominent brackets
-              size: 4
+              text: `★ ${label} ★`, // Stars for maximum peak/trough identification
+              size: 3
             });
 
             const pLine = candlestickSeriesRef.current!.createPriceLine({
@@ -1469,7 +1469,7 @@ const WyckoffAnalyzer: React.FC = () => {
             )}
           </div>
 
-          {/* General AI Deep Analysis Panel (Hides if unified Helio is shown) */}
+          {/* General AI Deep Analysis Panel (Hides if unified Helium-3 is shown) */}
           {(!activeElliott || !indicators.find(i => i.id === 'elliott')?.enabled) && (activePatterns || activeCandles) && (
              <motion.div 
                drag
@@ -1680,21 +1680,21 @@ const WyckoffAnalyzer: React.FC = () => {
                   drag
                   dragMomentum={false}
                   dragConstraints={chartContainerRef}
-                  initial={{ opacity: 0, scale: 0.9, y: 50 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  initial={{ opacity: 0, scale: 0.9, y: 100, x: 50 }}
+                  animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9 }}
-                  className="absolute top-24 right-10 p-0 rounded-[2.5rem] backdrop-blur-3xl border-2 border-primary/50 bg-[#0b0f14]/95 shadow-[0_40px_120px_rgba(0,0,0,0.6)] pointer-events-auto cursor-move w-[420px] z-[80] overflow-hidden"
+                  className="absolute top-32 right-12 p-0 rounded-[2.5rem] backdrop-blur-3xl border-2 border-primary/50 bg-[#0b0f14]/95 shadow-[0_40px_120px_rgba(0,255,163,0.8)] pointer-events-auto cursor-move w-[420px] z-[90] overflow-hidden"
                 >
                    {/* Panel Header */}
-                   <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-primary/10 to-transparent">
+                   <div className="p-6 pb-4 border-b border-white/20 bg-gradient-to-r from-primary/20 to-transparent">
                      <div className="flex items-center justify-between">
                        <div className="flex items-center gap-3">
-                         <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center border-2 border-primary shadow-[0_0_20px_rgba(0,255,163,0.3)]">
-                           <Brain className="w-7 h-7 text-primary" />
+                         <div className="w-14 h-14 rounded-2xl bg-primary/20 flex items-center justify-center border-2 border-primary shadow-[0_0_30px_rgba(0,255,163,0.5)] animate-pulse">
+                           <Brain className="w-8 h-8 text-primary" />
                          </div>
                          <div className="flex flex-col">
-                           <h3 className="text-[16px] font-black uppercase tracking-[0.2em] text-white leading-tight">HELIUM-3 · ELLIOTT WAVES</h3>
-                           <span className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">SISTEMA CUÁNTICO DE ANÁLISIS</span>
+                           <h3 className="text-[18px] font-black uppercase tracking-[0.2em] text-white leading-tight">HE-3 · QUANTUM</h3>
+                           <span className="text-[10px] font-black text-primary uppercase tracking-widest mt-1">ELLIOTT CORE ACTIVADA</span>
                          </div>
                        </div>
                       <div className="flex items-center gap-3">
@@ -1802,7 +1802,7 @@ const WyckoffAnalyzer: React.FC = () => {
                   
                   {/* Footer Disclaimer */}
                   <div className="p-4 bg-black/60 flex items-center justify-center gap-2">
-                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest italic">Análisis Basado en Algoritmos IA Helio • Trading ACC 2026</span>
+                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest italic">Análisis Basado en Algoritmos IA Helium-3 • Trading ACC 2026</span>
                   </div>
                </motion.div>
             )}
@@ -1962,7 +1962,7 @@ const WyckoffAnalyzer: React.FC = () => {
                     </div>
                     
                     <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 italic text-[12px] text-white/60 leading-relaxed">
-                      Este "Diodo" de inteligencia procesa 1,000 barras en tiempo real usando el motor Helio para detectar manipulaciones institucionales en {selectedTimeframe}.
+                      Este "Diodo" de inteligencia procesa 1,000 barras en tiempo real usando el motor Helium-3 para detectar manipulaciones institucionales en {selectedTimeframe}.
                     </div>
                   </div>
                 </motion.div>
@@ -1991,7 +1991,7 @@ const WyckoffAnalyzer: React.FC = () => {
             {[
               { id: "patterns", label: "PATRONES", color: 'primary' },
               { id: "candles", label: "VELAS", color: 'primary' },
-              { id: "elliott", label: "HELIO", color: 'primary' },
+              { id: "elliott", label: "HELIUM-3", color: 'primary' },
               { id: "wakeup", label: "WYCKOFF", color: 'primary' },
               { id: "macd", label: "MACD", color: 'primary' },
               { id: "liquidity", label: "LIQUIDEZ", color: 'secondary' },
