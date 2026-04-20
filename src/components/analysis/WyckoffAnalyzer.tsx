@@ -891,6 +891,18 @@ const WyckoffAnalyzer: React.FC = () => {
             ].sort((a,b) => (a.time as number) - (b.time as number));
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
+
+            // POINT-ON-LINE LABELS as requested: Letters/Numbers directly on the waves
+            const midTime = (prevPt.time + pt.time) / 2;
+            const lineLabel = pt.label || '?';
+            markers.push({
+              time: (midTime / 1000) as UTCTimestamp,
+              position: 'inBar',
+              color: 'rgba(255, 255, 255, 0.8)',
+              shape: 'square',
+              text: lineLabel, // Direct number/letter on the white segment
+              size: 2
+            });
           });
 
           // Vertex markers and price lines
@@ -1168,12 +1180,16 @@ const WyckoffAnalyzer: React.FC = () => {
                 
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <span className="text-[10px] uppercase font-black text-primary/60 tracking-widest block">Objetivo</span>
+                    <div className="w-fit px-2 py-0.5 rounded-lg bg-primary/20 border border-primary/30">
+                      <span className="text-[10px] uppercase font-black text-primary tracking-widest block">Objetivo</span>
+                    </div>
                     <p className="text-[13px] text-white/80 font-medium leading-relaxed">{strat.description}</p>
                   </div>
                   
                   <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                    <span className="text-[10px] uppercase font-black text-white/40 tracking-widest block mb-2">Lógica de Ejecución</span>
+                    <div className="w-fit px-2 py-0.5 rounded-lg bg-white/10 border border-white/5 mb-2">
+                      <span className="text-[10px] uppercase font-black text-white/40 tracking-widest block">Lógica de Ejecución</span>
+                    </div>
                     <p className="text-[12px] text-white/60 italic leading-snug">{strat.logic}</p>
                   </div>
                 </div>
