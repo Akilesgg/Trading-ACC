@@ -63,24 +63,24 @@ const WyckoffAnalyzer: React.FC = () => {
   const strategies: Strategy[] = [
     { 
       id: "scalping", 
-      name: "Scalping de Alta Frecuencia", 
+      name: "Scalping de Alta Frecuencia (Malla ACC)", 
       icon: <Zap className="w-4 h-4" />,
-      description: "Basada en micro-tendencias y reversión a la media usando RSI y Bandas de Bollinger.",
-      logic: "Busca sobre-extensión en temporalidades cortas (1m-5m) para capturar rebotes rápidos."
+      description: "Sistema de ultra-velocidad optimizado para capturar ineficiencias de micro-tendencia. Utiliza un algoritmo de reversión a la media mediante Bandas de Bollinger y un RSI suavizado (14) para identificar estados de sobre-extensión extrema donde la probabilidad de retroceso al VWAP es superior al 85%.",
+      logic: "Ejecución reactiva en temporalidades de 1m a 5m. Identifica velas con mechas de absorción fuera de las bandas de volatilidad y entra en contra-tendencia buscando objetivos rápidos de scalping institucional."
     },
     { 
       id: "breakout", 
-      name: "Ruptura de Rango (Breakout)", 
+      name: "Ruptura de Rango (Momentum Breakout)", 
       icon: <TrendingUp className="w-4 h-4" />,
-      description: "Identifica zonas de consolidación y entra cuando el precio rompe con volumen.",
-      logic: "Utiliza el Volume Profile y Supertrend para confirmar la fuerza de la ruptura."
+      description: "Estrategia basada en la acumulación de energía en rangos laterales. Detecta zonas de valor mediante el Volume Profile y espera a que el precio rompa la zona de control con un aumento significativo del volumen relativo (RVOL > 2.0). Utiliza el Supertrend (10,3) como filtro de confirmación y salida dinámica.",
+      logic: "Monitorea la compresión de volatilidad (Squeeze). Una vez confirmada la ruptura por encima del máximo local con cierre de vela, se activa la orden con stops ceñidos al punto de control (POC) del rango anterior."
     },
     { 
       id: "trend_following", 
-      name: "Seguimiento de Tendencia", 
+      name: "Seguimiento de Tendencia (Largo Plazo)", 
       icon: <Activity className="w-4 h-4" />,
-      description: "Estrategia conservadora que sigue la tendencia institucional de largo plazo.",
-      logic: "Usa VWAP e Ichimoku Cloud para asegurar que estamos a favor del flujo de órdenes."
+      description: "Enfoque conservador diseñado para capturar movimientos macro siguiendo el flujo de órdenes institucional. Se apoya en la confluencia de medias móviles de largo plazo (200 EMA) y el Ichimoku Cloud para filtrar el ruido del mercado y asegurar que la entrada se realice en la dirección de la tendencia dominante de mayor jerarquía.",
+      logic: "Espera a retrocesos ordenados (Pullbacks) hacia niveles de Fibonacci o la nube de Ichimoku (Kijun-sen). Entra cuando el precio reanuda la dirección principal confirmada por un histograma de MACD en expansión."
     }
   ];
 
@@ -917,7 +917,7 @@ const WyckoffAnalyzer: React.FC = () => {
               lineWidth: 1,
               lineStyle: 2,
               axisLabelVisible: true,
-              title: `Onda ${label}${isLast ? ' ◄ ACTUAL' : ''}`
+              title: `${label}${isLast ? ' (ACTUAL)' : ''}`
             });
             priceLinesRef.current.push(pLine);
           });
@@ -1262,6 +1262,22 @@ const WyckoffAnalyzer: React.FC = () => {
                           </div>
                         </div>
 
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                            <span className="text-[9px] uppercase font-black text-white/30 block mb-1">Precio Entrada</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px] font-black text-white">${signal.entry.toLocaleString()}</span>
+                              <div className="w-2 h-2 rounded-full bg-primary" />
+                            </div>
+                          </div>
+                          <div className="p-3 rounded-xl bg-secondary/10 border border-secondary/20">
+                            <span className="text-[9px] uppercase font-black text-secondary block mb-1">Stop Loss</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[14px] font-black text-secondary">${signal.sl.toLocaleString()}</span>
+                            </div>
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-3 gap-3">
                           {[
                             { label: 'TP 1', val: signal.tp1 },
@@ -1438,17 +1454,49 @@ const WyckoffAnalyzer: React.FC = () => {
           <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none flex justify-center">
             {(activeElliott || activePatterns || activeCandles) && (
               <motion.div 
+                drag
+                dragMomentum={false}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b0f14]/90 backdrop-blur-2xl border border-white/20 p-5 rounded-3xl shadow-2xl max-w-2xl w-full pointer-events-auto"
+                className="bg-[#0b0f14]/90 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] max-w-2xl w-full pointer-events-auto cursor-move"
               >
-                <div className="flex items-center gap-3 mb-2 border-b border-white/10 pb-2">
-                  <Activity size={16} className="text-primary animate-pulse" />
-                  <span className="text-[11px] font-black uppercase tracking-wider text-white">ANÁLISIS PROFUNDO IA</span>
+                <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
+                  <div className="flex items-center gap-3">
+                    <Activity size={18} className="text-primary animate-pulse" />
+                    <span className="text-[12px] font-black uppercase tracking-widest text-white">ANÁLISIS PROFUNDO IA · HELIO ENGINE</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                    <span className="text-[10px] font-black text-primary uppercase">Procesando Tiempo Real</span>
+                  </div>
                 </div>
-                <p className="text-[13px] text-white/80 font-medium leading-relaxed italic">
-                  {activeElliott?.analysis || activePatterns?.analysis || activeCandles?.analysis}
-                </p>
+                
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] block mb-1">CONFLUENCIA TÉCNICA</span>
+                    <p className="text-[14px] text-white/90 font-semibold leading-relaxed">
+                      {activeElliott?.analysis || activePatterns?.analysis || activeCandles?.analysis}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                      <span className="text-[8px] font-black text-white/40 uppercase block mb-1">RECOMENDACIÓN</span>
+                      <span className={cn(
+                        "text-[12px] font-black uppercase",
+                        (activeElliott?.recommendation === 'LONG' || activePatterns?.recommendation === 'LONG') ? "text-primary" : "text-secondary"
+                      )}>
+                        {activeElliott?.recommendation === 'LONG' ? '⚡ COMPRA AGRESIVA' : '⚡ ESPERAR RETROCESO'}
+                      </span>
+                    </div>
+                    <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                      <span className="text-[8px] font-black text-white/40 uppercase block mb-1">PRÓXIMO OBJETIVO</span>
+                      <span className="text-[12px] font-black text-white">
+                        ${(activeElliott?.takeProfit || activePatterns?.takeProfit || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             )}
           </div>
