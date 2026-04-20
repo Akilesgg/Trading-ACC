@@ -892,34 +892,31 @@ const WyckoffAnalyzer: React.FC = () => {
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
 
-            // POINT-ON-LINE LABELS as requested: Letters/Numbers directly on the waves
+            // POINT-ON-LINE LABELS: Ultra-prominent labels directly on segments
             const midTime = (prevPt.time + pt.time) / 2;
             const lineLabel = pt.label || '?';
             markers.push({
               time: (midTime / 1000) as UTCTimestamp,
               position: 'inBar',
-              color: 'rgba(255, 255, 255, 0.8)',
-              shape: 'square',
-              text: lineLabel, // Direct number/letter on the white segment
-              size: 2
+              color: '#00ffa3', // Bright Cyan
+              shape: 'circle',
+              text: lineLabel,
+              size: 4 // Prominent
             });
           });
 
-          // Vertex markers and price lines
+          // Vertex markers: Large white labels
           visuals.points.forEach((pt, i) => {
             const label = pt.label || '?';
-            // Determine if it's a peak or trough for positioning
             const isAbove = ['1', '3', '5', 'B'].includes(label);
-
-            const color = '#ffffff'; // White labels like the image
             
             markers.push({
               time: (pt.time / 1000) as UTCTimestamp,
               position: isAbove ? 'aboveBar' : 'belowBar',
-              color,
+              color: '#ffffff',
               shape: 'square',
               text: label,
-              size: 4 // Large labels
+              size: 4
             });
 
             const pLine = candlestickSeriesRef.current!.createPriceLine({
@@ -1154,7 +1151,7 @@ const WyckoffAnalyzer: React.FC = () => {
               <button
                 onClick={() => toggleStrategy(strat.id)}
                 className={cn(
-                  "flex flex-col p-6 rounded-3xl border transition-all text-left group relative overflow-hidden h-full",
+                  "flex flex-col p-6 rounded-3xl border transition-all text-left group relative overflow-hidden h-fit",
                   isActive 
                     ? "bg-primary/10 border-primary/50 shadow-[0_0_30px_rgba(0,255,163,0.1)] scale-[1.02]" 
                     : "bg-surface-container-high/20 border-white/5 hover:border-white/10 opacity-70"
@@ -1179,16 +1176,16 @@ const WyckoffAnalyzer: React.FC = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="w-fit px-2 py-0.5 rounded-lg bg-primary/20 border border-primary/30">
-                      <span className="text-[10px] uppercase font-black text-primary tracking-widest block">Objetivo</span>
+                  <div className="space-y-1">
+                    <div className="w-fit px-1 py-0 rounded bg-primary/20 border border-primary/30">
+                      <span className="text-[8px] uppercase font-bold text-primary tracking-tighter block">Objetivo</span>
                     </div>
                     <p className="text-[13px] text-white/80 font-medium leading-relaxed">{strat.description}</p>
                   </div>
                   
-                  <div className="p-4 rounded-xl bg-white/5 border border-white/5">
-                    <div className="w-fit px-2 py-0.5 rounded-lg bg-white/10 border border-white/5 mb-2">
-                      <span className="text-[10px] uppercase font-black text-white/40 tracking-widest block">Lógica de Ejecución</span>
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/5">
+                    <div className="w-fit px-1 py-0 rounded bg-white/10 border border-white/5 mb-1.5">
+                      <span className="text-[8px] uppercase font-bold text-white/40 tracking-tighter block">Lógica de Ejecución</span>
                     </div>
                     <p className="text-[12px] text-white/60 italic leading-snug">{strat.logic}</p>
                   </div>
@@ -1499,7 +1496,9 @@ const WyckoffAnalyzer: React.FC = () => {
                     
                     <div className="grid grid-cols-2 gap-4 pt-2">
                       <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                        <span className="text-[8px] font-black text-white/40 uppercase block mb-1">RECOMENDACIÓN</span>
+                        <div className="w-fit px-1 py-0 rounded bg-white/10 border border-white/5 mb-1">
+                          <span className="text-[7px] font-black text-white/40 uppercase block">RECOMENDACIÓN</span>
+                        </div>
                         <span className={cn(
                           "text-[12px] font-black uppercase",
                           (activePatterns?.recommendation === 'LONG' || activeCandles?.recommendation === 'LONG') ? "text-primary" : "text-secondary"
@@ -1508,7 +1507,9 @@ const WyckoffAnalyzer: React.FC = () => {
                         </span>
                       </div>
                       <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                        <span className="text-[8px] font-black text-white/40 uppercase block mb-1">OBJETIVO</span>
+                        <div className="w-fit px-1 py-0 rounded bg-white/10 border border-white/5 mb-1">
+                          <span className="text-[7px] font-black text-white/40 uppercase block">OBJETIVO</span>
+                        </div>
                         <span className="text-[12px] font-black text-white">
                           ${(activePatterns?.takeProfit || 0).toLocaleString()}
                         </span>
