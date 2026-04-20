@@ -899,27 +899,28 @@ const WyckoffAnalyzer: React.FC = () => {
           polySeries.setData(lineData);
           polylineSeriesRef.current[key] = polySeries;
           
+          const elliottMarkers: any[] = [];
+          
           visuals.points.forEach((pt) => {
             const label = pt.label || '?';
             const isImpulse = ['1', '3', '5'].includes(label);
             const isCorrection = ['2', '4', 'A', 'C'].includes(label);
-            const isB = label === 'B';
 
             let color = '#ffffff';
             if (isImpulse) color = '#00ffa3';
             if (isCorrection) color = '#ff7162';
             
-            // Marker
-            markers.push({
+            // Dedicated Marker for the Line Series to ensure it's "ON" the line
+            elliottMarkers.push({
               time: (pt.time / 1000) as UTCTimestamp,
-              position: (isImpulse || isB) ? 'aboveBar' : 'belowBar',
+              position: 'inBar',
               color,
               shape: 'circle',
               text: label,
-              size: 3
+              size: 2
             });
 
-            // Price Line
+            // Price Line for context
             const pLine = polySeries.createPriceLine({
               price: pt.price,
               color,
@@ -930,6 +931,10 @@ const WyckoffAnalyzer: React.FC = () => {
             });
             priceLinesRef.current.push(pLine);
           });
+
+          // Sort and set markers directly on the polyline series
+          elliottMarkers.sort((a, b) => (a.time as number) - (b.time as number));
+          (polySeries as any).setMarkers(elliottMarkers);
           return;
         }
 
