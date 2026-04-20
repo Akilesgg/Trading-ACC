@@ -876,12 +876,12 @@ const WyckoffAnalyzer: React.FC = () => {
             const prevPt = visuals.points[i - 1];
             const isLast = i === visuals.points.length - 1;
             const color = isLast 
-              ? (analysis.type === 'BULLISH' ? '#00ffa3' : '#ff7162') 
-              : '#ffffff';
+              ? '#ffff00' // Yellow for active line
+              : '#ffffff'; // White for previous waves
             
             const segment = chartRef.current!.addSeries(LineSeries, {
               color,
-              lineWidth: isLast ? 3 : 2,
+              lineWidth: isLast ? 4 : 2, // Thicker active line
               priceLineVisible: false,
               lastValueVisible: false,
             });
@@ -892,16 +892,20 @@ const WyckoffAnalyzer: React.FC = () => {
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
 
-            // POINT-ON-LINE LABELS: Ultra-prominent labels directly on segments
-            const midTime = (prevPt.time + pt.time) / 2;
+            // POINT-ON-LINE LABELS: Ultra-prominent labels at the midpoint of EACH wave segment
+            const midTimeValue = (prevPt.time + pt.time) / 2;
+            const nearestCandle = chartData.reduce((prev, curr) => 
+              Math.abs(curr.time - midTimeValue) < Math.abs(prev.time - midTimeValue) ? curr : prev
+            );
+            
             const lineLabel = pt.label || '?';
             markers.push({
-              time: (midTime / 1000) as UTCTimestamp,
+              time: (nearestCandle.time / 1000) as UTCTimestamp,
               position: 'inBar',
               color: '#00ffa3', // Bright Cyan
               shape: 'circle',
               text: lineLabel,
-              size: 4 // Prominent
+              size: 4 // Large marker
             });
           });
 
