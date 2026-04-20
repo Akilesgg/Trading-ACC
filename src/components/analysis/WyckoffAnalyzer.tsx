@@ -900,7 +900,7 @@ const WyckoffAnalyzer: React.FC = () => {
               position: 'inBar',
               color: '#ffffff',
               shape: 'square',
-              text: label, // Just the ID for cleaner look on segments
+              text: `Onda ${label}`, // More explicit labeling on lines
               size: 1
             });
           });
@@ -1237,7 +1237,7 @@ const WyckoffAnalyzer: React.FC = () => {
                              <Target className="w-5 h-5 text-primary" />
                              <span className="text-[13px] font-black uppercase tracking-widest text-white">Setup Optimizado</span>
                           </div>
-                          <div className="w-8 h-8 rounded-lg bg-primary/20 text-primary text-[10px] font-black border border-primary/30 uppercase flex items-center justify-center">
+                          <div className="w-fit min-w-[32px] h-fit py-1 px-2 rounded bg-primary/20 text-primary text-[10px] font-black border border-primary/30 uppercase flex items-center justify-center">
                             {selectedTimeframe}
                           </div>
                         </div>
@@ -1466,55 +1466,56 @@ const WyckoffAnalyzer: React.FC = () => {
             )}
           </div>
 
-          <div className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none flex justify-center">
-            {(activeElliott || activePatterns || activeCandles) && (
-              <motion.div 
-                drag
-                dragMomentum={false}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#0b0f14]/90 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] max-w-2xl w-full pointer-events-auto cursor-move"
-              >
-                <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
-                  <div className="flex items-center gap-3">
-                    <Activity size={18} className="text-primary animate-pulse" />
-                    <span className="text-[12px] font-black uppercase tracking-widest text-white">ANÁLISIS PROFUNDO IA · HELIO ENGINE</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
-                    <span className="text-[10px] font-black text-primary uppercase">Procesando Tiempo Real</span>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div>
-                    <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] block mb-1">CONFLUENCIA TÉCNICA</span>
-                    <p className="text-[14px] text-white/90 font-semibold leading-relaxed">
-                      {activeElliott?.analysis || activePatterns?.analysis || activeCandles?.analysis}
-                    </p>
+          {/* General AI Deep Analysis Panel (Hides if unified Helio is shown) */}
+          {(!activeElliott || !indicators.find(i => i.id === 'elliott')?.enabled) && (activePatterns || activeCandles) && (
+             <motion.div 
+               drag
+               dragMomentum={false}
+               initial={{ opacity: 0, y: 30 }}
+               animate={{ opacity: 1, y: 0 }}
+               className="absolute bottom-6 left-6 right-6 z-20 pointer-events-none flex justify-center"
+             >
+                <div className="bg-[#0b0f14]/90 backdrop-blur-2xl border border-white/20 p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] max-w-2xl w-full pointer-events-auto cursor-move">
+                  <div className="flex items-center justify-between mb-3 border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-3">
+                      <Activity size={18} className="text-primary animate-pulse" />
+                      <span className="text-[12px] font-black uppercase tracking-widest text-white">ANÁLISIS PROFUNDO IA · TRADING ACC</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-primary animate-ping" />
+                      <span className="text-[10px] font-black text-primary uppercase">Tiempo Real</span>
+                    </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                      <span className="text-[8px] font-black text-white/40 uppercase block mb-1">RECOMENDACIÓN</span>
-                      <span className={cn(
-                        "text-[12px] font-black uppercase",
-                        (activeElliott?.recommendation === 'LONG' || activePatterns?.recommendation === 'LONG') ? "text-primary" : "text-secondary"
-                      )}>
-                        {activeElliott?.recommendation === 'LONG' ? '⚡ COMPRA AGRESIVA' : '⚡ ESPERAR RETROCESO'}
-                      </span>
+                  <div className="space-y-4">
+                    <div>
+                      <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] block mb-1">CONFLUENCIA TÉCNICA</span>
+                      <p className="text-[14px] text-white/90 font-semibold leading-relaxed">
+                        {activePatterns?.analysis || activeCandles?.analysis}
+                      </p>
                     </div>
-                    <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
-                      <span className="text-[8px] font-black text-white/40 uppercase block mb-1">PRÓXIMO OBJETIVO</span>
-                      <span className="text-[12px] font-black text-white">
-                        ${(activeElliott?.takeProfit || activePatterns?.takeProfit || 0).toLocaleString()}
-                      </span>
+                    
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                        <span className="text-[8px] font-black text-white/40 uppercase block mb-1">RECOMENDACIÓN</span>
+                        <span className={cn(
+                          "text-[12px] font-black uppercase",
+                          (activePatterns?.recommendation === 'LONG' || activeCandles?.recommendation === 'LONG') ? "text-primary" : "text-secondary"
+                        )}>
+                          {activePatterns?.recommendation === 'LONG' || activeCandles?.recommendation === 'LONG' ? '⚡ COMPRA' : '⚡ ESPERAR'}
+                        </span>
+                      </div>
+                      <div className="bg-white/5 rounded-2xl p-3 border border-white/10">
+                        <span className="text-[8px] font-black text-white/40 uppercase block mb-1">OBJETIVO</span>
+                        <span className="text-[12px] font-black text-white">
+                          ${(activePatterns?.takeProfit || 0).toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </div>
+             </motion.div>
+          )}
           
           <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-surface-container-high/80 backdrop-blur-md border border-outline-variant/20 p-1 rounded-lg">
             <button 
@@ -1593,7 +1594,7 @@ const WyckoffAnalyzer: React.FC = () => {
                     </button>
                   </div>
                   <div className={cn(
-                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                    "w-fit h-fit px-2 py-0.5 rounded-lg text-[9px] font-black uppercase border",
                     activePatterns.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
                     activePatterns.type === 'BEARISH' ? "bg-secondary/20 text-secondary border-secondary/30" : 
                     "bg-outline-variant text-on-surface-variant"
@@ -1612,96 +1613,7 @@ const WyckoffAnalyzer: React.FC = () => {
                       <span className="text-[10px] uppercase opacity-40 block font-black mb-1">Objetivo (TP)</span>
                       <span className="text-[14px] font-bold text-primary font-mono">${activePatterns.takeProfit?.toLocaleString()}</span>
                     </div>
-                  </div>
-                )}
-              </motion.div>
-          )}
-
-          {activeElliott && indicators.find(i => i.id === 'elliott')?.enabled && (
-             <motion.div
-               drag
-               dragMomentum={false}
-               dragConstraints={chartContainerRef}
-               initial={{ opacity: 0, x: 20 }}
-               animate={{ opacity: 1, x: 0 }}
-               exit={{ opacity: 0, x: 20 }}
-               className="absolute bottom-14 right-14 p-6 rounded-[2.5rem] backdrop-blur-3xl border-2 border-white/30 bg-[#0b0f14]/90 shadow-[0_40px_80px_rgba(0,0,0,0.8)] pointer-events-auto cursor-move w-[380px] font-sans z-[30]"
-             >
-                <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/20">
-                      <Brain className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-[14px] font-black uppercase tracking-[0.2em] text-white leading-tight">HELIO · ELLIOTT WAVES</h3>
-                      <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">{activeElliott?.type === 'BULLISH' ? 'Tendencia Alcista' : 'Tendencia Bajista'}</span>
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "px-3 py-1 rounded-full text-[10px] font-black uppercase border",
-                    activeElliott?.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border-secondary/30"
-                  )}>
-                    {activeElliott?.type}
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  {/* Wave Diagram Mini */}
-                  <div className="flex items-end justify-between px-4 h-16 mb-4">
-                    {['1', '2', '3', '4', '5', 'A', 'B', 'C'].map((wave, i) => {
-                      const isActive = activeElliott?.visuals?.points?.[activeElliott.visuals.points.length - 1]?.label === wave;
-                      return (
-                        <div key={wave} className="flex flex-col items-center gap-2">
-                          <div className={cn(
-                            "w-1 rounded-t-full transition-all duration-500",
-                            isActive ? "bg-primary h-12 shadow-[0_0_15px_#00ffa3]" : "bg-white/10 h-6",
-                            i % 2 === 0 ? "mt-4" : "mb-4"
-                          )} />
-                          <span className={cn("text-[10px] font-black", isActive ? "text-primary scale-125" : "text-white/20")}>{wave}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                      <span className="text-[11px] font-black text-white/40 uppercase tracking-widest block mb-2">Estado de la Onda</span>
-                      <p className="text-[14px] text-white leading-relaxed font-bold italic">
-                        {activeElliott?.analysis}
-                      </p>
-                    </div>
-
-                    <div className="p-5 rounded-3xl bg-primary/10 border-2 border-primary/30 shadow-[inset_0_0_30px_rgba(0,255,163,0.1)]">
-                       <div className="flex items-center gap-2 mb-3">
-                         <Zap size={16} className="text-primary" />
-                         <span className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">RECOMENDACIÓN DE ENTRADA</span>
-                       </div>
-                       
-                       <div className="grid grid-cols-1 gap-2 mb-4">
-                          <div className="flex justify-between items-center text-[13px]">
-                            <span className="text-white/40 font-black uppercase">Entrada</span>
-                            <span className="text-white font-black">${activeElliott?.entryPrice?.toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-[13px]">
-                            <span className="text-secondary/60 font-black uppercase">Stop Loss</span>
-                            <span className="text-secondary font-black">${activeElliott?.stopLoss?.toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-[13px]">
-                            <span className="text-primary/60 font-black uppercase">Take Profit</span>
-                            <span className="text-primary font-black">${activeElliott?.takeProfit?.toLocaleString()}</span>
-                          </div>
-                       </div>
-
-                       <p className="text-[12px] font-medium text-white/80 leading-relaxed border-t border-primary/10 pt-3">
-                         {activeElliott?.recommendation === 'LONG' ? '⚡ Buscar compras en niveles de retroceso. Estructura impulsiva potente.' : '⚡ Buscar rechazo. La estructura sugiere una onda correctiva en curso.'}
-                       </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 justify-center">
-                      <Info size={14} className="text-white/40" />
-                      <span className="text-[11px] text-white/40 font-black uppercase tracking-widest">Confirma con volumen antes de entrar</span>
-                    </div>
-                  </div>
+                 {/* Redundant Elliott Box Removed */}                  </div>
                 </div>
              </motion.div>
           )}
@@ -1733,7 +1645,7 @@ const WyckoffAnalyzer: React.FC = () => {
                     </button>
                   </div>
                   <div className={cn(
-                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                    "w-fit h-fit px-2 py-0.5 rounded-lg text-[9px] font-black uppercase border",
                     activeCandles.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : 
                     activeCandles.type === 'BEARISH' ? "bg-secondary/20 text-secondary border-secondary/30" : 
                     "bg-outline-variant text-on-surface-variant"
@@ -1757,102 +1669,135 @@ const WyckoffAnalyzer: React.FC = () => {
             )}
 
             {activeElliott && indicators.find(i => i.id === 'elliott')?.enabled && (
-              <motion.div
-                drag
-                dragMomentum={false}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute bottom-14 right-14 p-0 rounded-[2rem] bg-[#0b0f14]/95 backdrop-blur-3xl border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.8)] pointer-events-auto cursor-move w-[400px] z-[32] overflow-hidden"
-              >
-                {/* Panel Header */}
-                <div className="p-6 pb-4 border-b border-white/10">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <span className="text-[15px] font-black tracking-tighter text-white uppercase leading-none">HELIO · ELLIOTT WAVES</span>
-                      <span className="text-[11px] font-black text-white/40 uppercase tracking-widest mt-1 opacity-60">{activeElliott.pattern}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border",
-                        activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
-                      )}>
-                        {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
-                      </div>
-                      <button onClick={handleManualRefresh} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white">
-                        <RotateCcw size={16} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Wave Visualization Bar */}
-                <div className="p-6 py-4 bg-white/5 border-b border-white/10">
-                  <div className="flex items-end justify-between h-16 gap-1 mb-3">
-                    {['1', '2', '3', '4', '5', 'A', 'B', 'C'].map((label, i) => {
-                      const points = activeElliott.visuals?.points || [];
-                      const pointIndex = points.findIndex(p => p.label === label);
-                      const isFound = pointIndex !== -1;
-                      const isCurrent = isFound && pointIndex === points.length - 1;
-                      const isCompleted = isFound && !isCurrent;
-                      
-                      const heights = [32, 16, 48, 24, 40, 28, 20, 32];
-                      const height = heights[i];
-                      
-                      return (
-                        <div key={label} className="flex-1 flex flex-col items-center gap-2">
-                          <div 
-                            className={cn(
-                              "w-full rounded-t-lg transition-all duration-700 relative",
-                              isCurrent ? (activeElliott.type === 'BULLISH' ? "bg-primary shadow-[0_0_20px_#00ffa3]" : "bg-secondary shadow-[0_0_20px_#ff7162]") : 
-                              isCompleted ? "bg-white/70" : "bg-white/5"
-                            )}
-                            style={{ height: `${height}px` }}
-                          >
-                            {isCurrent && <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
-                          </div>
-                          <span className={cn("text-[10px] font-black", isFound ? "text-white" : "text-white/20")}>{label}</span>
+               <motion.div
+                 drag
+                 dragMomentum={false}
+                 dragConstraints={chartContainerRef}
+                 initial={{ opacity: 0, scale: 0.9, x: 100 }}
+                 animate={{ opacity: 1, scale: 1, x: 0 }}
+                 exit={{ opacity: 0, scale: 0.9 }}
+                 className="absolute bottom-10 right-10 p-0 rounded-[2.5rem] backdrop-blur-3xl border-2 border-white/20 bg-[#0b0f14]/95 shadow-[0_40px_120px_rgba(0,0,0,0.9)] pointer-events-auto cursor-move w-[420px] z-[50] overflow-hidden"
+               >
+                  {/* Panel Header */}
+                  <div className="p-6 pb-4 border-b border-white/10 bg-gradient-to-r from-primary/5 to-transparent">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-[0_0_15px_rgba(0,255,163,0.1)]">
+                          <Brain className="w-7 h-7 text-primary" />
                         </div>
-                      );
-                    })}
-                  </div>
-                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] text-center">
-                    Blanco = completadas | <span className="text-primary">Color = onda actual</span>
-                  </p>
-                </div>
-
-                {/* Current State Detail */}
-                <div className="p-6 space-y-5">
-                  <div>
-                    <span className="text-[10px] font-black text-white/30 uppercase tracking-widest block mb-1.5">ESTADO ACTUAL</span>
-                    <p className="text-[14px] text-white font-medium leading-relaxed italic">{activeElliott.analysis}</p>
-                  </div>
-
-                  <div className="p-5 rounded-[1.5rem] bg-white/[0.03] border border-white/10 space-y-4">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] font-black text-white/30 uppercase tracking-widest">RECOMENDACIÓN DE ENTRADA</span>
-                      <p className="text-[15px] text-white font-black">{activeElliott.recommendation === 'LONG' ? '⚡ EXPOSICIÓN ALCISTA · COMPRA CONFIRMADA' : '⚡ LIMITAR EXPOSICIÓN · BUSCAR CORTOS'}</p>
+                        <div className="flex flex-col">
+                          <h3 className="text-[16px] font-black uppercase tracking-[0.2em] text-white leading-tight">HELIO · ELLIOTT WAVES</h3>
+                          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest mt-1 opacity-60">SISTEMA DE ANÁLISIS DE ONDAS</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-fit h-fit px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider border",
+                          activeElliott.type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border border-secondary/30"
+                        )}>
+                          {activeElliott.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'}
+                        </div>
+                        <button onClick={handleManualRefresh} className="p-2 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/60 hover:text-white">
+                          <RotateCcw size={16} />
+                        </button>
+                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="p-3 rounded-xl bg-white/5 border border-white/10">
-                        <span className="text-[8px] font-black text-white/40 uppercase block mb-1">ENTRADA</span>
-                        <span className="text-[13px] font-black text-white">${activeElliott.entryPrice?.toLocaleString()}</span>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    {/* Wave Progress Bar */}
+                    <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
+                      <div className="flex items-end justify-between h-12 gap-1 mb-2 px-2">
+                        {['1', '2', '3', '4', '5', 'A', 'B', 'C'].map((label, i) => {
+                          const points = activeElliott.visuals?.points || [];
+                          const pointIndex = points.findIndex(p => p.label === label);
+                          const isFound = pointIndex !== -1;
+                          const isCurrent = isFound && pointIndex === points.length - 1;
+                          const isCompleted = isFound && !isCurrent;
+                          
+                          const heights = [28, 16, 44, 22, 38, 26, 18, 30];
+                          const height = heights[i];
+
+                          return (
+                            <div key={label} className="flex flex-col items-center flex-1 gap-1">
+                              <motion.div 
+                                initial={{ height: 0 }}
+                                animate={{ height: `${height}px` }}
+                                className={cn(
+                                  "w-2 rounded-t-sm transition-all duration-700",
+                                  isCurrent ? "bg-primary shadow-[0_0_15px_rgba(0,255,163,0.8)]" : 
+                                  isCompleted ? "bg-white/60" : "bg-white/5"
+                                )} 
+                              />
+                              <span className={cn(
+                                "text-[9px] font-black",
+                                isCurrent ? "text-primary" : isCompleted ? "text-white/60" : "text-white/10"
+                              )}>
+                                {label}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="p-3 rounded-xl bg-secondary/10 border border-secondary/20">
-                        <span className="text-[8px] font-black text-secondary uppercase block mb-1">STOP LOSS</span>
-                        <span className="text-[13px] font-black text-secondary">${activeElliott.stopLoss?.toLocaleString()}</span>
+                      <div className="flex justify-between items-center px-1">
+                        <span className="text-[8px] font-black text-white/20 uppercase tracking-[0.2em]">Blanco = Completadas</span>
+                        <span className="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Cyan = Onda Actual</span>
                       </div>
-                      <div className="p-3 rounded-xl bg-primary/10 border border-primary/20">
-                        <span className="text-[8px] font-black text-primary uppercase block mb-1">T. PROFIT</span>
-                        <span className="text-[13px] font-black text-primary">${activeElliott.takeProfit?.toLocaleString()}</span>
+                    </div>
+
+                    {/* Deep Technical Analysis */}
+                    <div className="space-y-4">
+                      <div>
+                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] block mb-2">ANÁLISIS DE CONFLUENCIA</span>
+                        <div className="bg-white/5 p-5 rounded-3xl border border-white/10 relative overflow-hidden group">
+                          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Activity size={40} className="text-secondary" />
+                          </div>
+                          <p className="text-[14px] text-white/90 leading-relaxed font-bold italic relative z-10">
+                            {activeElliott.analysis}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Trade Recommendation */}
+                      <div className="bg-primary/10 border-2 border-primary/30 p-5 rounded-[2.5rem] shadow-[inset_0_0_40px_rgba(0,255,163,0.1)]">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Zap size={16} className="text-primary" />
+                          <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">ESTRATEGIA COMPLETA</span>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 mb-5">
+                          <div className="p-3 rounded-2xl bg-white/5 border border-white/5 text-center">
+                            <span className="text-[9px] font-black text-white/40 uppercase block mb-1">Entrada</span>
+                            <span className="text-[14px] font-mono font-black text-white">${activeElliott.entryPrice?.toLocaleString()}</span>
+                          </div>
+                          <div className="p-3 rounded-2xl bg-secondary/10 border border-secondary/20 text-center">
+                            <span className="text-[9px] font-black text-secondary uppercase block mb-1">Stop Loss</span>
+                            <span className="text-[14px] font-mono font-black text-secondary">${activeElliott.stopLoss?.toLocaleString()}</span>
+                          </div>
+                          <div className="p-3 rounded-2xl bg-primary/20 border border-primary/30 text-center">
+                            <span className="text-[9px] font-black text-primary uppercase block mb-1">Target TP</span>
+                            <span className="text-[14px] font-mono font-black text-white">${activeElliott.takeProfit?.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="p-4 bg-black/40 rounded-2xl border border-white/5 flex items-start gap-4">
+                          <Info size={16} className="text-white/40 shrink-0 mt-0.5" />
+                          <p className="text-[12px] font-medium text-white/70 leading-relaxed uppercase tracking-tight">
+                            {activeElliott.recommendation === 'LONG' 
+                              ? 'ESTRUCTURA IMPULSIVA POTENTE. BUSCAR COMPRAS EN RETROCESOS PARA MAXIMIZAR EL RVR.' 
+                              : 'FASE CORRECTIVA EN CURSO. SE RECOMIENDA CAUTELA O BUSCAR OPORTUNIDADES DE COBERTURA.'}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                   
-                  <p className="text-[10px] font-medium text-white/20 italic text-center leading-tight">Las líneas blancas marcan ondas completadas.<br/>La línea de color marca la onda activa.</p>
-                </div>
-              </motion.div>
+                  {/* Footer Disclaimer */}
+                  <div className="p-4 bg-black/60 flex items-center justify-center gap-2">
+                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest italic">Análisis Basado en Algoritmos IA Helio • Trading ACC 2026</span>
+                  </div>
+               </motion.div>
             )}
 
             {indicators.find(i => i.id === 'macd')?.enabled && rawAnalysisData['macd'] && (
@@ -1873,7 +1818,7 @@ const WyckoffAnalyzer: React.FC = () => {
                     </button>
                   </div>
                   <div className={cn(
-                    "px-2 py-0.5 rounded-full text-[9px] font-black uppercase border",
+                    "w-fit h-fit px-2 py-0.5 rounded-lg text-[9px] font-black uppercase border",
                     rawAnalysisData['macd'].type === 'BULLISH' ? "bg-primary/20 text-primary border-primary/30" : "bg-secondary/20 text-secondary border-secondary/30"
                   )}>
                     {rawAnalysisData['macd'].type}
