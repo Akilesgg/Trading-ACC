@@ -32,7 +32,8 @@ import {
   SeriesMarker,
   CandlestickSeries,
   LineSeries,
-  HistogramSeries
+  HistogramSeries,
+  createSeriesMarkers
 } from 'lightweight-charts';
 import { 
   Plus,
@@ -111,6 +112,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<any>(null);
+  const seriesMarkersRef = useRef<any>(null);
   const indicatorSeriesRef = useRef<Record<string, any>>({});
   const polylineSeriesRef = useRef<Record<string, any>>({});
   const priceLinesRef = useRef<IPriceLine[]>([]);
@@ -495,6 +497,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
     chartRef.current = chart;
     candlestickSeriesRef.current = candlestickSeries;
+    seriesMarkersRef.current = createSeriesMarkers(candlestickSeries);
 
     const handleResize = () => {
       if (chartContainerRef.current) {
@@ -547,8 +550,8 @@ const WyckoffAnalyzer: React.FC = () => {
       });
       polylineSeriesRef.current = {};
 
-      if (candlestickSeriesRef.current) {
-        (candlestickSeriesRef.current as any).setMarkers([]);
+      if (seriesMarkersRef.current) {
+        seriesMarkersRef.current.setMarkers([]);
       }
 
       // 2. Draw new visual patterns
@@ -851,9 +854,9 @@ const WyckoffAnalyzer: React.FC = () => {
         }
       });
 
-      if (candlestickSeriesRef.current && markers.length > 0) {
+      if (seriesMarkersRef.current && markers.length > 0) {
         markers.sort((a, b) => (a.time as number) - (b.time as number));
-        (candlestickSeriesRef.current as any).setMarkers(markers);
+        seriesMarkersRef.current.setMarkers(markers);
       }
 
       setActivePatterns(currentPatterns);

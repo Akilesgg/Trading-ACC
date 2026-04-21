@@ -122,7 +122,7 @@ service cloud.firestore {
 
     function isValidSignal(data) {
       return hasRequiredFields(['activo', 'tipo', 'entry', 'tp1', 'sl', 'estado', 'timestamp']) &&
-             hasOnlyAllowedFields(['activo', 'tipo', 'entry', 'tp1', 'tp2', 'tp3', 'sl', 'estado', 'timestamp', 'authorUid', 'leverage', 'confidence', 'analysis']) &&
+             hasOnlyAllowedFields(['activo', 'tipo', 'entry', 'tp1', 'tp2', 'tp3', 'sl', 'estado', 'timestamp', 'authorUid', 'leverage', 'confidence', 'analysis', 'timeframe']) &&
              data.activo is string &&
              data.tipo in ['LONG', 'SHORT'] &&
              data.entry is number &&
