@@ -19,7 +19,18 @@ import { cn } from "@/lib/utils";
 import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
 import { analyzeMarketData, Candle, AnalysisResult } from "@/lib/analysisEngine";
-import { createChart, IChartApi, ISeriesApi, CandlestickData, LineData, UTCTimestamp, ColorType, CrosshairMode, CandlestickSeries, LineSeries, HistogramSeries, IPriceLine, SeriesMarker, createSeriesMarkers, ISeriesMarkersPluginApi } from 'lightweight-charts';
+import { 
+  createChart, 
+  IChartApi, 
+  ISeriesApi, 
+  CandlestickData, 
+  LineData, 
+  UTCTimestamp, 
+  ColorType, 
+  CrosshairMode, 
+  IPriceLine, 
+  SeriesMarker
+} from 'lightweight-charts';
 import { 
   Plus,
   Minus,
@@ -96,11 +107,10 @@ const WyckoffAnalyzer: React.FC = () => {
   const [cursor, setCursor] = useState("default");
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candlestickSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
-  const indicatorSeriesRef = useRef<Record<string, ISeriesApi<any>>>({});
-  const polylineSeriesRef = useRef<Record<string, ISeriesApi<"Line">>>({});
+  const candlestickSeriesRef = useRef<any>(null);
+  const indicatorSeriesRef = useRef<Record<string, any>>({});
+  const polylineSeriesRef = useRef<Record<string, any>>({});
   const priceLinesRef = useRef<IPriceLine[]>([]);
-  const markersPluginRef = useRef<ISeriesMarkersPluginApi<any> | null>(null);
   const [macdData, setMacdData] = useState<{ macd: any[], signal: any[], histogram: any[] } | null>(null);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
@@ -168,7 +178,7 @@ const WyckoffAnalyzer: React.FC = () => {
         if (!drawingInProgressRef.current) {
           drawingInProgressRef.current = { time: param.time, price };
         } else {
-          const trendSeries = chart.addSeries(LineSeries, { 
+          const trendSeries = (chart as any).addLineSeries({ 
             color: '#ffffff', 
             lineWidth: 2,
             priceLineVisible: false,
@@ -265,197 +275,6 @@ const WyckoffAnalyzer: React.FC = () => {
       // 1. Technical Analysis Engine
       setIndicatorAnalysis(realAnalysis);
       setRawAnalysisData(rawAnalysis);
-
-      return; // Stop early to avoid legacy rendering code below for now
-
-      // 2. Draw new visual patterns
-      const markers: SeriesMarker<UTCTimestamp>[] = [];
-      
-      const patternsEnabled = indicators.find(i => i.id === 'patterns')?.enabled;
-      const candlesEnabled = indicators.find(i => i.id === 'candles')?.enabled;
-      const elliottEnabled = indicators.find(i => i.id === 'elliott')?.enabled;
-      const wyckoffEnabled = indicators.find(i => i.id === 'wakeup')?.enabled;
-
-      const liquidityEnabled = indicators.find(i => i.id === 'liquidity')?.enabled;
-      const levelsEnabled = indicators.find(i => i.id === 'levels')?.enabled;
-
-      let currentPatterns: AnalysisResult | null = null;
-      let currentCandles: AnalysisResult | null = null;
-      let currentElliott: AnalysisResult | null = null;
-
-      Object.entries(rawAnalysis).forEach(([key, analysis]) => {
-        if (!analysis.visuals) return;
-        
-        // Check if indicator is enabled
-        if (key === 'patterns' && !patternsEnabled) return;
-        if (key === 'candles' && !candlesEnabled) return;
-        if (key === 'elliott' && !elliottEnabled) return;
-        if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
-        
-        // Handle Levels separately
-        if (key === 'levels' || analysis.visuals.type === 'PIVOT') {
-          if (!levelsEnabled) return;
-        }
-        
-        if ((key === 'liquidity' || analysis.visuals.type === 'LIQUIDITY') && !liquidityEnabled) return;
-
-        if (key === 'patterns') {
-          currentPatterns = analysis;
-        }
-        if (key === 'candles') {
-          currentCandles = analysis;
-        }
-        if (key === 'elliott') {
-          currentElliott = analysis;
-        }
-
-        const { visuals } = analysis;
-
-        // Add dynamic Recommendation Arrows on the latest candle for all active indicators
-        const latestTime = (data[data.length - 1].time / 1000) as UTCTimestamp;
-        const offsetMultiplier = Object.keys(rawAnalysis).indexOf(key) + 1;
-        
-        markers.push({
-          time: latestTime,
-          position: analysis.type === 'BULLISH' ? 'belowBar' : (analysis.type === 'BEARISH' ? 'aboveBar' : 'inBar'),
-          color: analysis.type === 'BULLISH' ? '#00ffa3' : (analysis.type === 'BEARISH' ? '#ff7162' : '#ffffff'),
-          shape: analysis.type === 'BULLISH' ? 'arrowUp' : (analysis.type === 'BEARISH' ? 'arrowDown' : 'square'),
-          text: `${analysis.pattern.split(' ')[0]} ${analysis.type === 'BULLISH' ? '↑' : (analysis.type === 'BEARISH' ? '↓' : '↔')}`,
-          size: 2
-        });
-
-        if ((visuals.type === 'HORIZONTAL' || visuals.type === 'STRUCTURE') && visuals.price) {
-          const line = candlestickSeriesRef.current!.createPriceLine({
-            price: visuals.price,
-            color: '#ffffff', // White
-            lineWidth: 2,
-            lineStyle: 1, // Dotted
-            axisLabelVisible: true,
-            title: analysis.pattern.toUpperCase(),
-          });
-          priceLinesRef.current.push(line);
-        }
-
-        if (visuals.type === 'STRUCTURE' && visuals.points) {
-          // For Structure like H-C-H, also mark the peaks with dotted lines
-          visuals.points.forEach(pt => {
-             const line = candlestickSeriesRef.current!.createPriceLine({
-              price: pt.price,
-              color: '#ffffff',
-              lineWidth: 1,
-              lineStyle: 1, // Dotted
-              axisLabelVisible: true,
-              title: pt.label ? `${analysis.pattern}: ${pt.label}` : analysis.pattern,
-            });
-            priceLinesRef.current.push(line);
-          });
-        }
-
-        // Draw Entry/SL/TP if present
-        if (analysis.entryPrice && (key === 'patterns' || key === 'candles')) {
-          const entryLine = candlestickSeriesRef.current!.createPriceLine({
-            price: analysis.entryPrice,
-            color: '#00ffa3',
-            lineWidth: 2,
-            lineStyle: 0,
-            axisLabelVisible: true,
-            title: `ENTRADA: $${analysis.entryPrice.toLocaleString()}`,
-          });
-          priceLinesRef.current.push(entryLine);
-
-          if (analysis.stopLoss) {
-            const slLine = candlestickSeriesRef.current!.createPriceLine({
-              price: analysis.stopLoss,
-              color: '#ff7162',
-              lineWidth: 1,
-              lineStyle: 2,
-              axisLabelVisible: true,
-              title: `SL: $${analysis.stopLoss.toLocaleString()}`,
-            });
-            priceLinesRef.current.push(slLine);
-          }
-
-          if (analysis.takeProfit) {
-            const tpLine = candlestickSeriesRef.current!.createPriceLine({
-              price: analysis.takeProfit,
-              color: '#00e0ff',
-              lineWidth: 1,
-              lineStyle: 2,
-              axisLabelVisible: true,
-              title: `TP: $${analysis.takeProfit.toLocaleString()}`,
-            });
-            priceLinesRef.current.push(tpLine);
-          }
-        }
-
-        if (visuals.type === 'POLYLINE' && visuals.points) {
-          const polySeries = chartRef.current!.addSeries(LineSeries, {
-            color: '#ffffff',
-            lineWidth: 3,
-            lineStyle: 0,
-            priceLineVisible: false,
-            lastValueVisible: false,
-          });
-          
-          const lineData = visuals.points.map(pt => ({
-            time: (pt.time / 1000) as UTCTimestamp,
-            value: pt.price
-          }));
-          
-          polySeries.setData(lineData);
-          polylineSeriesRef.current[key] = polySeries;
-
-          // Add markers for labels - Use clear, professional labels
-          visuals.points.forEach(pt => {
-            if (pt.label) {
-              markers.push({
-                time: (pt.time / 1000) as UTCTimestamp,
-                position: 'aboveBar',
-                color: '#ffffff',
-                shape: 'circle',
-                text: pt.label,
-                size: 2
-              });
-            }
-          });
-        }
-
-        if (visuals.points && visuals.type !== 'POLYLINE') {
-          visuals.points.forEach(pt => {
-            markers.push({
-              time: (pt.time / 1000) as UTCTimestamp,
-              position: analysis.type === 'BULLISH' ? 'belowBar' : 'aboveBar',
-              color: analysis.type === 'BULLISH' ? '#00ffa3' : '#ff7162',
-              shape: analysis.type === 'BULLISH' ? 'arrowUp' : 'arrowDown',
-              text: pt.label || analysis.pattern,
-            });
-          });
-        }
-      });
-
-      if (markersPluginRef.current && markers.length > 0) {
-        // Sort markers by time
-        markers.sort((a, b) => (a.time as number) - (b.time as number));
-        markersPluginRef.current.setMarkers(markers);
-      }
-
-      setActivePatterns(currentPatterns);
-      setActiveCandles(currentCandles);
-      setActiveElliott(currentElliott);
-
-      // 3. Draw Wyckoff Phase Context
-      if (candlestickSeriesRef.current && wyckoffPhase && wyckoffEnabled) {
-        const currentPrice = Number(ticker.price);
-        const line = candlestickSeriesRef.current.createPriceLine({
-          price: currentPrice,
-          color: '#ffffff',
-          lineWidth: 1,
-          lineStyle: 2, // Dashed
-          axisLabelVisible: true,
-          title: "", // Removed title to avoid obstruction
-        });
-        priceLinesRef.current.push(line);
-      }
 
       // Parsing logic
       const wyckoffMatch = aiResponse.match(/FASE WYCKOFF:?\s*(.*)/i);
@@ -663,7 +482,7 @@ const WyckoffAnalyzer: React.FC = () => {
       handleScale: true,
     });
 
-    const candlestickSeries = chart.addSeries(CandlestickSeries, {
+    const candlestickSeries = (chart as any).addCandlestickSeries({
       upColor: '#00ffa3',
       downColor: '#ff7162',
       borderVisible: false,
@@ -688,10 +507,6 @@ const WyckoffAnalyzer: React.FC = () => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (markersPluginRef.current) {
-        markersPluginRef.current.detach();
-        markersPluginRef.current = null;
-      }
       chart.remove();
     };
   }, []);
@@ -881,7 +696,7 @@ const WyckoffAnalyzer: React.FC = () => {
               ? '#ffff00' // Yellow for active line
               : '#ffffff'; // White for previous waves
             
-            const segment = chartRef.current!.addSeries(LineSeries, {
+            const segment = (chartRef.current as any).addLineSeries({
               color,
               lineWidth: isLast ? 4 : 2, // Thicker active line
               priceLineVisible: false,
@@ -1000,7 +815,7 @@ const WyckoffAnalyzer: React.FC = () => {
         }
 
         if (visuals.type === 'POLYLINE' && visuals.points) {
-          const polySeries = chartRef.current!.addSeries(LineSeries, {
+          const polySeries = (chartRef.current as any).addLineSeries({
             color: '#ffffff',
             lineWidth: 3,
             lineStyle: 0,
@@ -1058,7 +873,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
         if (isEnabled) {
           if (!indicatorSeriesRef.current[config.id]) {
-            indicatorSeriesRef.current[config.id] = chartRef.current!.addSeries(LineSeries, {
+            indicatorSeriesRef.current[config.id] = (chartRef.current as any).addLineSeries({
               color: config.color,
               lineWidth: config.id === 'wakeup' ? 3 : 2,
               lineStyle: config.dash.length ? 2 : 0,
@@ -1082,7 +897,7 @@ const WyckoffAnalyzer: React.FC = () => {
     const macdEnabled = indicators.find(i => i.id === 'macd')?.enabled;
     if (macdEnabled && macdData) {
       if (!indicatorSeriesRef.current['macd_line']) {
-        const hSeries = chartRef.current!.addSeries(HistogramSeries as any, {
+        const hSeries = (chartRef.current as any).addHistogramSeries({
           color: '#26a69a',
           priceScaleId: 'macd',
           priceLineVisible: false,
@@ -1090,7 +905,7 @@ const WyckoffAnalyzer: React.FC = () => {
         });
         indicatorSeriesRef.current['macd_hist'] = hSeries;
 
-        const mSeries = chartRef.current!.addSeries(LineSeries, {
+        const mSeries = (chartRef.current as any).addLineSeries({
           color: '#2962FF',
           lineWidth: 2,
           priceScaleId: 'macd',
@@ -1099,7 +914,7 @@ const WyckoffAnalyzer: React.FC = () => {
         });
         indicatorSeriesRef.current['macd_line'] = mSeries;
 
-        const sSeries = chartRef.current!.addSeries(LineSeries, {
+        const sSeries = (chartRef.current as any).addLineSeries({
           color: '#FF6D00',
           lineWidth: 2,
           priceScaleId: 'macd',
