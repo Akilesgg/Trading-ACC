@@ -266,6 +266,8 @@ const WyckoffAnalyzer: React.FC = () => {
       setIndicatorAnalysis(realAnalysis);
       setRawAnalysisData(rawAnalysis);
 
+      return; // Stop early to avoid legacy rendering code below for now
+
       // 2. Draw new visual patterns
       const markers: SeriesMarker<UTCTimestamp>[] = [];
       
@@ -728,7 +730,7 @@ const WyckoffAnalyzer: React.FC = () => {
       polylineSeriesRef.current = {};
 
       if (candlestickSeriesRef.current) {
-        candlestickSeriesRef.current.setMarkers([]);
+        (candlestickSeriesRef.current as any).setMarkers([]);
       }
 
       // 2. Draw new visual patterns
@@ -892,7 +894,7 @@ const WyckoffAnalyzer: React.FC = () => {
             segment.setData(segmentData);
             polylineSeriesRef.current[`elliott_${i}`] = segment;
 
-            // POINT-ON-LINE LABELS: Thicker and more visible text attached to the Helium-3 structure
+            // POINT-ON-LINE LABELS: Mid-segment identification
             const midTimeValue = (prevPt.time + pt.time) / 2;
             const nearestCandle = chartData.reduce((prev, curr) => 
               Math.abs(curr.time - midTimeValue) < Math.abs(prev.time - midTimeValue) ? curr : prev
@@ -902,24 +904,29 @@ const WyckoffAnalyzer: React.FC = () => {
             markers.push({
               time: (nearestCandle.time / 1000) as UTCTimestamp,
               position: 'inBar',
-              color: '#ffff00', // Yellow to match the line exactly
+              color: '#ffff00',
               shape: 'circle',
-              text: `ONDA ${lineLabel}`, // Explicit text
-              size: 4 // Prominent
+              text: lineLabel, // Simplify text to just the label
+              size: 1
             });
           });
 
-          // Vertex markers: Ultra-prominent labels
-          visuals.points.forEach((pt, i) => {
+          // Vertex markers: High-visibility labels on the corresponding bars
+          visuals.points.forEach((pt: any, i: number) => {
             const label = pt.label || '?';
             const isAbove = ['1', '3', '5', 'B'].includes(label);
             
+            // Critical: Ensure marker time matches a candle time EXACTLY
+            const vertexCandle = chartData.reduce((prev, curr) => 
+              Math.abs(curr.time - pt.time) < Math.abs(prev.time - pt.time) ? curr : prev
+            );
+
             markers.push({
-              time: (pt.time / 1000) as UTCTimestamp,
+              time: (vertexCandle.time / 1000) as UTCTimestamp,
               position: isAbove ? 'aboveBar' : 'belowBar',
-              color: '#ffffff',
-              shape: 'square',
-              text: `【 ${label} 】`, // Brackets as requested
+              color: '#ffff00', // Highly visible yellow
+              shape: 'circle', 
+              text: `【 ${label} 】`, // Big bold labels with brackets
               size: 4
             });
 
@@ -1028,7 +1035,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
       if (candlestickSeriesRef.current && markers.length > 0) {
         markers.sort((a, b) => (a.time as number) - (b.time as number));
-        candlestickSeriesRef.current.setMarkers(markers);
+        (candlestickSeriesRef.current as any).setMarkers(markers);
       }
 
       setActivePatterns(currentPatterns);
