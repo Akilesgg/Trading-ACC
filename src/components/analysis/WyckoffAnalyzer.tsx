@@ -727,8 +727,8 @@ const WyckoffAnalyzer: React.FC = () => {
       });
       polylineSeriesRef.current = {};
 
-      if (markersPluginRef.current) {
-        markersPluginRef.current.setMarkers([]);
+      if (candlestickSeriesRef.current) {
+        candlestickSeriesRef.current.setMarkers([]);
       }
 
       // 2. Draw new visual patterns
@@ -904,8 +904,8 @@ const WyckoffAnalyzer: React.FC = () => {
               position: 'inBar',
               color: '#ffff00', // Yellow to match the line exactly
               shape: 'circle',
-              text: `[${lineLabel}]`, // Just the label in brackets for extreme clarity
-              size: 2
+              text: `ONDA ${lineLabel}`, // Explicit text
+              size: 4 // Prominent
             });
           });
 
@@ -919,8 +919,8 @@ const WyckoffAnalyzer: React.FC = () => {
               position: isAbove ? 'aboveBar' : 'belowBar',
               color: '#ffffff',
               shape: 'square',
-              text: `★ ${label} ★`, // Stars for maximum peak/trough identification
-              size: 3
+              text: `【 ${label} 】`, // Brackets as requested
+              size: 4
             });
 
             const pLine = candlestickSeriesRef.current!.createPriceLine({
@@ -1026,9 +1026,9 @@ const WyckoffAnalyzer: React.FC = () => {
         }
       });
 
-      if (markersPluginRef.current && markers.length > 0) {
+      if (candlestickSeriesRef.current && markers.length > 0) {
         markers.sort((a, b) => (a.time as number) - (b.time as number));
-        markersPluginRef.current.setMarkers(markers);
+        candlestickSeriesRef.current.setMarkers(markers);
       }
 
       setActivePatterns(currentPatterns);
