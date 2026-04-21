@@ -29,7 +29,10 @@ import {
   ColorType, 
   CrosshairMode, 
   IPriceLine, 
-  SeriesMarker
+  SeriesMarker,
+  CandlestickSeries,
+  LineSeries,
+  HistogramSeries
 } from 'lightweight-charts';
 import { 
   Plus,
@@ -178,7 +181,7 @@ const WyckoffAnalyzer: React.FC = () => {
         if (!drawingInProgressRef.current) {
           drawingInProgressRef.current = { time: param.time, price };
         } else {
-          const trendSeries = (chart as any).addLineSeries({ 
+          const trendSeries = chart.addSeries(LineSeries, { 
             color: '#ffffff', 
             lineWidth: 2,
             priceLineVisible: false,
@@ -482,7 +485,7 @@ const WyckoffAnalyzer: React.FC = () => {
       handleScale: true,
     });
 
-    const candlestickSeries = (chart as any).addCandlestickSeries({
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#00ffa3',
       downColor: '#ff7162',
       borderVisible: false,
@@ -696,7 +699,7 @@ const WyckoffAnalyzer: React.FC = () => {
               ? '#ffff00' // Yellow for active line
               : '#ffffff'; // White for previous waves
             
-            const segment = (chartRef.current as any).addLineSeries({
+            const segment = (chartRef.current as any).addSeries(LineSeries, {
               color,
               lineWidth: isLast ? 4 : 2, // Thicker active line
               priceLineVisible: false,
@@ -815,7 +818,7 @@ const WyckoffAnalyzer: React.FC = () => {
         }
 
         if (visuals.type === 'POLYLINE' && visuals.points) {
-          const polySeries = (chartRef.current as any).addLineSeries({
+          const polySeries = (chartRef.current as any).addSeries(LineSeries, {
             color: '#ffffff',
             lineWidth: 3,
             lineStyle: 0,
@@ -873,7 +876,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
         if (isEnabled) {
           if (!indicatorSeriesRef.current[config.id]) {
-            indicatorSeriesRef.current[config.id] = (chartRef.current as any).addLineSeries({
+            indicatorSeriesRef.current[config.id] = (chartRef.current as any).addSeries(LineSeries, {
               color: config.color,
               lineWidth: config.id === 'wakeup' ? 3 : 2,
               lineStyle: config.dash.length ? 2 : 0,
@@ -897,7 +900,7 @@ const WyckoffAnalyzer: React.FC = () => {
     const macdEnabled = indicators.find(i => i.id === 'macd')?.enabled;
     if (macdEnabled && macdData) {
       if (!indicatorSeriesRef.current['macd_line']) {
-        const hSeries = (chartRef.current as any).addHistogramSeries({
+        const hSeries = (chartRef.current as any).addSeries(HistogramSeries, {
           color: '#26a69a',
           priceScaleId: 'macd',
           priceLineVisible: false,
@@ -905,7 +908,7 @@ const WyckoffAnalyzer: React.FC = () => {
         });
         indicatorSeriesRef.current['macd_hist'] = hSeries;
 
-        const mSeries = (chartRef.current as any).addLineSeries({
+        const mSeries = (chartRef.current as any).addSeries(LineSeries, {
           color: '#2962FF',
           lineWidth: 2,
           priceScaleId: 'macd',
@@ -914,7 +917,7 @@ const WyckoffAnalyzer: React.FC = () => {
         });
         indicatorSeriesRef.current['macd_line'] = mSeries;
 
-        const sSeries = (chartRef.current as any).addLineSeries({
+        const sSeries = (chartRef.current as any).addSeries(LineSeries, {
           color: '#FF6D00',
           lineWidth: 2,
           priceScaleId: 'macd',
