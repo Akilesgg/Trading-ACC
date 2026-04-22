@@ -70,18 +70,22 @@ async function startServer() {
         
         **PATRONES DETECTADOS**: Identifica patrones como Doble Techo/Suelo, HCH, Triángulos, Canales, Banderas, etc. Indica si están en FORMACIÓN o CONFIRMADOS. Sé extremadamente preciso.
         
+        **ONDAS DE ELLIOTT FRÁCTALES**: Analiza la estructura de ondas actual considerando el grado mayor (ciclo macro) y el grado menor (sub-ondas internas). Explica la fase actual del fractal Helium-3.
+        
         **VELAS JAPONESAS**: Identifica velas como Engulfing, Pin Bar, Hammer, Morning Star, etc. Analiza su relevancia en el contexto actual.
         
         **JUSTIFICACIÓN TÉCNICA**: Liquidez, FVG y Order Blocks.
         
         **ANÁLISIS DE ESTRUCTURA**: BOS, CHoCH.
         
-        **NIVELES OPERATIVOS**: 
-        ENTRADA: [precio]
-        STOP LOSS: [precio]
-        TAKE PROFIT 1: [precio]
-        TAKE PROFIT 2: [precio]
-        TAKE PROFIT 3: [precio]
+        **NIVELES OPERATIVOS (CRÍTICO: Deben ser niveles realistas basados en Fibonacci y Liquidez)**: 
+        ENTRADA: [precio cercano al actual]
+        STOP LOSS: [precio de invalidación técnica]
+        TAKE PROFIT 1: [objetivo conservador]
+        TAKE PROFIT 2: [objetivo estructural]
+        TAKE PROFIT 3: [extensión final]
+        
+        **FILTRO DE ACTIVACIÓN**: Si el precio de entrada no está cerca del precio actual (máximo 0.5% de diferencia), indica claramente que no se debe activar el setup.
         
         **NIVEL DE CONFIANZA**: [1-100] (Calculado por multi-confluencia: Tendencia + S/R + Patrón + Vela + Volumen).
         

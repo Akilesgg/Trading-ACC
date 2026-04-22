@@ -693,18 +693,20 @@ const WyckoffAnalyzer: React.FC = () => {
           return;
         }
 
-        if (key === 'elliott' && visuals.points) {
+        if (key.startsWith('elliott') && visuals.points) {
           visuals.points.forEach((pt, i) => {
             if (i === 0) return;
             const prevPt = visuals.points[i - 1];
             const isLast = i === visuals.points.length - 1;
-            const color = isLast 
-              ? '#ffff00' // Yellow for active line
-              : '#ffffff'; // White for previous waves
+            const isMajor = key === 'elliott_major';
+            
+            const color = isMajor 
+              ? (isLast ? '#00e0ff' : '#00a8ff') // Blue tones for Major
+              : (isLast ? '#ffff00' : '#ffffff'); // Yellow/White for Minor
             
             const segment = (chartRef.current as any).addSeries(LineSeries, {
               color,
-              lineWidth: isLast ? 4 : 2, // Thicker active line
+              lineWidth: isLast ? 4 : (isMajor ? 3 : 2),
               priceLineVisible: false,
               lastValueVisible: false,
             });
@@ -713,7 +715,7 @@ const WyckoffAnalyzer: React.FC = () => {
               { time: (pt.time / 1000) as UTCTimestamp, value: pt.price }
             ].sort((a,b) => (a.time as number) - (b.time as number));
             segment.setData(segmentData);
-            polylineSeriesRef.current[`elliott_${i}`] = segment;
+            polylineSeriesRef.current[`${key}_${i}`] = segment;
 
             // POINT-ON-LINE LABELS: Mid-segment identification
             const midTimeValue = (prevPt.time + pt.time) / 2;
@@ -725,19 +727,19 @@ const WyckoffAnalyzer: React.FC = () => {
             markers.push({
               time: (nearestCandle.time / 1000) as UTCTimestamp,
               position: 'inBar',
-              color: '#ffff00',
+              color: color,
               shape: 'circle',
-              text: lineLabel, // Simplify text to just the label
+              text: lineLabel, 
               size: 1
             });
           });
 
-          // Vertex markers: High-visibility labels on the corresponding bars
+          // Vertex markers
           visuals.points.forEach((pt: any, i: number) => {
             const label = pt.label || '?';
-            const isAbove = ['1', '3', '5', 'B'].includes(label);
+            const isMajor = key === 'elliott_major';
+            const isAbove = ['1', '3', '5', 'B', '(1)', '(3)', '(5)', '(B)'].includes(label);
             
-            // Critical: Ensure marker time matches a candle time EXACTLY
             const vertexCandle = chartData.reduce((prev, curr) => 
               Math.abs(curr.time - pt.time) < Math.abs(prev.time - pt.time) ? curr : prev
             );
@@ -745,21 +747,23 @@ const WyckoffAnalyzer: React.FC = () => {
             markers.push({
               time: (vertexCandle.time / 1000) as UTCTimestamp,
               position: isAbove ? 'aboveBar' : 'belowBar',
-              color: '#ffff00', // Highly visible yellow
+              color: isMajor ? '#00e0ff' : '#ffff00', 
               shape: 'circle', 
-              text: `【 ${label} 】`, // Big bold labels with brackets
-              size: 4
+              text: isMajor ? `⦗ ${label} ⦘` : `【 ${label} 】`, 
+              size: isMajor ? 5 : 4
             });
 
-            const pLine = candlestickSeriesRef.current!.createPriceLine({
-              price: pt.price,
-              color: 'rgba(255, 255, 255, 0.4)', // Subtle white line
-              lineWidth: 1,
-              lineStyle: 2,
-              axisLabelVisible: true,
-              title: `${label}`
-            });
-            priceLinesRef.current.push(pLine);
+            if (isMajor) {
+              const pLine = candlestickSeriesRef.current!.createPriceLine({
+                price: pt.price,
+                color: 'rgba(0, 224, 255, 0.3)', 
+                lineWidth: 1,
+                lineStyle: 1,
+                axisLabelVisible: true,
+                title: `${label}`
+              });
+              priceLinesRef.current.push(pLine);
+            }
           });
           return;
         }
