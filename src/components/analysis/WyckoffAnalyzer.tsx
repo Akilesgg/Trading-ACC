@@ -1609,6 +1609,30 @@ const WyckoffAnalyzer: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Wave Legend */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-[#00e5ff]/5 border border-[#00e5ff]/20 p-3 rounded-2xl">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-[#00e5ff]" />
+                            <span className="text-[10px] font-black text-[#00e5ff] uppercase tracking-wider">ONDA MAYOR</span>
+                          </div>
+                          <span className="text-[8px] font-mono text-[#00e5ff] font-black">【 (1) - (5) 】</span>
+                        </div>
+                        <p className="text-[9px] text-white/60 font-bold leading-tight uppercase">ESTRUCTURA MACRO DOMINANTE (CICLO COMPLETO)</p>
+                      </div>
+                      <div className="bg-[#fbff00]/5 border border-[#fbff00]/20 p-3 rounded-2xl">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 rounded-full bg-[#fbff00]" />
+                            <span className="text-[10px] font-black text-[#fbff00] uppercase tracking-wider">ONDA MENOR</span>
+                          </div>
+                          <span className="text-[8px] font-mono text-[#fbff00] font-black">【 1 - 5 】</span>
+                        </div>
+                        <p className="text-[9px] text-white/60 font-bold leading-tight uppercase">FRACTALES INTERNOS DE LA TEMPORALIDAD ({selectedTimeframe})</p>
+                      </div>
+                    </div>
+
                       {/* Deep Technical Analysis */}
                       <div className="space-y-4">
                         <div>
