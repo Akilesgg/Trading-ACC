@@ -41,7 +41,8 @@ import {
   Maximize2,
   RefreshCw,
   Clock,
-  RotateCcw
+  RotateCcw,
+  Trash2
 } from "lucide-react";
 
 interface IndicatorConfig {
@@ -134,6 +135,15 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
     { id: "ai_pro", name: "Análisis ✦✦", enabled: false }
   ]);
+
+  const clearMaster = () => {
+    setIndicators(prev => prev.map(ind => ({ ...ind, enabled: false })));
+    clearDrawings();
+    setActivePatterns(null);
+    setActiveCandles(null);
+    setActiveElliott(null);
+    setIndicatorAnalysis({});
+  };
 
   const [indicatorAnalysis, setIndicatorAnalysis] = useState<Record<string, string>>({});
   const [finalConclusion, setFinalConclusion] = useState<string>("");
@@ -1177,11 +1187,16 @@ const WyckoffAnalyzer: React.FC = () => {
               {[
                 { id: 'hline', icon: '—', label: 'H-Line' },
                 { id: 'trendline', icon: '↗', label: 'Trend' },
-                { id: 'erase', icon: '✕', label: 'Clear' }
+                { id: 'erase', icon: '✕', label: 'Clear' },
+                { id: 'master_clear', icon: <Trash2 size={16} />, label: 'Limpiar Todo' }
               ].map(tool => (
                 <button
                   key={tool.id}
-                  onClick={() => tool.id === 'erase' ? clearDrawings() : setDrawingTool(prev => prev === tool.id ? 'none' : tool.id as any)}
+                  onClick={() => {
+                    if (tool.id === 'erase') clearDrawings();
+                    else if (tool.id === 'master_clear') clearMaster();
+                    else setDrawingTool(prev => prev === tool.id ? 'none' : tool.id as any);
+                  }}
                   className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center text-[16px] font-bold transition-all",
                     drawingTool === tool.id ? "bg-primary/20 text-primary border border-primary/40" : "text-white/40 hover:text-white"

@@ -90,9 +90,25 @@ export function detectLatestCandleStatus(data: Candle[]): { status: string; type
 }
 
 /**
+ * Returns dynamic SL and TP percentages based on the timeframe.
+ * Adheres to realistic strategies: tighter for scalp, wider for swing.
+ */
+export function getStrategyScales(timeframe: string) {
+  const scales: Record<string, { sl: number, tp: number }> = {
+    '1m': { sl: 0.003, tp: 0.01 },   // 0.3% SL / 1% TP approx
+    '5m': { sl: 0.005, tp: 0.015 },  // 0.5% SL / 1.5% TP
+    '15m': { sl: 0.008, tp: 0.025 }, // 0.8% SL / 2.5% TP
+    '1h': { sl: 0.015, tp: 0.05 },   // 1.5% SL / 5% TP
+    '4h': { sl: 0.025, tp: 0.08 },   // 2.5% SL / 8% TP
+    '1d': { sl: 0.05, tp: 0.15 }     // 5.0% SL / 15% TP
+  };
+  return scales[timeframe] || scales['1h'];
+}
+
+/**
  * Detects candlestick patterns in the most recent data.
  */
-export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null {
+export function detectCandlestickPatterns(data: Candle[], timeframe: string): AnalysisResult | null {
   if (data.length < 5) return null;
 
   const last = data[data.length - 1];
@@ -109,6 +125,7 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
 
   // Contextual status for every run
   const marketStatus = detectLatestCandleStatus(data);
+  const scales = getStrategyScales(timeframe);
 
   // 1. Doji
   if (bodySize < candleRange * 0.1) {
@@ -132,11 +149,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       pattern: `${hammerType} - ESTRATEGIA: ACCIÓN DEL PRECIO`,
       type: 'BULLISH',
       status: 'CONFIRMED',
-      analysis: `Martillo detectado. ${marketStatus.analysis} La mecha indica rechazo de precios bajos. Ideal para buscar entradas en largo tras confirmación de la siguiente vela.`,
+      analysis: `Martillo detectado en temporalidad ${timeframe}. ${marketStatus.analysis} La mecha indica rechazo de precios bajos.`,
       recommendation: 'LONG',
       entryPrice: last.close,
-      stopLoss: last.low * 0.998,
-      takeProfit: last.close * 1.015,
+      stopLoss: isBullish ? last.low : last.close * (1 - scales.sl),
+      takeProfit: last.close * (1 + scales.tp),
       visuals: {
         type: 'STRUCTURE',
         points: [
@@ -153,11 +170,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       pattern: 'Estrella Fugaz - ESTRATEGIA: RECHAZO DE RESISTENCIA',
       type: 'BEARISH',
       status: 'CONFIRMED',
-      analysis: `Estrella fugaz detectada. ${marketStatus.analysis} Rechazo masivo en la parte superior. Los vendedores han tomado el control del nivel de precio actual.`,
+      analysis: `Estrella fugaz detectada en ${timeframe}. ${marketStatus.analysis} Rechazo masivo en la parte superior.`,
       recommendation: 'SHORT',
       entryPrice: last.close,
-      stopLoss: last.high * 1.002,
-      takeProfit: last.close * 0.985,
+      stopLoss: last.high,
+      takeProfit: last.close * (1 - scales.tp),
       visuals: {
         type: 'STRUCTURE',
         points: [
@@ -175,11 +192,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       pattern: 'Engulfing Alcista - ESTRATEGIA: CAMBIO DE MOMENTUM',
       type: 'BULLISH',
       status: 'CONFIRMED',
-      analysis: `Envolvente Alcista detectada. ${marketStatus.analysis} Los compradores han envuelto completamente la vela previa, demostrando una fuerza impulsora renovada.`,
+      analysis: `Envolvente Alcista detectada (${timeframe}). ${marketStatus.analysis} Momentum alcista renovado.`,
       recommendation: 'LONG',
       entryPrice: last.close,
-      stopLoss: Math.min(last.low, prev.low) * 0.998,
-      takeProfit: last.close * 1.025,
+      stopLoss: Math.min(last.low, prev.low),
+      takeProfit: last.close * (1 + scales.tp * 1.5), // Expansive
       visuals: {
         type: 'STRUCTURE',
         points: [
@@ -194,11 +211,11 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
       pattern: 'Engulfing Bajista - ESTRATEGIA: AGOTAMIENTO COMPRADOR',
       type: 'BEARISH',
       status: 'CONFIRMED',
-      analysis: `Envolvente Bajista detectada. ${marketStatus.analysis} Fuerte señal de reversión. La oferta ha superado drásticamente a la demanda.`,
+      analysis: `Envolvente Bajista detectada (${timeframe}). ${marketStatus.analysis} La oferta supera a la demanda.`,
       recommendation: 'SHORT',
       entryPrice: last.close,
-      stopLoss: Math.max(last.high, prev.high) * 1.002,
-      takeProfit: last.close * 0.975,
+      stopLoss: Math.max(last.high, prev.high),
+      takeProfit: last.close * (1 - scales.tp * 1.5),
       visuals: {
         type: 'STRUCTURE',
         points: [
@@ -310,12 +327,14 @@ export function detectCandlestickPatterns(data: Candle[]): AnalysisResult | null
 /**
  * Detects chart patterns using a larger window of data.
  */
-export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
+export function detectChartPatterns(data: Candle[], timeframe: string): AnalysisResult | null {
   if (data.length < 50) return null;
 
   const prices = data.map(d => d.close);
   const highs = data.map(d => d.high);
   const lows = data.map(d => d.low);
+
+  const scales = getStrategyScales(timeframe);
 
   // Simple Peak/Trough detection
   const findPeaks = (arr: number[], window = 5) => {
@@ -356,8 +375,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         analysis: 'Se ha identificado un patrón de Doble Techo. El precio ha fallado dos veces en superar la resistencia en el nivel de ' + p2.value.toFixed(2) + '.',
         recommendation: 'SHORT',
         entryPrice: data[data.length - 1].close,
-        stopLoss: p2.value * 1.005,
-        takeProfit: data[data.length - 1].close * 0.95,
+        stopLoss: p2.value,
+        takeProfit: data[data.length - 1].close * (1 - scales.tp * 2),
         visuals: {
           type: 'HORIZONTAL',
           price: p2.value,
@@ -383,8 +402,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         analysis: 'Patrón de Doble Suelo detectado. El mercado ha encontrado un soporte sólido en el nivel de ' + t2.value.toFixed(2) + ' tras dos intentos de ruptura fallidos.',
         recommendation: 'LONG',
         entryPrice: data[data.length - 1].close,
-        stopLoss: t2.value * 0.995,
-        takeProfit: data[data.length - 1].close * 1.05,
+        stopLoss: t2.value,
+        takeProfit: data[data.length - 1].close * (1 + scales.tp * 2),
         visuals: {
           type: 'HORIZONTAL',
           price: t2.value,
@@ -411,8 +430,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         analysis: `Patrón Hombro-Cabeza-Hombro detectado. La cabeza en ${p2.value.toFixed(2)} es superior a los hombros, indicando un agotamiento de la tendencia alcista.`,
         recommendation: 'SHORT',
         entryPrice: data[data.length - 1].close,
-        stopLoss: p2.value * 1.005,
-        takeProfit: data[data.length - 1].close * 0.95,
+        stopLoss: p2.value,
+        takeProfit: data[data.length - 1].close * (1 - scales.tp * 3),
         visuals: {
           type: 'STRUCTURE',
           points: [
@@ -439,8 +458,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         analysis: `Patrón H-C-H Invertido detectado. El suelo en ${t2.value.toFixed(2)} indica una capitulación final seguida de una acumulación agresiva.`,
         recommendation: 'LONG',
         entryPrice: data[data.length - 1].close,
-        stopLoss: t2.value * 0.995,
-        takeProfit: data[data.length - 1].close * 1.05,
+        stopLoss: t2.value,
+        takeProfit: data[data.length - 1].close * (1 + scales.tp * 3),
         visuals: {
           type: 'STRUCTURE',
           points: [
@@ -457,51 +476,6 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
   const last3Peaks = peaks.slice(-3);
   const last3Troughs = troughs.slice(-3);
 
-  // 6. Elliott Waves (Impulse 1-2-3-4-5 and Correction A-B-C)
-  const allPivotPoints = [...peaks.map(p => ({ ...p, type: 'PEAK' })), ...troughs.map(t => ({ ...t, type: 'TROUGH' }))]
-    .sort((a, b) => a.index - b.index);
-
-  if (allPivotPoints.length >= 4) {
-    const points = allPivotPoints.slice(-8); // Take last 8 significant points
-    const labels = ['1', '2', '3', '4', '5', 'A', 'B', 'C'];
-    
-    // Always return Elliott structure if we have 4+ points
-    const elliottVisuals = {
-      type: 'POLYLINE' as const,
-      points: points.map((p, idx) => ({
-        time: data[p.index].time,
-        price: p.value,
-        label: labels[idx] || (idx + 1).toString()
-      }))
-    };
-
-    const lastPoint = points[points.length - 1];
-    const isBullish = lastPoint.type === 'PEAK';
-    const lastPrice = data[data.length - 1].close;
-
-    // Advanced Trade Plan Calculation (Fibonacci & Technicals)
-    const highest = Math.max(...points.map(p => p.value));
-    const lowest = Math.min(...points.map(p => p.value));
-    const range = highest - lowest;
-    
-    // Proximity Check: Entry must be within 0.5% of current price for a signal to be valid
-    const entry = lastPrice; 
-    const sl = isBullish ? lastPrice * 0.985 : lastPrice * 1.015;
-    const tp = isBullish ? lastPrice + (lastPrice - sl) * 2 : lastPrice - (sl - lastPrice) * 2;
-
-    return {
-      pattern: 'Ondas de Elliott (HELIUM-3)',
-      type: isBullish ? 'BULLISH' : 'BEARISH',
-      status: 'CONFIRMED',
-      analysis: `Estructura de Elliott detectada en Onda ${labels[points.length - 1]}. El mercado sigue un patrón rítmico de impulsos y correcciones.`,
-      recommendation: isBullish ? 'SHORT' : 'LONG',
-      entryPrice: entry,
-      stopLoss: sl,
-      takeProfit: tp,
-      visuals: elliottVisuals
-    };
-  }
-
   if (last3Peaks.length === 3 && last3Peaks[2].value > last3Peaks[1].value && last3Peaks[1].value > last3Peaks[0].value) {
     if (last3Troughs.length === 3 && last3Troughs[2].value > last3Troughs[1].value) {
       return {
@@ -511,8 +485,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         analysis: 'Estructura de mercado alcista con máximos y mínimos crecientes. La tendencia es sólida y los retrocesos están siendo comprados.',
         recommendation: 'LONG',
         entryPrice: data[data.length - 1].close,
-        stopLoss: last3Troughs[2].value * 0.995,
-        takeProfit: data[data.length - 1].close * 1.04
+        stopLoss: last3Troughs[2].value,
+        takeProfit: data[data.length - 1].close * (1 + scales.tp)
       };
     }
   }
@@ -526,8 +500,8 @@ export function detectChartPatterns(data: Candle[]): AnalysisResult | null {
         analysis: 'Estructura de mercado bajista con máximos y mínimos decrecientes. La presión vendedora domina el flujo de órdenes.',
         recommendation: 'SHORT',
         entryPrice: data[data.length - 1].close,
-        stopLoss: last3Peaks[2].value * 1.005,
-        takeProfit: data[data.length - 1].close * 0.96
+        stopLoss: last3Peaks[2].value,
+        takeProfit: data[data.length - 1].close * (1 - scales.tp)
       };
     }
   }
@@ -634,7 +608,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   const lows = data.map(d => d.low);
 
   // 1. Candlestick Analysis
-  const candlePattern = detectCandlestickPatterns(data);
+  const candlePattern = detectCandlestickPatterns(data, timeframe);
   if (candlePattern) {
     results['candles'] = `**ANÁLISIS:** ${candlePattern.analysis}\n\n**RECOMENDACIÓN:** ${candlePattern.recommendation}`;
     raw['candles'] = candlePattern;
@@ -643,7 +617,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   }
 
   // 2. Chart Pattern Analysis
-  const chartPattern = detectChartPatterns(data);
+  const chartPattern = detectChartPatterns(data, timeframe);
   if (chartPattern) {
     results['patterns'] = `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`;
     raw['patterns'] = chartPattern;
@@ -701,8 +675,9 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     'c': 'PURGA FINAL DE LIQUIDEZ. Onda C detectada: Desplome hacia zonas de soporte macro. Capitulación necesaria para reiniciar el ciclo Helium-3.'
   };
 
-  const slPerc = 0.015; // 1.5% SL
-  const tpPerc = 0.045; // 4.5% TP (1:3 RVR)
+  const scales = getStrategyScales(timeframe);
+  const slPerc = scales.sl;
+  const tpPerc = scales.tp;
 
   if (finalMajor.length >= 4) {
     const lastPoint = finalMajor[finalMajor.length - 1];
