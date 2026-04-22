@@ -690,19 +690,33 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   const slDist = lastPrice * 0.012; 
   const tpDist = slDist * 3.0; 
 
+  const descriptions: Record<string, string> = {
+    '1': 'EL SISTEMA HELIUM-3 HA DETECTADO EL INICIO DEL CICLO. Onda 1 confirmada: Compradores institucionales están posicionándose. Ruptura de estructura previa detectada.',
+    '2': 'FASE DE REACUMULACIÓN TÉCNICA. Onda 2 en desarrollo: El precio está mitigando desequilibrios. Zona ideal para buscar entradas tras el rechazo del nivel 0.618 Fib.',
+    '3': 'EXPANSIÓN VERTICAL IMPULSIVA (ONDA MAESTRA). Onda 3 activa: Impulso de alta convicción institucional. Fase de máxima rentabilidad. No se recomienda operar en contra.',
+    '4': 'CONSOLIDACIÓN ESTRUCTURAL COMPLEJA. Onda 4 detectada: Toma de beneficios parcial y rotación de liquidez. El soporte de la Onda 1 debe mantenerse intacto.',
+    '5': 'CLÍMAX DEL IMPULSO Y AGOTAMIENTO. Onda 5 en curso: El precio alcanza objetivos finales. Se observan divergencias bajistas. Ajustar Stop Loss a territorio protector.',
+    'a': 'CAPITULACIÓN INICIAL (ONDA A). Inicio de corrección: Los institucionales están descargando posiciones. Primera señal de debilidad estructural macro.',
+    'b': 'TRAMPA ALCISTA / REBOTE DE GATO MUERTO. Onda B activa: El precio intenta recuperar máximos sin volumen real. Punto óptimo para coberturas o salida de largos.',
+    'c': 'PURGA FINAL DE LIQUIDEZ. Onda C detectada: Desplome hacia zonas de soporte macro. Capitulación necesaria para reiniciar el ciclo Helium-3.'
+  };
+
+  const slPerc = 0.015; // 1.5% SL
+  const tpPerc = 0.045; // 4.5% TP (1:3 RVR)
+
   if (finalMajor.length >= 4) {
     const lastPoint = finalMajor[finalMajor.length - 1];
     const isBull = ['(1)', '(3)', '(5)'].includes(lastPoint.label);
 
     raw['elliott_major'] = {
-      pattern: 'Ondas de Elliott (Grado Mayor)',
+      pattern: 'Ondas de Elliott (HE-3 QUANTUM)',
       type: isBull ? 'BULLISH' : 'BEARISH',
       status: 'CONFIRMED',
-      analysis: `Ciclo macro detectado. Las ondas de grado mayor confirman la dirección del mercado a largo plazo.`,
+      analysis: `ESTRUCTURA MACRO HELIUM-3: Ciclo mayor detectado en ${timeframe}. La tendencia estructural es ${isBull ? 'ALCISTA' : 'BAJISTA'} dominante.`,
       recommendation: isBull ? 'LONG' : 'SHORT',
       entryPrice: lastPrice,
-      stopLoss: isBull ? lastPrice - slDist : lastPrice + slDist,
-      takeProfit: isBull ? lastPrice + tpDist : lastPrice - tpDist,
+      stopLoss: isBull ? lastPrice * (1 - slPerc) : lastPrice * (1 + slPerc),
+      takeProfit: isBull ? lastPrice * (1 + tpPerc) : lastPrice * (1 - tpPerc),
       visuals: {
         type: 'POLYLINE',
         points: finalMajor.map(w => ({ time: w.time, price: w.price, label: w.label }))
@@ -712,15 +726,17 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
 
   if (finalMinor.length >= 4) {
     const lastPoint = finalMinor[finalMinor.length - 1];
-    const isBull = ['1', '3', '5'].includes(lastPoint.label);
+    const isBull = ['1', '3', '5', 'b'].includes(lastPoint.label);
 
     raw['elliott_minor'] = {
-      pattern: 'Ondas de Elliott (Grado Menor)',
+      pattern: 'Análisis Fractal Helium-3',
       type: isBull ? 'BULLISH' : 'BEARISH',
       status: 'CONFIRMED',
-      analysis: `Análisis fractal completado. Se han identificado sub-ondas que validan el impulso interno actual en ${timeframe}.`,
+      analysis: descriptions[lastPoint.label] || `SINCRO FRÁCTAL DETECTADA: Sub-ondas analizadas satisfactoriamente en ${timeframe}.`,
       recommendation: isBull ? 'LONG' : 'SHORT',
       entryPrice: lastPrice,
+      stopLoss: isBull ? lastPrice * (1 - slPerc) : lastPrice * (1 + slPerc),
+      takeProfit: isBull ? lastPrice * (1 + tpPerc) : lastPrice * (1 - tpPerc),
       visuals: {
         type: 'POLYLINE',
         points: finalMinor.map(w => ({ time: w.time, price: w.price, label: w.label }))

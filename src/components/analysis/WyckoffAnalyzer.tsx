@@ -574,12 +574,15 @@ const WyckoffAnalyzer: React.FC = () => {
         // Check if indicator is enabled
         if (key === 'patterns' && !patternsEnabled) return;
         if (key === 'candles' && !candlesEnabled) return;
-        if (key === 'elliott' && !elliottEnabled) return;
+        if (key.startsWith('elliott') && !elliottEnabled) return;
         if (key === 'wyckoff_schematic' && !wyckoffEnabled) return;
 
         if (key === 'patterns') currentPatterns = analysis;
         if (key === 'candles') currentCandles = analysis;
-        if (key === 'elliott') currentElliott = analysis;
+        // Prioritize minor wave for the UI card as it has immediate trade levels
+        if (key === 'elliott_minor') currentElliott = analysis;
+        if (key === 'elliott_major' && !currentElliott) currentElliott = analysis;
+        if (key === 'elliott' && !currentElliott) currentElliott = analysis;
 
         const { visuals } = analysis;
         const isLiquidity = key === 'liquidity' || visuals.type === 'LIQUIDITY';
@@ -866,6 +869,13 @@ const WyckoffAnalyzer: React.FC = () => {
       setActivePatterns(currentPatterns);
       setActiveCandles(currentCandles);
       setActiveElliott(currentElliott);
+
+      if (currentElliott) {
+        setIndicatorAnalysis(prev => ({
+          ...prev,
+          elliott: currentElliott.analysis
+        }));
+      }
     }
 
       // 4. Update Other Indicator Series (BB, Supertrend, etc)
@@ -1584,25 +1594,26 @@ const WyckoffAnalyzer: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Deep Technical Analysis */}
-                    <div className="space-y-4">
-                      <div>
-                        <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] block mb-2">ANÁLISIS DE CONFLUENCIA</span>
-                        <div className="bg-white/5 p-5 rounded-3xl border border-white/10 relative overflow-hidden group">
-                          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Activity size={40} className="text-secondary" />
+                      {/* Deep Technical Analysis */}
+                      <div className="space-y-4">
+                        <div>
+                          <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] block mb-2">MODO DIODO: EXPLICACIÓN TÉCNICA</span>
+                          <div className="bg-white/5 p-6 rounded-[2rem] border-2 border-primary/20 relative overflow-hidden group shadow-[inset_0_0_30px_rgba(0,255,163,0.05)]">
+                          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-opacity">
+                            <Zap size={50} className="text-secondary" />
                           </div>
-                          <p className="text-[14px] text-white/90 leading-relaxed font-bold italic relative z-10">
+                          <p className="text-[15px] text-white font-black leading-tight uppercase tracking-tight relative z-10">
                             {activeElliott.analysis}
                           </p>
                         </div>
                       </div>
 
-                      {/* Trade Recommendation */}
-                      <div className="bg-primary/10 border-2 border-primary/30 p-5 rounded-[2.5rem] shadow-[inset_0_0_40px_rgba(0,255,163,0.1)]">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Zap size={16} className="text-primary" />
-                          <span className="text-[11px] font-black text-primary uppercase tracking-[0.2em]">ESTRATEGIA COMPLETA</span>
+                      {/* Trade Recommendation Poster Style */}
+                      <div className="bg-primary/20 border-2 border-primary/40 p-6 rounded-[3rem] shadow-[0_20px_50px_rgba(0,255,163,0.15)] relative overflow-hidden">
+                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full" />
+                        <div className="flex items-center gap-3 mb-5">
+                          <TrendingUp size={20} className="text-primary" />
+                          <span className="text-[12px] font-black text-primary uppercase tracking-[0.3em]">RECOMENDACIÓN HELIUM-3</span>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3 mb-5">
