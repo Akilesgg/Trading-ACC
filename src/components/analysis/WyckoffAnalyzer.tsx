@@ -129,6 +129,7 @@ const WyckoffAnalyzer: React.FC = () => {
     { id: "elliott", name: "Helium-3 (Elliott)", enabled: true },
     { id: "wakeup", name: "Fases de Wyckoff", enabled: false },
     { id: "macd", name: "MACD Avanzado", enabled: false },
+    { id: "rsi", name: "RSI Cuántico", enabled: false },
     { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
     { id: "levels", name: "Techo/Suelo", enabled: false },
     { id: "supertrend", name: "Supertrend IA", enabled: false },
@@ -1876,6 +1877,7 @@ const WyckoffAnalyzer: React.FC = () => {
               { id: "elliott", label: "HELIUM-3", color: 'primary' },
               { id: "wakeup", label: "WYCKOFF", color: 'primary' },
               { id: "macd", label: "MACD", color: 'primary' },
+              { id: "rsi", label: "RSI", color: 'primary' },
               { id: "liquidity", label: "LIQUIDEZ", color: 'secondary' },
               { id: "levels", label: "TECHO/SUELO", color: 'secondary' },
               { id: "supertrend", label: "STREND", color: 'primary' },
@@ -1889,19 +1891,19 @@ const WyckoffAnalyzer: React.FC = () => {
                   key={ind.id}
                   onClick={() => toggleIndicator(ind.id)}
                   className={cn(
-                    "flex items-center gap-2 px-4 py-3 rounded-2xl border text-[13px] font-black uppercase tracking-widest transition-all duration-300",
+                    "flex items-center gap-2 px-5 py-4 rounded-2xl border text-[14px] font-black uppercase tracking-widest transition-all duration-300",
                     config.enabled 
                       ? ind.color === 'secondary' 
                         ? "bg-secondary/20 border-secondary text-secondary shadow-[0_0_20px_rgba(255,113,98,0.3)] scale-105"
                         : "bg-primary/20 border-primary text-primary shadow-[0_0_20px_rgba(0,255,163,0.3)] scale-105"
-                      : "bg-white/5 border-white/10 text-white/40 hover:text-white hover:bg-white/10"
+                      : "bg-white/5 border-white/10 text-white/60 hover:text-white hover:bg-white/10"
                   )}
                 >
                   <div className={cn(
-                    "w-2.5 h-2.5 rounded-full", 
+                    "w-3 h-3 rounded-full", 
                     config.enabled 
                       ? ind.color === 'secondary' ? "bg-secondary animate-pulse" : "bg-primary animate-pulse" 
-                      : "bg-white/20"
+                      : "bg-white/30"
                   )} />
                   {ind.label}
                 </button>

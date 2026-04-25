@@ -591,13 +591,81 @@ export function analyzeMACD(data: Candle[]): {
 }
 
 /**
+ * Calculates and analyzes Relative Strength Index (RSI).
+ */
+export function analyzeRSI(data: Candle[], period = 14) {
+  if (data.length <= period) return null;
+
+  const prices = data.map(d => d.close);
+  const rsi = [];
+  
+  let gains = 0;
+  let losses = 0;
+
+  // Initial average
+  for (let i = 1; i <= period; i++) {
+    const diff = prices[i] - prices[i - 1];
+    if (diff >= 0) gains += diff;
+    else losses -= diff;
+  }
+
+  let avgGain = gains / period;
+  let avgLoss = losses / period;
+
+  // Smoothing
+  for (let i = period + 1; i < prices.length; i++) {
+    const diff = prices[i] - prices[i - 1];
+    let gain = 0;
+    let loss = 0;
+    if (diff >= 0) gain = diff;
+    else loss = -diff;
+
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+
+    const rs = avgGain / avgLoss;
+    rsi.push(100 - (100 / (1 + rs)));
+  }
+
+  // Prepend zeroes to align
+  const alignedRsi = new Array(prices.length - rsi.length).fill(50).concat(rsi);
+
+  const currentRSI = alignedRsi[alignedRsi.length - 1];
+  let status = "OPTIMAL";
+  let analysis = `RSI en ${currentRSI.toFixed(2)}. Momentum neutral y equilibrado. El mercado no muestra fatiga extrema.`;
+  let rec = "WAIT";
+  let type: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
+
+  if (currentRSI > 70) {
+    status = "SOBRECOMPRA";
+    analysis = `RSI en ${currentRSI.toFixed(2)}. CONDICIÓN DE SOBRECOMPRA CRÍTICA. El impulso alcista es excesivo, se espera una corrección o reversión bajista inminente.`;
+    rec = "SHORT";
+    type = 'BEARISH';
+  } else if (currentRSI < 30) {
+    status = "SOBREVENTA";
+    analysis = `RSI en ${currentRSI.toFixed(2)}. CONDICIÓN DE SOBREVENTA CRÍTICA. Agotamiento vendedor detectado, alta probabilidad de rebote técnico alcista.`;
+    rec = "LONG";
+    type = 'BULLISH';
+  } else if (currentRSI > 55) {
+    status = "FUERZA ALCISTA";
+    analysis = `RSI en ${currentRSI.toFixed(2)}. Tendencia alcista saludable con margen de maniobra adicional.`;
+  } else if (currentRSI < 45) {
+    status = "FUERZA BAJISTA";
+    analysis = `RSI en ${currentRSI.toFixed(2)}. Presión vendedora dominante, el momentum se inclina hacia el lado bajista.`;
+  }
+
+  return { rsi: alignedRsi, currentRSI, status, analysis, recommendation: rec, type };
+}
+
+/**
  * Full Market Analysis Engine
  */
 export function analyzeMarketData(data: Candle[], timeframe: string): { 
   results: Record<string, string>, 
   raw: Record<string, AnalysisResult>,
   indicators: {
-    macd?: { macd: number[], signal: number[], histogram: number[] }
+    macd?: { macd: number[], signal: number[], histogram: number[] },
+    rsi?: number[]
   }
 } {
   const results: Record<string, string> = {};
@@ -727,13 +795,27 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
       signal: macdResult.signal,
       histogram: macdResult.histogram
     };
-    results['macd'] = `**ANÁLISIS:** ${macdResult.analysis}\n\n**RECOMENDACIÓN:** ${macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'CONTRATAR LARGOS' : 'BUSCAR CORTOS'}`;
+    results['macd'] = `**ANÁLISIS:** ${macdResult.analysis}\n\n**RECOMENDACIÓN:** ${macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'LONG' : 'SHORT'}`;
     raw['macd'] = {
       pattern: 'MACD Pro',
       type: macdResult.divergence || (macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'BULLISH' : 'BEARISH'),
       status: 'CONFIRMED',
       analysis: macdResult.analysis,
       recommendation: macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'LONG' : 'SHORT'
+    };
+  }
+
+  // 3.5 RSI Analysis
+  const rsiResult = analyzeRSI(data);
+  if (rsiResult) {
+    indicatorData.rsi = rsiResult.rsi;
+    results['rsi'] = `**ANÁLISIS:** ${rsiResult.analysis}\n\n**RECOMENDACIÓN:** ${rsiResult.recommendation}`;
+    raw['rsi'] = {
+      pattern: 'RSI Cuántico',
+      type: rsiResult.type,
+      status: 'CONFIRMED',
+      analysis: rsiResult.analysis,
+      recommendation: rsiResult.recommendation
     };
   }
 
