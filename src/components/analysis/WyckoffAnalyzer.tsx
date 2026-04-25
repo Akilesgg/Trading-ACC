@@ -930,22 +930,18 @@ const WyckoffAnalyzer: React.FC = () => {
 
     // Adjust scale margins based on which indicators are enabled to prevent overlapping
     if (chartRef.current) {
-      const macdMargin = { top: rsiEnabled ? 0.85 : 0.8, bottom: 0.05 };
-      const rsiMargin = { top: macdEnabled ? 0.7 : 0.8, bottom: macdEnabled ? 0.15 : 0.05 };
       const priceBottomMargin = rsiEnabled && macdEnabled ? 0.4 : (rsiEnabled || macdEnabled ? 0.3 : 0.1);
-      
-      chartRef.current.priceScale('macd').applyOptions({
-        scaleMargins: macdMargin,
-      });
-      chartRef.current.priceScale('rsi').applyOptions({
-        scaleMargins: rsiMargin,
-      });
       chartRef.current.priceScale('right').applyOptions({
         scaleMargins: { top: 0.1, bottom: priceBottomMargin },
       });
     }
 
     if (macdEnabled && macdData) {
+      const macdMargin = { top: rsiEnabled ? 0.85 : 0.8, bottom: 0.05 };
+      chartRef.current!.priceScale('macd').applyOptions({
+        scaleMargins: macdMargin,
+      });
+
       if (!indicatorSeriesRef.current['macd_line']) {
         const hSeries = (chartRef.current as any).addSeries(HistogramSeries, {
           color: '#26a69a',
@@ -1014,6 +1010,11 @@ const WyckoffAnalyzer: React.FC = () => {
 
     // 6. Handle RSI
     if (rsiEnabled && (rawAnalysisData as any).rsi) {
+      const rsiMargin = { top: macdEnabled ? 0.7 : 0.8, bottom: macdEnabled ? 0.15 : 0.05 };
+      chartRef.current!.priceScale('rsi').applyOptions({
+        scaleMargins: rsiMargin,
+      });
+
       const rsiValues = (rawAnalysisData as any).rsi.rsi || [];
       if (!indicatorSeriesRef.current['rsi_line']) {
         const rSeries = (chartRef.current as any).addSeries(LineSeries, {
@@ -1307,7 +1308,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
                 {/* Timeframe Commands */}
                 <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-[2rem] border border-white/5">
-                  {["1m", "5m", "15m", "1h", "4h", "1d"].map(tf => (
+                  {["1s", "10s", "30s", "1m", "5m", "15m", "1h", "4h", "1d", "1w"].map(tf => (
                     <button
                       key={tf}
                       onClick={() => setSelectedTimeframe(tf)}

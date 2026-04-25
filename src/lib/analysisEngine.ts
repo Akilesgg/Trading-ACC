@@ -95,12 +95,16 @@ export function detectLatestCandleStatus(data: Candle[]): { status: string; type
  */
 export function getStrategyScales(timeframe: string) {
   const scales: Record<string, { sl: number, tp: number }> = {
-    '1m': { sl: 0.003, tp: 0.01 },   // 0.3% SL / 1% TP approx
-    '5m': { sl: 0.005, tp: 0.015 },  // 0.5% SL / 1.5% TP
-    '15m': { sl: 0.008, tp: 0.025 }, // 0.8% SL / 2.5% TP
-    '1h': { sl: 0.015, tp: 0.05 },   // 1.5% SL / 5% TP
-    '4h': { sl: 0.025, tp: 0.08 },   // 2.5% SL / 8% TP
-    '1d': { sl: 0.05, tp: 0.15 }     // 5.0% SL / 15% TP
+    '1s': { sl: 0.0005, tp: 0.0015 }, // Scalp micro (0.05% SL)
+    '10s': { sl: 0.001, tp: 0.003 },
+    '30s': { sl: 0.002, tp: 0.006 },
+    '1m': { sl: 0.003, tp: 0.01 },   
+    '5m': { sl: 0.005, tp: 0.015 },  
+    '15m': { sl: 0.008, tp: 0.025 }, 
+    '1h': { sl: 0.015, tp: 0.05 },   
+    '4h': { sl: 0.025, tp: 0.08 },   
+    '1d': { sl: 0.05, tp: 0.15 },    
+    '1w': { sl: 0.10, tp: 0.30 }     // Swing Macro (10% SL)
   };
   return scales[timeframe] || scales['1h'];
 }

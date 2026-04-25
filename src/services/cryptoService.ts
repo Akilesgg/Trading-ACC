@@ -123,8 +123,18 @@ export async function fetchTickers(symbols: string[], timeframe: string = "1h"):
 }
 
 export async function fetchKlines(symbol: string, interval: string = "1h", limit: number = 50) {
-  const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`);
-  if (!response.ok) throw new Error("Failed to fetch klines");
+  // Map micro-timeframes to closest supported Binance API interval
+  let apiInterval = interval;
+  if (interval === '10s' || interval === '30s') apiInterval = '1s';
+  
+  const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${apiInterval}&limit=${limit}`);
+  if (!response.ok) {
+    // If 1s or others are not supported for this pair, fallback to 1m
+    if (apiInterval === '1s') {
+      return fetchKlines(symbol, '1m', limit);
+    }
+    throw new Error("Failed to fetch klines");
+  }
   const data = await response.json();
   return data.map((d: any) => ({
     time: d[0],
