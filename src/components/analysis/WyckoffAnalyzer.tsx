@@ -118,24 +118,41 @@ const WyckoffAnalyzer: React.FC = () => {
   const polylineSeriesRef = useRef<Record<string, any>>({});
   const priceLinesRef = useRef<IPriceLine[]>([]);
   const [macdData, setMacdData] = useState<{ macd: any[], signal: any[], histogram: any[] } | null>(null);
+  const [rsiData, setRsiData] = useState<number[] | null>(null);
   
   const [wyckoffPhase, setWyckoffPhase] = useState<string>("");
   const [wyckoffExplanation, setWyckoffExplanation] = useState<string>("");
   const [recommendation, setRecommendation] = useState<string>("");
   
-  const [indicators, setIndicators] = useState<IndicatorConfig[]>([
-    { id: "patterns", name: "Patrones de Precios", enabled: false },
-    { id: "candles", name: "Velas Japonesas", enabled: false },
-    { id: "elliott", name: "Helium-3 (Elliott)", enabled: true },
-    { id: "wakeup", name: "Fases de Wyckoff", enabled: false },
-    { id: "macd", name: "MACD Avanzado", enabled: false },
-    { id: "rsi", name: "RSI Cuántico", enabled: false },
-    { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
-    { id: "levels", name: "Techo/Suelo", enabled: false },
-    { id: "supertrend", name: "Supertrend IA", enabled: false },
-    { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
-    { id: "ai_pro", name: "Análisis ✦✦", enabled: false }
-  ]);
+  const [indicators, setIndicators] = useState<IndicatorConfig[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('helium_indicators_v2');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Error parsing indicators", e);
+        }
+      }
+    }
+    return [
+      { id: "patterns", name: "Patrones de Precios", enabled: false },
+      { id: "candles", name: "Velas Japonesas", enabled: false },
+      { id: "elliott", name: "Helium-3 (Elliott)", enabled: false },
+      { id: "wakeup", name: "Fases de Wyckoff", enabled: false },
+      { id: "macd", name: "MACD Avanzado", enabled: false },
+      { id: "rsi", name: "RSI Cuántico", enabled: false },
+      { id: "liquidity", name: "Zonas de Liquidez", enabled: false },
+      { id: "levels", name: "Techo/Suelo", enabled: false },
+      { id: "supertrend", name: "Supertrend IA", enabled: false },
+      { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
+      { id: "ai_pro", name: "Análisis ✦✦", enabled: false }
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('helium_indicators_v2', JSON.stringify(indicators));
+  }, [indicators]);
 
   const clearMaster = () => {
     setIndicators(prev => prev.map(ind => ({ ...ind, enabled: false })));
@@ -284,6 +301,7 @@ const WyckoffAnalyzer: React.FC = () => {
       // Real Technical Analysis Engine
       const { results: realAnalysis, raw: rawAnalysis, indicators: indicatorData } = analyzeMarketData(sortedKlines as Candle[], selectedTimeframe);
       setMacdData(indicatorData.macd || null);
+      setRsiData(indicatorData.rsi || null);
       
       console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
       console.log("[DEBUG] Análisis Real de Velas:", realAnalysis['candles']);
@@ -1009,10 +1027,9 @@ const WyckoffAnalyzer: React.FC = () => {
     }
 
     // 6. Handle RSI
-    if (rsiEnabled && (rawAnalysisData as any).rsi) {
-      const rsiValues = (rawAnalysisData as any).rsi.rsi || [];
+    if (rsiEnabled && rsiData) {
       if (!indicatorSeriesRef.current['rsi_line']) {
-        const rSeries = (chartRef.current as any).addSeries(LineSeries, {
+        const rSeries = (chartRef.current as any).addLineSeries({
           color: '#fbff00',
           lineWidth: 2,
           priceScaleId: 'rsi',
@@ -1029,7 +1046,7 @@ const WyckoffAnalyzer: React.FC = () => {
           lineWidth: 1,
           lineStyle: 2,
           axisLabelVisible: true,
-          title: 'OVERBOUGHT',
+          title: '70',
         });
 
         // Oversold line
@@ -1039,12 +1056,12 @@ const WyckoffAnalyzer: React.FC = () => {
           lineWidth: 1,
           lineStyle: 2,
           axisLabelVisible: true,
-          title: 'OVERSOLD',
+          title: '30',
         });
 
         chartRef.current!.priceScale('rsi').applyOptions({
           mode: 0,
-          autoScale: false,
+          autoScale: true,
           borderColor: 'rgba(148, 163, 184, 0.1)',
           visible: true,
         });
@@ -1055,16 +1072,19 @@ const WyckoffAnalyzer: React.FC = () => {
         scaleMargins: rsiMargin,
       });
 
-      const rData = rsiValues.map((val: number, i: number) => ({
-        time: (chartData[i].time / 1000) as UTCTimestamp,
-        value: val
-      }));
+      const rData = rsiData.map((val: number, i: number) => {
+        if (!chartData[i]) return null;
+        return {
+          time: (chartData[i].time / 1000) as UTCTimestamp,
+          value: val
+        };
+      }).filter(Boolean);
       (indicatorSeriesRef.current['rsi_line'] as any).setData(rData);
     } else if (indicatorSeriesRef.current['rsi_line']) {
       chartRef.current!.removeSeries(indicatorSeriesRef.current['rsi_line']);
       delete indicatorSeriesRef.current['rsi_line'];
     }
-  }, [chartData, selectedTimeframe, indicators, indicatorAnalysis, macdData, refreshTrigger, selectedSymbol, rawAnalysisData]);
+  }, [chartData, selectedTimeframe, indicators, indicatorAnalysis, macdData, rsiData, refreshTrigger, selectedSymbol, rawAnalysisData]);
 
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10 relative">
