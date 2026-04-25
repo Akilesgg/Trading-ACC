@@ -937,11 +937,6 @@ const WyckoffAnalyzer: React.FC = () => {
     }
 
     if (macdEnabled && macdData) {
-      const macdMargin = { top: rsiEnabled ? 0.85 : 0.8, bottom: 0.05 };
-      chartRef.current!.priceScale('macd').applyOptions({
-        scaleMargins: macdMargin,
-      });
-
       if (!indicatorSeriesRef.current['macd_line']) {
         const hSeries = (chartRef.current as any).addSeries(HistogramSeries, {
           color: '#26a69a',
@@ -975,6 +970,11 @@ const WyckoffAnalyzer: React.FC = () => {
           borderColor: 'rgba(148, 163, 184, 0.1)',
         });
       }
+
+      const macdMargin = { top: rsiEnabled ? 0.85 : 0.8, bottom: 0.05 };
+      chartRef.current!.priceScale('macd').applyOptions({
+        scaleMargins: macdMargin,
+      });
 
       const hData = macdData.histogram.map((val, i) => {
         const prevVal = i > 0 ? macdData.histogram[i-1] : 0;
@@ -1010,11 +1010,6 @@ const WyckoffAnalyzer: React.FC = () => {
 
     // 6. Handle RSI
     if (rsiEnabled && (rawAnalysisData as any).rsi) {
-      const rsiMargin = { top: macdEnabled ? 0.7 : 0.8, bottom: macdEnabled ? 0.15 : 0.05 };
-      chartRef.current!.priceScale('rsi').applyOptions({
-        scaleMargins: rsiMargin,
-      });
-
       const rsiValues = (rawAnalysisData as any).rsi.rsi || [];
       if (!indicatorSeriesRef.current['rsi_line']) {
         const rSeries = (chartRef.current as any).addSeries(LineSeries, {
@@ -1054,6 +1049,11 @@ const WyckoffAnalyzer: React.FC = () => {
           visible: true,
         });
       }
+
+      const rsiMargin = { top: macdEnabled ? 0.7 : 0.8, bottom: macdEnabled ? 0.15 : 0.05 };
+      chartRef.current!.priceScale('rsi').applyOptions({
+        scaleMargins: rsiMargin,
+      });
 
       const rData = rsiValues.map((val: number, i: number) => ({
         time: (chartData[i].time / 1000) as UTCTimestamp,
