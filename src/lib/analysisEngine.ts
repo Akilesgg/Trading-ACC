@@ -633,7 +633,7 @@ export function analyzeRSI(data: Candle[], period = 14) {
   const currentRSI = alignedRsi[alignedRsi.length - 1];
   let status = "OPTIMAL";
   let analysis = `RSI en ${currentRSI.toFixed(2)}. Momentum neutral y equilibrado. El mercado no muestra fatiga extrema.`;
-  let rec = "WAIT";
+  let rec: 'LONG' | 'SHORT' | 'WAIT' = "WAIT";
   let type: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
 
   if (currentRSI > 70) {

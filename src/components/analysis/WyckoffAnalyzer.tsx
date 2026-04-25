@@ -926,6 +926,25 @@ const WyckoffAnalyzer: React.FC = () => {
 
     // 5. Handle MACD
     const macdEnabled = indicators.find(i => i.id === 'macd')?.enabled;
+    const rsiEnabled = indicators.find(i => i.id === 'rsi')?.enabled;
+
+    // Adjust scale margins based on which indicators are enabled to prevent overlapping
+    if (chartRef.current) {
+      const macdMargin = { top: rsiEnabled ? 0.85 : 0.8, bottom: 0.05 };
+      const rsiMargin = { top: macdEnabled ? 0.7 : 0.8, bottom: macdEnabled ? 0.15 : 0.05 };
+      const priceBottomMargin = rsiEnabled && macdEnabled ? 0.4 : (rsiEnabled || macdEnabled ? 0.3 : 0.1);
+      
+      chartRef.current.priceScale('macd').applyOptions({
+        scaleMargins: macdMargin,
+      });
+      chartRef.current.priceScale('rsi').applyOptions({
+        scaleMargins: rsiMargin,
+      });
+      chartRef.current.priceScale('right').applyOptions({
+        scaleMargins: { top: 0.1, bottom: priceBottomMargin },
+      });
+    }
+
     if (macdEnabled && macdData) {
       if (!indicatorSeriesRef.current['macd_line']) {
         const hSeries = (chartRef.current as any).addSeries(HistogramSeries, {
@@ -957,7 +976,6 @@ const WyckoffAnalyzer: React.FC = () => {
         chartRef.current!.priceScale('macd').applyOptions({
           mode: 0,
           autoScale: true,
-          scaleMargins: { top: 0.8, bottom: 0.05 },
           borderColor: 'rgba(148, 163, 184, 0.1)',
         });
       }
@@ -992,6 +1010,58 @@ const WyckoffAnalyzer: React.FC = () => {
           delete indicatorSeriesRef.current[id];
         }
       });
+    }
+
+    // 6. Handle RSI
+    if (rsiEnabled && (rawAnalysisData as any).rsi) {
+      const rsiValues = (rawAnalysisData as any).rsi.rsi || [];
+      if (!indicatorSeriesRef.current['rsi_line']) {
+        const rSeries = (chartRef.current as any).addSeries(LineSeries, {
+          color: '#fbff00',
+          lineWidth: 2,
+          priceScaleId: 'rsi',
+          priceLineVisible: false,
+          lastValueVisible: true,
+          title: 'RSI',
+        });
+        indicatorSeriesRef.current['rsi_line'] = rSeries;
+
+        // Overbought line
+        rSeries.createPriceLine({
+          price: 70,
+          color: 'rgba(255, 113, 98, 0.5)',
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'OVERBOUGHT',
+        });
+
+        // Oversold line
+        rSeries.createPriceLine({
+          price: 30,
+          color: 'rgba(0, 255, 163, 0.5)',
+          lineWidth: 1,
+          lineStyle: 2,
+          axisLabelVisible: true,
+          title: 'OVERSOLD',
+        });
+
+        chartRef.current!.priceScale('rsi').applyOptions({
+          mode: 0,
+          autoScale: false,
+          borderColor: 'rgba(148, 163, 184, 0.1)',
+          visible: true,
+        });
+      }
+
+      const rData = rsiValues.map((val: number, i: number) => ({
+        time: (chartData[i].time / 1000) as UTCTimestamp,
+        value: val
+      }));
+      (indicatorSeriesRef.current['rsi_line'] as any).setData(rData);
+    } else if (indicatorSeriesRef.current['rsi_line']) {
+      chartRef.current!.removeSeries(indicatorSeriesRef.current['rsi_line']);
+      delete indicatorSeriesRef.current['rsi_line'];
     }
   }, [chartData, selectedTimeframe, indicators, indicatorAnalysis, macdData, refreshTrigger, selectedSymbol, rawAnalysisData]);
 
