@@ -16,7 +16,12 @@ import {
   X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchKlines, fetchTicker, fetchCryptoData } from "@/services/cryptoService";
+import { 
+  fetchKlines, 
+  fetchTicker, 
+  fetchCryptoData,
+  connectKlineStream
+} from "@/services/cryptoService";
 import { analyzeMarket } from "@/services/geminiService";
 import { analyzeMarketData, Candle, AnalysisResult } from "@/lib/analysisEngine";
 import { 
@@ -63,6 +68,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const [allAssets, setAllAssets] = useState<any[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState("BTCUSDT");
   const [selectedTimeframe, setSelectedTimeframe] = useState("1h");
+  const [remainingTime, setRemainingTime] = useState<string>("");
   const [activeStrategies, setActiveStrategies] = useState<string[]>(["scalping", "breakout", "trend_following"]);
   const [strategySignals, setStrategySignals] = useState<Record<string, {
     entry: number;
@@ -431,6 +437,97 @@ const WyckoffAnalyzer: React.FC = () => {
     runAnalysis();
   }, [selectedSymbol, selectedTimeframe, activeStrategies.length, indicators.filter(i => i.enabled).length]);
 
+  // Real-time Stream & Countdown
+  useEffect(() => {
+    if (!candlestickSeriesRef.current || !selectedSymbol) return;
+
+    let streamInterval = selectedTimeframe;
+    let aggregationMod = 1;
+    
+    if (selectedTimeframe === '10s') { streamInterval = '1s'; aggregationMod = 10; }
+    else if (selectedTimeframe === '30s') { streamInterval = '1s'; aggregationMod = 30; }
+    
+    // Supported Binance kline streams: 1s, 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
+    const supportedStreams = ['1s', '1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '8h', '12h', '1d', '3d', '1w', '1M'];
+    const streamTf = supportedStreams.includes(streamInterval) ? streamInterval : '1m';
+
+    const ws = connectKlineStream(selectedSymbol, streamTf, (newCandle) => {
+      if (!candlestickSeriesRef.current) return;
+      
+      const candleTime = aggregationMod > 1 
+        ? Math.floor(newCandle.time / (aggregationMod * 1000)) * (aggregationMod * 1000)
+        : newCandle.time;
+
+      const time = (candleTime / 1000) as UTCTimestamp;
+      
+      // Update chart series
+      candlestickSeriesRef.current.update({
+        time,
+        open: newCandle.open,
+        high: newCandle.high,
+        low: newCandle.low,
+        close: newCandle.close,
+      });
+
+      // Also update local data state
+      setData(prev => {
+        if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
+        const last = prev[prev.length - 1];
+        if (last.time === candleTime) {
+          const next = [...prev];
+          next[next.length - 1] = { 
+            ...last, 
+            close: newCandle.close,
+            high: Math.max(last.high, newCandle.high),
+            low: Math.min(last.low, newCandle.low),
+            volume: last.volume + (newCandle.volume / aggregationMod) // Approximation
+          };
+          return next;
+        } else if (candleTime > last.time) {
+          return [...prev, { ...newCandle, time: candleTime }].slice(-1000);
+        }
+        return prev;
+      });
+    });
+
+    // Countdown Timer Logic
+    const getTimeframeSeconds = (tf: string) => {
+      const unit = tf.slice(-1);
+      const val = parseInt(tf);
+      if (unit === 's') return val;
+      if (unit === 'm') return val * 60;
+      if (unit === 'h') return val * 3600;
+      if (unit === 'd') return val * 86400;
+      if (unit === 'w') return val * 604800;
+      return 60;
+    };
+
+    const tfSec = getTimeframeSeconds(selectedTimeframe);
+    const timer = setInterval(() => {
+      const now = Math.floor(Date.now() / 1000);
+      const nextCandle = Math.ceil(now / tfSec) * tfSec;
+      const left = nextCandle - now;
+      
+      if (left <= 0) {
+        setRemainingTime("00:00");
+      } else {
+        const h = Math.floor(left / 3600);
+        const m = Math.floor((left % 3600) / 60);
+        const s = left % 60;
+        
+        let timeStr = "";
+        if (h > 0) timeStr += `${h.toString().padStart(2, '0')}:`;
+        timeStr += `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        setRemainingTime(timeStr);
+      }
+    }, 1000);
+
+    return () => {
+      ws.close();
+      clearInterval(timer);
+    };
+  }, [selectedSymbol, selectedTimeframe]);
+
   const handleResetView = () => {
     if (chartRef.current) {
       chartRef.current.timeScale().fitContent();
@@ -505,15 +602,24 @@ const WyckoffAnalyzer: React.FC = () => {
       timeScale: {
         borderColor: 'rgba(148, 163, 184, 0.1)',
         timeVisible: true,
-        secondsVisible: false,
+        secondsVisible: true,
         visible: true,
-        rightOffset: 12,
+        rightOffset: 20,
         barSpacing: 10,
-        fixLeftEdge: true,
+        fixLeftEdge: false,
         minBarSpacing: 0.1,
       },
-      handleScroll: true,
-      handleScale: true,
+      handleScroll: {
+        mouseWheel: true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        pinch: true,
+        axisPressedMouseMove: true,
+      },
     });
 
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
@@ -1299,6 +1405,15 @@ const WyckoffAnalyzer: React.FC = () => {
             ref={chartContainerRef}
             className="w-full h-[800px] rounded-[2.5rem] bg-[#0b0f14] border border-outline-variant/10 relative overflow-hidden shadow-2xl"
           >
+            {/* Price Scale Countdown Timer */}
+            <div className="absolute top-1/2 -translate-y-1/2 right-[60px] z-30 pointer-events-none flex flex-col items-center">
+               <div className="bg-[#00ffa3] text-black font-black text-[12px] px-2 py-1 rounded shadow-[0_0_15px_rgba(0,255,163,0.6)] tabular-nums border border-white/20 flex flex-col items-center">
+                 <Clock size={10} className="mb-0.5" />
+                 {remainingTime}
+               </div>
+               <div className="w-[2px] h-20 bg-gradient-to-b from-[#00ffa3]/60 to-transparent" />
+            </div>
+
             {/* Drawing Toolbar */}
             <div className="absolute top-4 right-4 flex items-center gap-1 p-1 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 z-[40]">
               {[

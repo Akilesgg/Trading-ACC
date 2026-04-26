@@ -198,6 +198,24 @@ export function connectTickerStream(symbol: string, onMessage: (data: any) => vo
   return ws;
 }
 
+export function connectKlineStream(symbol: string, interval: string, onMessage: (candle: any) => void): WebSocket {
+  const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`);
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    const k = data.k;
+    onMessage({
+      time: k.t,
+      open: parseFloat(k.o),
+      high: parseFloat(k.h),
+      low: parseFloat(k.l),
+      close: parseFloat(k.c),
+      volume: parseFloat(k.v),
+      isFinal: k.x
+    });
+  };
+  return ws;
+}
+
 export interface AssetFundamental {
   symbol: string;
   name: string;
