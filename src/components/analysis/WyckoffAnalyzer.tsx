@@ -460,19 +460,11 @@ const WyckoffAnalyzer: React.FC = () => {
 
       const time = (candleTime / 1000) as UTCTimestamp;
       
-      // Update chart series
-      candlestickSeriesRef.current.update({
-        time,
-        open: newCandle.open,
-        high: newCandle.high,
-        low: newCandle.low,
-        close: newCandle.close,
-      });
-
-      // Also update local data state
+      // Update local data state FIRST to maintain consistency
       setData(prev => {
         if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
         const last = prev[prev.length - 1];
+        
         if (last.time === candleTime) {
           const next = [...prev];
           next[next.length - 1] = { 
@@ -480,11 +472,33 @@ const WyckoffAnalyzer: React.FC = () => {
             close: newCandle.close,
             high: Math.max(last.high, newCandle.high),
             low: Math.min(last.low, newCandle.low),
-            volume: last.volume + (newCandle.volume / aggregationMod) // Approximation
+            volume: last.volume + (newCandle.volume / aggregationMod)
           };
+          
+          // Update chart series with the latest state of the current candle
+          candlestickSeriesRef.current.update({
+            time,
+            open: next[next.length - 1].open,
+            high: next[next.length - 1].high,
+            low: next[next.length - 1].low,
+            close: next[next.length - 1].close,
+          });
+          
           return next;
         } else if (candleTime > last.time) {
-          return [...prev, { ...newCandle, time: candleTime }].slice(-1000);
+          // New candle detected
+          const nextCandle = { ...newCandle, time: candleTime };
+          const next = [...prev, nextCandle].slice(-1000);
+          
+          candlestickSeriesRef.current.update({
+            time,
+            open: nextCandle.open,
+            high: nextCandle.high,
+            low: nextCandle.low,
+            close: nextCandle.close,
+          });
+          
+          return next;
         }
         return prev;
       });
