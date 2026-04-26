@@ -452,56 +452,47 @@ const WyckoffAnalyzer: React.FC = () => {
     const streamTf = supportedStreams.includes(streamInterval) ? streamInterval : '1m';
 
     const ws = connectKlineStream(selectedSymbol, streamTf, (newCandle) => {
-      if (!candlestickSeriesRef.current) return;
+      if (!candlestickSeriesRef.current || !chartRef.current) return;
       
-      // For 1s, candleTime is exactly newCandle.time
-      // For others, it's aggregated
+      // Calculate candle time based on the actual timeframe
       const candleTime = aggregationMod > 1 
         ? Math.floor(newCandle.time / (aggregationMod * 1000)) * (aggregationMod * 1000)
-        : Math.floor(newCandle.time / 1000) * 1000; // Force 1s precision
+        : Math.floor(newCandle.time / 1000) * 1000;
 
       const time = (candleTime / 1000) as UTCTimestamp;
       
-      // Update local data state FIRST
+      // IMMEDIATE Chart Update (Bypasses React rendering for maximum speed)
+      candlestickSeriesRef.current.update({
+        time,
+        open: newCandle.open,
+        high: newCandle.high,
+        low: newCandle.low,
+        close: newCandle.close,
+      });
+
+      // Update Local State for indicators (debounced or filtered if needed, but for now just efficient)
       setData(prev => {
         if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
         const last = prev[prev.length - 1];
         
         if (last.time === candleTime) {
+          // Update last candle in state without full re-creation if possible
+          const lastCandle = { ...last };
+          lastCandle.close = newCandle.close;
+          lastCandle.high = Math.max(last.high, newCandle.high);
+          lastCandle.low = Math.min(last.low, newCandle.low);
+          lastCandle.volume = last.volume + (newCandle.volume / (aggregationMod || 1));
+          
+          if (last.close === lastCandle.close && last.high === lastCandle.high && last.low === lastCandle.low) {
+            return prev; // No change, skip state update
+          }
+
           const next = [...prev];
-          const updatedCandle = { 
-            ...last, 
-            close: newCandle.close,
-            high: Math.max(last.high, newCandle.high),
-            low: Math.min(last.low, newCandle.low),
-            volume: last.volume + (newCandle.volume / aggregationMod)
-          };
-          next[next.length - 1] = updatedCandle;
-          
-          // Update chart series
-          candlestickSeriesRef.current.update({
-            time,
-            open: updatedCandle.open,
-            high: updatedCandle.high,
-            low: updatedCandle.low,
-            close: updatedCandle.close,
-          });
-          
+          next[next.length - 1] = lastCandle;
           return next;
         } else if (candleTime > last.time) {
-          // New candle detected
-          const nextCandle = { ...newCandle, time: candleTime };
-          const next = [...prev, nextCandle].slice(-2000); // Keep more data for stability
-          
-          candlestickSeriesRef.current.update({
-            time,
-            open: nextCandle.open,
-            high: nextCandle.high,
-            low: nextCandle.low,
-            close: nextCandle.close,
-          });
-          
-          return next;
+          // New candle - append
+          return [...prev, { ...newCandle, time: candleTime }].slice(-2000);
         }
         return prev;
       });
