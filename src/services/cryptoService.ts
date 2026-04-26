@@ -125,18 +125,33 @@ export async function fetchTickers(symbols: string[], timeframe: string = "1h"):
 export async function fetchKlines(symbol: string, interval: string = "1h", limit: number = 50) {
   // Map micro-timeframes to closest supported Binance API interval
   let apiInterval = interval;
-  if (interval === '10s' || interval === '30s') apiInterval = '1s';
+  let aggregationFactor = 1;
   
-  const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${apiInterval}&limit=${limit}`);
+  if (interval === '10s') {
+    apiInterval = '1s';
+    aggregationFactor = 10;
+  } else if (interval === '30s') {
+    apiInterval = '1s';
+    aggregationFactor = 30;
+  }
+  
+  // We need more data if we are aggregating
+  const fetchLimit = limit * aggregationFactor;
+  // Binance has a max limit of 1000 for regular klines (sometimes 1500)
+  const safeLimit = Math.min(fetchLimit, 1000);
+
+  const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${apiInterval}&limit=${safeLimit}`);
+  
   if (!response.ok) {
-    // If 1s or others are not supported for this pair, fallback to 1m
+    // If 1s is not supported (often only for top pairs like BTCUSDT), fallback to 1m
     if (apiInterval === '1s') {
       return fetchKlines(symbol, '1m', limit);
     }
     throw new Error("Failed to fetch klines");
   }
-  const data = await response.json();
-  return data.map((d: any) => ({
+  
+  const rawData = await response.json();
+  const candles = rawData.map((d: any) => ({
     time: d[0],
     open: parseFloat(d[1]),
     high: parseFloat(d[2]),
@@ -144,6 +159,26 @@ export async function fetchKlines(symbol: string, interval: string = "1h", limit
     close: parseFloat(d[4]),
     volume: parseFloat(d[5]),
   }));
+
+  if (aggregationFactor === 1) return candles;
+
+  // Aggregate candles
+  const aggregated = [];
+  for (let i = 0; i < candles.length; i += aggregationFactor) {
+    const chunk = candles.slice(i, i + aggregationFactor);
+    if (chunk.length === 0) continue;
+    
+    aggregated.push({
+      time: chunk[0].time,
+      open: chunk[0].open,
+      high: Math.max(...chunk.map(c => c.high)),
+      low: Math.min(...chunk.map(c => c.low)),
+      close: chunk[chunk.length - 1].close,
+      volume: chunk.reduce((sum, c) => sum + c.volume, 0),
+    });
+  }
+  
+  return aggregated.slice(-limit);
 }
 
 export function connectTickerStream(symbol: string, onMessage: (data: any) => void): WebSocket {

@@ -1029,7 +1029,7 @@ const WyckoffAnalyzer: React.FC = () => {
     // 6. Handle RSI
     if (rsiEnabled && rsiData) {
       if (!indicatorSeriesRef.current['rsi_line']) {
-        const rSeries = (chartRef.current as any).addLineSeries({
+        const rSeries = (chartRef.current as any).addSeries(LineSeries, {
           color: '#fbff00',
           lineWidth: 2,
           priceScaleId: 'rsi',
@@ -1070,6 +1070,7 @@ const WyckoffAnalyzer: React.FC = () => {
       const rsiMargin = { top: macdEnabled ? 0.7 : 0.8, bottom: macdEnabled ? 0.15 : 0.05 };
       chartRef.current!.priceScale('rsi').applyOptions({
         scaleMargins: rsiMargin,
+        visible: true // Explicitly ensure visibility
       });
 
       const rData = rsiData.map((val: number, i: number) => {
