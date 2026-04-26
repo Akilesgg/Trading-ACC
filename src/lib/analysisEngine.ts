@@ -881,6 +881,114 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     }
   };
 
+  // 6.5 Supertrend Analysis
+  const calculateSupertrend = (data: Candle[], period = 10, multiplier = 3) => {
+    if (data.length < period) return null;
+    const atrArr: number[] = [];
+    const hl2 = data.map(d => (d.high + d.low) / 2);
+    
+    // Simple ATR
+    for (let i = 1; i < data.length; i++) {
+      atrArr.push(Math.max(
+        data[i].high - data[i].low,
+        Math.abs(data[i].high - data[i-1].close),
+        Math.abs(data[i].low - data[i-1].close)
+      ));
+    }
+    const smoothAtr = (arr: number[], p: number) => {
+      const res = new Array(arr.length).fill(0);
+      let sum = 0;
+      for (let i = 0; i < p; i++) sum += arr[i];
+      res[p-1] = sum / p;
+      for (let i = p; i < arr.length; i++) {
+        res[i] = (res[i-1] * (p-1) + arr[i]) / p;
+      }
+      return res;
+    };
+    const atr = [0, ...smoothAtr(atrArr, period)];
+
+    let upperBand = hl2[period] + multiplier * atr[period];
+    let lowerBand = hl2[period] - multiplier * atr[period];
+    const supertrend = new Array(data.length).fill(0);
+    const direction = new Array(data.length).fill(1); // 1 = Up, -1 = Down
+
+    for (let i = period + 1; i < data.length; i++) {
+      const prevUpper = hl2[i-1] + multiplier * atr[i-1];
+      const prevLower = hl2[i-1] - multiplier * atr[i-1];
+      
+      upperBand = hl2[i] + multiplier * atr[i] < prevUpper || data[i-1].close > prevUpper 
+        ? hl2[i] + multiplier * atr[i] 
+        : prevUpper;
+      
+      lowerBand = hl2[i] - multiplier * atr[i] > prevLower || data[i-1].close < prevLower 
+        ? hl2[i] - multiplier * atr[i] 
+        : prevLower;
+
+      if (direction[i-1] === 1) {
+        direction[i] = data[i].close < lowerBand ? -1 : 1;
+      } else {
+        direction[i] = data[i].close > upperBand ? 1 : -1;
+      }
+      supertrend[i] = direction[i] === 1 ? lowerBand : upperBand;
+    }
+
+    const currentDir = direction[direction.length - 1];
+    return {
+      type: currentDir === 1 ? 'BULLISH' : 'BEARISH',
+      value: supertrend[supertrend.length - 1]
+    };
+  };
+
+  const st = calculateSupertrend(data);
+  if (st) {
+    raw['supertrend'] = {
+      pattern: 'Supertrend IA',
+      type: st.type as any,
+      status: 'CONFIRMED',
+      analysis: `Supertrend confirma sesgo ${st.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'} en el nivel ${st.value.toFixed(2)}.`,
+      recommendation: st.type === 'BULLISH' ? 'LONG' : 'SHORT'
+    };
+  }
+
+  // 6.6 Bollinger Bands Analysis
+  const calculateBB = (data: number[], period = 20, stdDev = 2) => {
+    if (data.length < period) return null;
+    const sma = data.map((_, i) => {
+      if (i < period - 1) return 0;
+      const slice = data.slice(i - period + 1, i + 1);
+      return slice.reduce((a, b) => a + b, 0) / period;
+    });
+    const upper = sma.map((s, i) => {
+      if (s === 0) return 0;
+      const slice = data.slice(i - period + 1, i + 1);
+      const variance = slice.reduce((a, b) => a + Math.pow(b - s, 2), 0) / period;
+      return s + stdDev * Math.sqrt(variance);
+    });
+    const lower = sma.map((s, i) => {
+      if (s === 0) return 0;
+      const slice = data.slice(i - period + 1, i + 1);
+      const variance = slice.reduce((a, b) => a + Math.pow(b - s, 2), 0) / period;
+      return s - stdDev * Math.sqrt(variance);
+    });
+    return { upper: upper[upper.length - 1], lower: lower[lower.length - 1], middle: sma[sma.length - 1] };
+  };
+
+  const bb = calculateBB(data.map(d => d.close));
+  if (bb) {
+    const lastClose = data[data.length-1].close;
+    let type: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
+    if (lastClose < bb.lower) type = 'BULLISH'; // Potential bounce
+    else if (lastClose > bb.upper) type = 'BEARISH'; // Potential rejection
+
+    raw['bollinger'] = {
+      pattern: 'Bandas de Bollinger',
+      type: type as any,
+      status: 'CONFIRMED',
+      analysis: `El precio se encuentra ${lastClose < bb.lower ? 'por debajo de la banda inferior' : (lastClose > bb.upper ? 'por encima de la banda superior' : 'dentro del canal central')}.`,
+      recommendation: type === 'BULLISH' ? 'LONG' : (type === 'BEARISH' ? 'SHORT' : 'WAIT')
+    };
+  }
+
   // 6. Support and Resistance Levels (Techo/Suelo Reales)
   const windowSize = Math.max(5, Math.floor(data.length / 15));
   const detectedPeaks = [];

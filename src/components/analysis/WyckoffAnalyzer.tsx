@@ -1087,6 +1087,30 @@ const WyckoffAnalyzer: React.FC = () => {
     }
   }, [chartData, selectedTimeframe, indicators, indicatorAnalysis, macdData, rsiData, refreshTrigger, selectedSymbol, rawAnalysisData]);
 
+  const confluence = useMemo(() => {
+    let bullish = 0;
+    let bearish = 0;
+    
+    indicators.forEach(ind => {
+      if (!ind.enabled) return;
+      
+      // Map indicator ID to raw analysis keys
+      let keys = [ind.id];
+      if (ind.id === 'elliott') keys = ['elliott_major', 'elliott_minor'];
+      if (ind.id === 'wakeup') keys = ['wyckoff_schematic'];
+      
+      keys.forEach(k => {
+        const analysis = rawAnalysisData[k];
+        if (analysis) {
+          if (analysis.type === 'BULLISH') bullish++;
+          else if (analysis.type === 'BEARISH') bearish++;
+        }
+      });
+    });
+
+    return { bullish, bearish };
+  }, [indicators, rawAnalysisData]);
+
   return (
     <div className="space-y-8 bg-surface-container-low/20 p-8 rounded-[2.5rem] border border-outline-variant/10 relative">
       {/* Strategy Selector - Now at the top for quick context */}
@@ -1399,9 +1423,21 @@ const WyckoffAnalyzer: React.FC = () => {
         )}
           <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3">
             {wyckoffPhase && (
-              <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-2">
-                <Brain size={12} className="text-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Fase: {wyckoffPhase}</span>
+              <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-4 py-2.5 rounded-2xl flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Brain size={14} className="text-primary" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-primary leading-none">Fase: {wyckoffPhase}</span>
+                </div>
+                
+                {/* Confluence Box */}
+                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
+                  <div className="w-10 h-10 rounded-lg bg-[#00ffa3]/10 flex items-center justify-center border border-[#00ffa3]/20">
+                    <span className="text-[16px] font-black text-[#00ffa3]">+{confluence.bullish}</span>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg bg-[#ff7162]/10 flex items-center justify-center border border-[#ff7162]/20">
+                    <span className="text-[16px] font-black text-[#ff7162]">-{confluence.bearish}</span>
+                  </div>
+                </div>
               </div>
             )}
             
