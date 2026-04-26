@@ -454,41 +454,44 @@ const WyckoffAnalyzer: React.FC = () => {
     const ws = connectKlineStream(selectedSymbol, streamTf, (newCandle) => {
       if (!candlestickSeriesRef.current) return;
       
+      // For 1s, candleTime is exactly newCandle.time
+      // For others, it's aggregated
       const candleTime = aggregationMod > 1 
         ? Math.floor(newCandle.time / (aggregationMod * 1000)) * (aggregationMod * 1000)
-        : newCandle.time;
+        : Math.floor(newCandle.time / 1000) * 1000; // Force 1s precision
 
       const time = (candleTime / 1000) as UTCTimestamp;
       
-      // Update local data state FIRST to maintain consistency
+      // Update local data state FIRST
       setData(prev => {
         if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
         const last = prev[prev.length - 1];
         
         if (last.time === candleTime) {
           const next = [...prev];
-          next[next.length - 1] = { 
+          const updatedCandle = { 
             ...last, 
             close: newCandle.close,
             high: Math.max(last.high, newCandle.high),
             low: Math.min(last.low, newCandle.low),
             volume: last.volume + (newCandle.volume / aggregationMod)
           };
+          next[next.length - 1] = updatedCandle;
           
-          // Update chart series with the latest state of the current candle
+          // Update chart series
           candlestickSeriesRef.current.update({
             time,
-            open: next[next.length - 1].open,
-            high: next[next.length - 1].high,
-            low: next[next.length - 1].low,
-            close: next[next.length - 1].close,
+            open: updatedCandle.open,
+            high: updatedCandle.high,
+            low: updatedCandle.low,
+            close: updatedCandle.close,
           });
           
           return next;
         } else if (candleTime > last.time) {
           // New candle detected
           const nextCandle = { ...newCandle, time: candleTime };
-          const next = [...prev, nextCandle].slice(-1000);
+          const next = [...prev, nextCandle].slice(-2000); // Keep more data for stability
           
           candlestickSeriesRef.current.update({
             time,
@@ -519,10 +522,12 @@ const WyckoffAnalyzer: React.FC = () => {
     const tfSec = getTimeframeSeconds(selectedTimeframe);
     const timer = setInterval(() => {
       const now = Math.floor(Date.now() / 1000);
-      const nextCandle = Math.ceil(now / tfSec) * tfSec;
-      const left = nextCandle - now;
       
-      if (left <= 0) {
+      // Special logic for sub-minute timeframes to be more reactive
+      const nextCandle = Math.ceil((Date.now() / 1000) / tfSec) * tfSec;
+      const left = Math.max(0, nextCandle - now);
+      
+      if (left <= 0 && selectedTimeframe !== '1s') {
         setRemainingTime("00:00");
       } else {
         const h = Math.floor(left / 3600);
@@ -534,7 +539,7 @@ const WyckoffAnalyzer: React.FC = () => {
         timeStr += `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
         setRemainingTime(timeStr);
       }
-    }, 1000);
+    }, 500); // More frequent update for smoothness
 
     return () => {
       ws.close();
