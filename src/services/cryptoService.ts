@@ -122,12 +122,15 @@ export async function fetchTickers(symbols: string[], timeframe: string = "1h"):
   return results.filter(t => t.price !== "0.00");
 }
 
-export async function fetchKlines(symbol: string, interval: string = "1h", limit: number = 50) {
+export async function fetchKlines(symbol: string, interval: string = "1h", limit: number = 500) {
   // Map micro-timeframes to closest supported Binance API interval
   let apiInterval = interval;
   let aggregationFactor = 1;
   
-  if (interval === '10s') {
+  if (interval === '3s') {
+    apiInterval = '1s';
+    aggregationFactor = 3;
+  } else if (interval === '10s') {
     apiInterval = '1s';
     aggregationFactor = 10;
   } else if (interval === '30s') {
@@ -135,15 +138,19 @@ export async function fetchKlines(symbol: string, interval: string = "1h", limit
     aggregationFactor = 30;
   }
   
-  // We need more data if we are aggregating
-  const fetchLimit = limit * aggregationFactor;
-  // Binance has a max limit of 1000 for regular klines (sometimes 1500)
-  const safeLimit = Math.min(fetchLimit, 1000);
+  // Supported Binance kline streams: 1s, 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
+  const isHighTf = ['1h', '4h', '1d', '1w'].includes(interval);
+  const startTime = isHighTf ? 1672531200000 : undefined; // Jan 1st 2023
+  
+  // Binance max limit is 1000
+  const fetchLimit = Math.min(limit * aggregationFactor, 1000);
 
-  const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${apiInterval}&limit=${safeLimit}`);
+  let url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${apiInterval}&limit=${fetchLimit}`;
+  if (startTime) url += `&startTime=${startTime}`;
+
+  const response = await fetch(url);
   
   if (!response.ok) {
-    // If 1s is not supported (often only for top pairs like BTCUSDT), fallback to 1m
     if (apiInterval === '1s') {
       return fetchKlines(symbol, '1m', limit);
     }
@@ -162,21 +169,25 @@ export async function fetchKlines(symbol: string, interval: string = "1h", limit
 
   if (aggregationFactor === 1) return candles;
 
-  // Aggregate candles
+  // Aggregate candles using strict timestamp boundaries (Clavadas)
   const aggregated = [];
-  for (let i = 0; i < candles.length; i += aggregationFactor) {
-    const chunk = candles.slice(i, i + aggregationFactor);
-    if (chunk.length === 0) continue;
-    
-    aggregated.push({
-      time: chunk[0].time,
-      open: chunk[0].open,
-      high: Math.max(...chunk.map(c => c.high)),
-      low: Math.min(...chunk.map(c => c.low)),
-      close: chunk[chunk.length - 1].close,
-      volume: chunk.reduce((sum, c) => sum + c.volume, 0),
-    });
-  }
+  const msPerBar = aggregationFactor * 1000;
+  
+  let currentBar: any = null;
+  
+  candles.forEach((c: any) => {
+    const barTime = Math.floor(c.time / msPerBar) * msPerBar;
+    if (!currentBar || currentBar.time !== barTime) {
+      if (currentBar) aggregated.push(currentBar);
+      currentBar = { ...c, time: barTime };
+    } else {
+      currentBar.high = Math.max(currentBar.high, c.high);
+      currentBar.low = Math.min(currentBar.low, c.low);
+      currentBar.close = c.close;
+      currentBar.volume += c.volume;
+    }
+  });
+  if (currentBar) aggregated.push(currentBar);
   
   return aggregated.slice(-limit);
 }

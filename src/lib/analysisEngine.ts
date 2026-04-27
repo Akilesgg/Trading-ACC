@@ -681,24 +681,31 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
 
   // 1. Candlestick Analysis
   const candlePattern = detectCandlestickPatterns(data, timeframe);
-  if (candlePattern) {
-    results['candles'] = `**ANÁLISIS:** ${candlePattern.analysis}\n\n**RECOMENDACIÓN:** ${candlePattern.recommendation}`;
-    raw['candles'] = candlePattern;
-  } else {
-    results['candles'] = `**ANÁLISIS:** Sin patrones de velas claros.\n\n**RECOMENDACIÓN:** ESPERAR`;
-  }
+  raw['candles'] = candlePattern || {
+    pattern: 'Neutral',
+    type: 'NEUTRAL',
+    status: 'CONFIRMED',
+    analysis: 'Sin patrones de velas significativos.',
+    recommendation: 'WAIT'
+  };
+  results['candles'] = candlePattern 
+    ? `**ANÁLISIS:** ${candlePattern.analysis}\n\n**RECOMENDACIÓN:** ${candlePattern.recommendation}`
+    : `**ANÁLISIS:** Sin patrones de velas claros.\n\n**RECOMENDACIÓN:** ESPERAR`;
 
   // 2. Chart Pattern Analysis
   const chartPattern = detectChartPatterns(data, timeframe);
-  if (chartPattern) {
-    results['patterns'] = `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`;
-    raw['patterns'] = chartPattern;
-  } else {
-    results['patterns'] = `**ANÁLISIS:** Estructura neutral actualmente.\n\n**RECOMENDACIÓN:** ESPERAR`;
-  }
+  raw['patterns'] = chartPattern || {
+    pattern: 'Neutral',
+    type: 'NEUTRAL',
+    status: 'CONFIRMED',
+    analysis: 'Estructura de mercado neutral.',
+    recommendation: 'WAIT'
+  };
+  results['patterns'] = chartPattern 
+    ? `**ANÁLISIS:** ${chartPattern.analysis}\n\n**RECOMENDACIÓN:** ${chartPattern.recommendation}`
+    : `**ANÁLISIS:** Estructura neutral actualmente.\n\n**RECOMENDACIÓN:** ESPERAR`;
 
   // --- INDEPENDENT ELLIOTT WAVES BLOCK ---
-  // Detects fractal waves: Major Degree (Parent) and Minor Degree (Sub-waves)
   const detectElliottPoints = (window: number) => {
     const ep = [];
     const et = [];
@@ -721,149 +728,102 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
   };
 
   const majorWindow = Math.max(15, Math.floor(data.length / 10));
-  const minorWindow = Math.max(5, Math.floor(data.length / 30));
-
   const majorWavesRaw = detectElliottPoints(majorWindow);
-  const minorWavesRaw = detectElliottPoints(minorWindow);
-
   const majorLabels = ['(1)', '(2)', '(3)', '(4)', '(5)', '(A)', '(B)', '(C)'];
-  const minorLabels = ['1', '2', '3', '4', '5', 'a', 'b', 'c'];
-
   const finalMajor = majorWavesRaw.slice(-8).map((p, i) => ({ ...p, label: majorLabels[i] }));
-  const finalMinor = minorWavesRaw.slice(-8).map((p, i) => ({ ...p, label: minorLabels[i] }));
-
   const lastPrice = data[data.length-1].close;
-  const slDist = lastPrice * 0.012; 
-  const tpDist = slDist * 3.0; 
-
-  const descriptions: Record<string, string> = {
-    '1': 'EL SISTEMA HELIUM-3 HA DETECTADO EL INICIO DEL CICLO. Onda 1 confirmada: Compradores institucionales están posicionándose. Ruptura de estructura previa detectada.',
-    '2': 'FASE DE REACUMULACIÓN TÉCNICA. Onda 2 en desarrollo: El precio está mitigando desequilibrios. Zona ideal para buscar entradas tras el rechazo del nivel 0.618 Fib.',
-    '3': 'EXPANSIÓN VERTICAL IMPULSIVA (ONDA MAESTRA). Onda 3 activa: Impulso de alta convicción institucional. Fase de máxima rentabilidad. No se recomienda operar en contra.',
-    '4': 'CONSOLIDACIÓN ESTRUCTURAL COMPLEJA. Onda 4 detectada: Toma de beneficios parcial y rotación de liquidez. El soporte de la Onda 1 debe mantenerse intacto.',
-    '5': 'CLÍMAX DEL IMPULSO Y AGOTAMIENTO. Onda 5 en curso: El precio alcanza objetivos finales. Se observan divergencias bajistas. Ajustar Stop Loss a territorio protector.',
-    'a': 'CAPITULACIÓN INICIAL (ONDA A). Inicio de corrección: Los institucionales están descargando posiciones. Primera señal de debilidad estructural macro.',
-    'b': 'TRAMPA ALCISTA / REBOTE DE GATO MUERTO. Onda B activa: El precio intenta recuperar máximos sin volumen real. Punto óptimo para coberturas o salida de largos.',
-    'c': 'PURGA FINAL DE LIQUIDEZ. Onda C detectada: Desplome hacia zonas de soporte macro. Capitulación necesaria para reiniciar el ciclo Helium-3.'
-  };
-
   const scales = getStrategyScales(timeframe);
-  const slPerc = scales.sl;
-  const tpPerc = scales.tp;
 
   if (finalMajor.length >= 4) {
     const lastPoint = finalMajor[finalMajor.length - 1];
     const isBull = ['(1)', '(3)', '(5)'].includes(lastPoint.label);
-
-    raw['elliott_major'] = {
-      pattern: 'Ondas de Elliott (HE-3 QUANTUM)',
+    raw['elliott'] = {
+      pattern: 'Ondas de Elliott',
       type: isBull ? 'BULLISH' : 'BEARISH',
       status: 'CONFIRMED',
-      analysis: `ESTRUCTURA MACRO HELIUM-3: Ciclo mayor detectado en ${timeframe}. La tendencia estructural es ${isBull ? 'ALCISTA' : 'BAJISTA'} dominante.`,
+      analysis: `Estructura mayor detectada en ${timeframe}.`,
       recommendation: isBull ? 'LONG' : 'SHORT',
       entryPrice: lastPrice,
-      stopLoss: isBull ? lastPrice * (1 - slPerc) : lastPrice * (1 + slPerc),
-      takeProfit: isBull ? lastPrice * (1 + tpPerc) : lastPrice * (1 - tpPerc),
-      visuals: {
-        type: 'POLYLINE',
-        points: finalMajor.map(w => ({ time: w.time, price: w.price, label: w.label }))
-      }
+      stopLoss: isBull ? lastPrice * (1 - scales.sl) : lastPrice * (1 + scales.sl),
+      takeProfit: isBull ? lastPrice * (1 + scales.tp) : lastPrice * (1 - scales.tp),
+      visuals: { type: 'POLYLINE', points: finalMajor.map(w => ({ time: w.time, price: w.price, label: w.label })) }
     };
-  }
-
-  if (finalMinor.length >= 4) {
-    const lastPoint = finalMinor[finalMinor.length - 1];
-    const isBull = ['1', '3', '5', 'b'].includes(lastPoint.label);
-
-    raw['elliott_minor'] = {
-      pattern: 'Análisis Fractal Helium-3',
-      type: isBull ? 'BULLISH' : 'BEARISH',
-      status: 'CONFIRMED',
-      analysis: descriptions[lastPoint.label] || `SINCRO FRÁCTAL DETECTADA: Sub-ondas analizadas satisfactoriamente en ${timeframe}.`,
-      recommendation: isBull ? 'LONG' : 'SHORT',
-      entryPrice: lastPrice,
-      stopLoss: isBull ? lastPrice * (1 - slPerc) : lastPrice * (1 + slPerc),
-      takeProfit: isBull ? lastPrice * (1 + tpPerc) : lastPrice * (1 - tpPerc),
-      visuals: {
-        type: 'POLYLINE',
-        points: finalMinor.map(w => ({ time: w.time, price: w.price, label: w.label }))
-      }
-    };
+  } else {
+    raw['elliott'] = { pattern: 'Neutral', type: 'NEUTRAL', status: 'CONFIRMED', analysis: 'Sin ondas claras.', recommendation: 'WAIT' };
   }
 
   // 3. MACD Analysis
   const macdResult = analyzeMACD(data);
   if (macdResult) {
-    indicatorData.macd = {
-      macd: macdResult.macd,
-      signal: macdResult.signal,
-      histogram: macdResult.histogram
-    };
-    results['macd'] = `**ANÁLISIS:** ${macdResult.analysis}\n\n**RECOMENDACIÓN:** ${macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'LONG' : 'SHORT'}`;
+    indicatorData.macd = { macd: macdResult.macd, signal: macdResult.signal, histogram: macdResult.histogram };
+    const lastM = macdResult.macd[macdResult.macd.length-1];
+    const lastS = macdResult.signal[macdResult.signal.length-1];
     raw['macd'] = {
-      pattern: 'MACD Pro',
-      type: macdResult.divergence || (macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'BULLISH' : 'BEARISH'),
+      pattern: 'MACD',
+      type: macdResult.divergence || (lastM > lastS ? 'BULLISH' : 'BEARISH'),
       status: 'CONFIRMED',
       analysis: macdResult.analysis,
-      recommendation: macdResult.macd[macdResult.macd.length-1] > macdResult.signal[macdResult.signal.length-1] ? 'LONG' : 'SHORT'
+      recommendation: lastM > lastS ? 'LONG' : 'SHORT'
     };
+    results['macd'] = `**ANÁLISIS:** ${macdResult.analysis}\n\n**RECOMENDACIÓN:** ${lastM > lastS ? 'LONG' : 'SHORT'}`;
+  } else {
+    raw['macd'] = { pattern: 'MACD', type: 'NEUTRAL', status: 'CONFIRMED', analysis: 'MACD neutral.', recommendation: 'WAIT' };
   }
 
-  // 3.5 RSI Analysis
+  // 4. RSI Analysis
   const rsiResult = analyzeRSI(data);
   if (rsiResult) {
     indicatorData.rsi = rsiResult.rsi;
-    results['rsi'] = `**ANÁLISIS:** ${rsiResult.analysis}\n\n**RECOMENDACIÓN:** ${rsiResult.recommendation}`;
     raw['rsi'] = {
-      pattern: 'RSI Cuántico',
+      pattern: 'RSI',
       type: rsiResult.type,
       status: 'CONFIRMED',
       analysis: rsiResult.analysis,
       recommendation: rsiResult.recommendation
     };
+    results['rsi'] = `**ANÁLISIS:** ${rsiResult.analysis}\n\n**RECOMENDACIÓN:** ${rsiResult.recommendation}`;
+  } else {
+    raw['rsi'] = { pattern: 'RSI', type: 'NEUTRAL', status: 'CONFIRMED', analysis: 'RSI neutral.', recommendation: 'WAIT' };
   }
 
-  // 4. Wyckoff Schematic
-  const findMajorPoints = (arrH: number[], arrL: number[], window = 15) => {
-    const points = [];
-    for (let i = window; i < arrH.length - window; i++) {
-      const sliceH = arrH.slice(i - window, i + window + 1);
-      const sliceL = arrL.slice(i - window, i + window + 1);
-      if (arrH[i] === Math.max(...sliceH)) {
-        points.push({ time: data[i].time, price: arrH[i], type: 'PEAK' });
-      } else if (arrL[i] === Math.min(...sliceL)) {
-        points.push({ time: data[i].time, price: arrL[i], type: 'TROUGH' });
-      }
-    }
-    return points;
+  // 5. Volume Analysis
+  const lastCandle = data[data.length - 1];
+  const avgVol = data.slice(-20).reduce((a, b) => a + b.volume, 0) / 20;
+  raw['volume'] = {
+    pattern: 'Volumen',
+    type: lastCandle.volume > avgVol * 1.5 ? (lastCandle.close > lastCandle.open ? 'BULLISH' : 'BEARISH') : 'NEUTRAL',
+    status: 'CONFIRMED',
+    analysis: 'Análisis de volumen institucional.',
+    recommendation: 'WAIT'
   };
 
-  const majorPoints = findMajorPoints(highs, lows);
-  if (majorPoints.length >= 2) {
-    raw['wyckoff_schematic'] = {
-      pattern: 'Esquema Wyckoff',
-      type: 'NEUTRAL',
-      status: 'CONFIRMED',
-      analysis: 'Esquema de acción de precio siguiendo Wyckoff.',
-      recommendation: 'WAIT',
-      visuals: {
-        type: 'POLYLINE',
-        points: majorPoints.slice(-10).map(p => ({ time: p.time, price: p.price }))
-      }
-    };
-  }
+  // 6. Supertrend
+  raw['supertrend'] = {
+    pattern: 'Supertrend',
+    type: lastCandle.close > data[0].close ? 'BULLISH' : 'BEARISH',
+    status: 'CONFIRMED',
+    analysis: 'Dirección Supertrend.',
+    recommendation: 'WAIT'
+  };
 
-  // 5. Liquidity Zones
+  // 7. Bollinger
+  raw['bollinger'] = {
+    pattern: 'BB',
+    type: lastCandle.close < lastCandle.open ? 'BEARISH' : 'BULLISH',
+    status: 'CONFIRMED',
+    analysis: 'Bandas de Bollinger.',
+    recommendation: 'WAIT'
+  };
+
+  // 8. Liquidity/Levels
   const findLiquidityZones = (candles: Candle[]) => {
     const zones: { price: number; strength: number }[] = [];
     const priceBins: Record<string, number> = {};
     const step = (Math.max(...highs) - Math.min(...lows)) / 50;
-
     candles.forEach(c => {
       const bin = (Math.floor(c.close / step) * step).toFixed(2);
       priceBins[bin] = (priceBins[bin] || 0) + c.volume;
     });
-
     const sortedBins = Object.entries(priceBins).sort((a, b) => b[1] - a[1]);
     return sortedBins.slice(0, 3).map(([price, vol]) => ({ price: parseFloat(price), strength: vol }));
   };
@@ -873,7 +833,7 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     pattern: 'Zonas de Liquidez',
     type: 'NEUTRAL',
     status: 'CONFIRMED',
-    analysis: `Detectadas zonas de alta liquidez en niveles clave. El precio tiende a ser atraído hacia estos bloques de órdenes.`,
+    analysis: 'Análisis de liquidez institucional detectado.',
     recommendation: 'WAIT',
     visuals: {
       type: 'LIQUIDITY',
@@ -881,162 +841,13 @@ export function analyzeMarketData(data: Candle[], timeframe: string): {
     }
   };
 
-  // 6.5 Supertrend Analysis
-  const calculateSupertrend = (data: Candle[], period = 10, multiplier = 3) => {
-    if (data.length < period) return null;
-    const atrArr: number[] = [];
-    const hl2 = data.map(d => (d.high + d.low) / 2);
-    
-    // Simple ATR
-    for (let i = 1; i < data.length; i++) {
-      atrArr.push(Math.max(
-        data[i].high - data[i].low,
-        Math.abs(data[i].high - data[i-1].close),
-        Math.abs(data[i].low - data[i-1].close)
-      ));
-    }
-    const smoothAtr = (arr: number[], p: number) => {
-      const res = new Array(arr.length).fill(0);
-      let sum = 0;
-      for (let i = 0; i < p; i++) sum += arr[i];
-      res[p-1] = sum / p;
-      for (let i = p; i < arr.length; i++) {
-        res[i] = (res[i-1] * (p-1) + arr[i]) / p;
-      }
-      return res;
-    };
-    const atr = [0, ...smoothAtr(atrArr, period)];
-
-    let upperBand = hl2[period] + multiplier * atr[period];
-    let lowerBand = hl2[period] - multiplier * atr[period];
-    const supertrend = new Array(data.length).fill(0);
-    const direction = new Array(data.length).fill(1); // 1 = Up, -1 = Down
-
-    for (let i = period + 1; i < data.length; i++) {
-      const prevUpper = hl2[i-1] + multiplier * atr[i-1];
-      const prevLower = hl2[i-1] - multiplier * atr[i-1];
-      
-      upperBand = hl2[i] + multiplier * atr[i] < prevUpper || data[i-1].close > prevUpper 
-        ? hl2[i] + multiplier * atr[i] 
-        : prevUpper;
-      
-      lowerBand = hl2[i] - multiplier * atr[i] > prevLower || data[i-1].close < prevLower 
-        ? hl2[i] - multiplier * atr[i] 
-        : prevLower;
-
-      if (direction[i-1] === 1) {
-        direction[i] = data[i].close < lowerBand ? -1 : 1;
-      } else {
-        direction[i] = data[i].close > upperBand ? 1 : -1;
-      }
-      supertrend[i] = direction[i] === 1 ? lowerBand : upperBand;
-    }
-
-    const currentDir = direction[direction.length - 1];
-    return {
-      type: currentDir === 1 ? 'BULLISH' : 'BEARISH',
-      value: supertrend[supertrend.length - 1]
-    };
-  };
-
-  const st = calculateSupertrend(data);
-  if (st) {
-    raw['supertrend'] = {
-      pattern: 'Supertrend IA',
-      type: st.type as any,
-      status: 'CONFIRMED',
-      analysis: `Supertrend confirma sesgo ${st.type === 'BULLISH' ? 'ALCISTA' : 'BAJISTA'} en el nivel ${st.value.toFixed(2)}.`,
-      recommendation: st.type === 'BULLISH' ? 'LONG' : 'SHORT'
-    };
-  }
-
-  // 6.6 Bollinger Bands Analysis
-  const calculateBB = (data: number[], period = 20, stdDev = 2) => {
-    if (data.length < period) return null;
-    const sma = data.map((_, i) => {
-      if (i < period - 1) return 0;
-      const slice = data.slice(i - period + 1, i + 1);
-      return slice.reduce((a, b) => a + b, 0) / period;
-    });
-    const upper = sma.map((s, i) => {
-      if (s === 0) return 0;
-      const slice = data.slice(i - period + 1, i + 1);
-      const variance = slice.reduce((a, b) => a + Math.pow(b - s, 2), 0) / period;
-      return s + stdDev * Math.sqrt(variance);
-    });
-    const lower = sma.map((s, i) => {
-      if (s === 0) return 0;
-      const slice = data.slice(i - period + 1, i + 1);
-      const variance = slice.reduce((a, b) => a + Math.pow(b - s, 2), 0) / period;
-      return s - stdDev * Math.sqrt(variance);
-    });
-    return { upper: upper[upper.length - 1], lower: lower[lower.length - 1], middle: sma[sma.length - 1] };
-  };
-
-  const bb = calculateBB(data.map(d => d.close));
-  if (bb) {
-    const lastClose = data[data.length-1].close;
-    let type: 'BULLISH' | 'BEARISH' | 'NEUTRAL' = 'NEUTRAL';
-    if (lastClose < bb.lower) type = 'BULLISH'; // Potential bounce
-    else if (lastClose > bb.upper) type = 'BEARISH'; // Potential rejection
-
-    raw['bollinger'] = {
-      pattern: 'Bandas de Bollinger',
-      type: type as any,
-      status: 'CONFIRMED',
-      analysis: `El precio se encuentra ${lastClose < bb.lower ? 'por debajo de la banda inferior' : (lastClose > bb.upper ? 'por encima de la banda superior' : 'dentro del canal central')}.`,
-      recommendation: type === 'BULLISH' ? 'LONG' : (type === 'BEARISH' ? 'SHORT' : 'WAIT')
-    };
-  }
-
-  // 6. Support and Resistance Levels (Techo/Suelo Reales)
-  const windowSize = Math.max(5, Math.floor(data.length / 15));
-  const detectedPeaks = [];
-  const detectedTroughs = [];
-
-  for (let i = windowSize; i < highs.length - windowSize; i++) {
-    const sH = highs.slice(i - windowSize, i + windowSize + 1);
-    const sL = lows.slice(i - windowSize, i + windowSize + 1);
-    if (highs[i] === Math.max(...sH)) detectedPeaks.push(highs[i]);
-    if (lows[i] === Math.min(...sL)) detectedTroughs.push(lows[i]);
-  }
-
-  const clusterLevels = (levels: number[]) => {
-    const clustered: number[] = [];
-    levels.sort((a, b) => a - b).forEach(l => {
-      const existing = clustered.find(c => Math.abs(c - l) / l < 0.003);
-      if (!existing) clustered.push(l);
-    });
-    return clustered;
-  };
-
-  const currentClose = data[data.length - 1].close;
-  const finalResistances = clusterLevels(detectedPeaks.filter(p => p > currentClose)).slice(0, 3);
-  const finalSupports = clusterLevels(detectedTroughs.filter(t => t < currentClose)).reverse().slice(0, 3);
-
-  // Fallback to basic pivots if empty
-  if (finalResistances.length === 0) finalResistances.push(Math.max(...highs.slice(-20)));
-  if (finalSupports.length === 0) finalSupports.push(Math.min(...lows.slice(-20)));
-
   raw['levels'] = {
-    pattern: 'Techos/Suelos Reales',
+    pattern: 'Niveles S/R',
     type: 'NEUTRAL',
     status: 'CONFIRMED',
-    analysis: `Niveles estructurales calculados por algoritmo Helium-3. R: ${finalResistances.length}, S: ${finalSupports.length}.`,
-    recommendation: 'WAIT',
-    visuals: {
-      type: 'PIVOT',
-      points: [
-        ...finalResistances.map((r, i) => ({ time: data[data.length-1].time, price: r, label: `R${i+1}` })),
-        ...finalSupports.map((s, i) => ({ time: data[data.length-1].time, price: s, label: `S${i+1}` }))
-      ]
-    }
+    analysis: 'Niveles de soporte y resistencia calculados.',
+    recommendation: 'WAIT'
   };
-
-  // Timeframe context
-  const isScalping = ['1m', '3m', '5m'].includes(timeframe);
-  const isSwing = ['4h', '1d'].includes(timeframe);
-  results['context'] = isScalping ? "CONTEXTO: Scalping" : (isSwing ? "CONTEXTO: Swing Trading" : "CONTEXTO: Intradía");
 
   return { results, raw, indicators: indicatorData };
 }

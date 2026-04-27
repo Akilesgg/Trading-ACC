@@ -446,7 +446,8 @@ const WyckoffAnalyzer: React.FC = () => {
     let streamInterval = selectedTimeframe;
     let aggregationMod = 1;
     
-    if (selectedTimeframe === '10s') { streamInterval = '1s'; aggregationMod = 10; }
+    if (selectedTimeframe === '3s') { streamInterval = '1s'; aggregationMod = 3; }
+    else if (selectedTimeframe === '10s') { streamInterval = '1s'; aggregationMod = 10; }
     else if (selectedTimeframe === '30s') { streamInterval = '1s'; aggregationMod = 30; }
     
     // Supported Binance kline streams: 1s, 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
@@ -1489,7 +1490,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
                 {/* Timeframe Commands */}
                 <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-[2rem] border border-white/5">
-                  {["1s", "10s", "30s", "1m", "5m", "15m", "1h", "4h", "1d", "1w"].map(tf => (
+                  {["1s", "3s", "10s", "30s", "1m", "5m", "15m", "1h", "4h", "1d", "1w"].map(tf => (
                     <button
                       key={tf}
                       onClick={() => setSelectedTimeframe(tf)}
@@ -1558,21 +1559,33 @@ const WyckoffAnalyzer: React.FC = () => {
           </div>
         )}
           <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-3">
+            {/* Master Score Control Board */}
+            <div className="flex items-center gap-1.5 bg-[#0b0f14]/80 backdrop-blur-xl p-1.5 rounded-2xl border border-white/10 shadow-2xl">
+              <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-green-500/10 border border-green-500/20">
+                <span className="text-[10px] font-black text-green-500/50 uppercase leading-none mb-1">Bull</span>
+                <span className="text-[18px] font-black text-green-500 leading-none">+{confluence.bullish}</span>
+              </div>
+              <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20">
+                <span className="text-[10px] font-black text-red-500/50 uppercase leading-none mb-1">Bear</span>
+                <span className="text-[18px] font-black text-red-500 leading-none">-{confluence.bearish}</span>
+              </div>
+              <div className="h-8 w-px bg-white/10 mx-1" />
+              <div className="px-3">
+                <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] block mb-0.5">ESTADO GLOBAL</span>
+                <span className={cn(
+                  "text-[10px] font-black uppercase tracking-widest",
+                  confluence.bullish > confluence.bearish ? "text-green-400" : (confluence.bearish > confluence.bullish ? "text-red-400" : "text-slate-400")
+                )}>
+                  {confluence.bullish > confluence.bearish ? "CONFLUENCIA ALCISTA" : (confluence.bearish > confluence.bullish ? "CONFLUENCIA BAJISTA" : "ESTADO NEUTRAL")}
+                </span>
+              </div>
+            </div>
+
             {wyckoffPhase && (
               <div className="bg-primary/10 backdrop-blur-md border border-primary/20 px-4 py-2.5 rounded-2xl flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Brain size={14} className="text-primary" />
                   <span className="text-[11px] font-bold uppercase tracking-widest text-primary leading-none">Fase: {wyckoffPhase}</span>
-                </div>
-                
-                {/* Confluence Box */}
-                <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
-                  <div className="w-10 h-10 rounded-lg bg-[#00ffa3]/10 flex items-center justify-center border border-[#00ffa3]/20">
-                    <span className="text-[16px] font-black text-[#00ffa3]">+{confluence.bullish}</span>
-                  </div>
-                  <div className="w-10 h-10 rounded-lg bg-[#ff7162]/10 flex items-center justify-center border border-[#ff7162]/20">
-                    <span className="text-[16px] font-black text-[#ff7162]">-{confluence.bearish}</span>
-                  </div>
                 </div>
               </div>
             )}
