@@ -175,7 +175,14 @@ const WyckoffAnalyzer: React.FC = () => {
   const [activeCandles, setActiveCandles] = useState<AnalysisResult | null>(null);
   const [activeElliott, setActiveElliott] = useState<AnalysisResult | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [rawAnalysisData, setRawAnalysisData] = useState<Record<string, any>>({});
+  
+  const rawAnalysisData = useMemo(() => {
+    if (data.length === 0) return {};
+    const { raw } = analyzeMarketData(data as Candle[], selectedTimeframe);
+    return raw;
+  }, [data, selectedTimeframe]);
+
+  const pendingCandleRef = useRef<any>(null);
   const [drawingTool, setDrawingTool] = useState<'none'|'hline'|'trendline'|'erase'>('none');
   const [drawnLines, setDrawnLines] = useState<any[]>([]);
   const drawnSeriesRef = useRef<any[]>([]);
@@ -309,12 +316,8 @@ const WyckoffAnalyzer: React.FC = () => {
       setMacdData(indicatorData.macd || null);
       setRsiData(indicatorData.rsi || null);
       
-      console.log("[DEBUG] Análisis Real de Patrones:", realAnalysis['patterns']);
-      console.log("[DEBUG] Análisis Real de Velas:", realAnalysis['candles']);
-
       // 1. Technical Analysis Engine
       setIndicatorAnalysis(realAnalysis);
-      setRawAnalysisData(rawAnalysis);
 
       // Parsing logic
       const wyckoffMatch = aiResponse.match(/FASE WYCKOFF:?\s*(.*)/i);
@@ -359,7 +362,6 @@ const WyckoffAnalyzer: React.FC = () => {
         analysisMap[ind.id] = `**ANÁLISIS:** ${detail}\n\n**RECOMENDACIÓN:** ${rec}`;
       });
       setIndicatorAnalysis(analysisMap);
-      setRawAnalysisData(rawAnalysis);
       
       const conclusionMatch = aiResponse.match(/\*\*RECOMENDACIÓN FINAL\*\*:?\s*(.*)/i);
       let finalConclusionText = conclusionMatch ? conclusionMatch[1].trim() : "Confluencia técnica positiva. Mantener vigilancia en niveles clave.";
@@ -454,14 +456,13 @@ const WyckoffAnalyzer: React.FC = () => {
     const ws = connectKlineStream(selectedSymbol, streamTf, (newCandle) => {
       if (!candlestickSeriesRef.current || !chartRef.current) return;
       
-      // Calculate candle time based on the actual timeframe
       const candleTime = aggregationMod > 1 
         ? Math.floor(newCandle.time / (aggregationMod * 1000)) * (aggregationMod * 1000)
-        : Math.floor(newCandle.time / 1000) * 1000;
+        : newCandle.time;
 
       const time = (candleTime / 1000) as UTCTimestamp;
       
-      // IMMEDIATE Chart Update (Bypasses React rendering for maximum speed)
+      // IMMEDIATE Chart Update (Direct update, no React render)
       candlestickSeriesRef.current.update({
         time,
         open: newCandle.open,
@@ -470,35 +471,35 @@ const WyckoffAnalyzer: React.FC = () => {
         close: newCandle.close,
       });
 
-      // Update Local State for indicators (debounced or filtered if needed, but for now just efficient)
-      setData(prev => {
-        if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
-        const last = prev[prev.length - 1];
-        
-        if (last.time === candleTime) {
-          // Update last candle in state without full re-creation if possible
-          const lastCandle = { ...last };
-          lastCandle.close = newCandle.close;
-          lastCandle.high = Math.max(last.high, newCandle.high);
-          lastCandle.low = Math.min(last.low, newCandle.low);
-          lastCandle.volume = last.volume + (newCandle.volume / (aggregationMod || 1));
-          
-          if (last.close === lastCandle.close && last.high === lastCandle.high && last.low === lastCandle.low) {
-            return prev; // No change, skip state update
-          }
+      pendingCandleRef.current = { ...newCandle, time: candleTime };
 
-          const next = [...prev];
-          next[next.length - 1] = lastCandle;
-          return next;
-        } else if (candleTime > last.time) {
-          // New candle - append
-          return [...prev, { ...newCandle, time: candleTime }].slice(-2000);
-        }
-        return prev;
-      });
+      // Update state ONLY on final candle to trigger re-renders/analysis
+      if (newCandle.isFinal) {
+        setData(prev => {
+          if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
+          const last = prev[prev.length - 1];
+          if (last.time === candleTime) {
+            const next = [...prev];
+            next[next.length - 1] = { 
+              ...last, 
+              close: newCandle.close,
+              high: Math.max(last.high, newCandle.high),
+              low: Math.min(last.low, newCandle.low),
+              volume: last.volume + (newCandle.volume / (aggregationMod || 1))
+            };
+            return next;
+          } else if (candleTime > last.time) {
+            return [...prev, { ...newCandle, time: candleTime }].slice(-2000);
+          }
+          return prev;
+        });
+      }
     });
 
-    // Countdown Timer Logic
+    // Countdown Timer Logic using requestAnimationFrame for zero-lag
+    let rafId: number;
+    let lastDisplayed = '';
+    
     const getTimeframeSeconds = (tf: string) => {
       const unit = tf.slice(-1);
       const val = parseInt(tf);
@@ -511,30 +512,31 @@ const WyckoffAnalyzer: React.FC = () => {
     };
 
     const tfSec = getTimeframeSeconds(selectedTimeframe);
-    const timer = setInterval(() => {
-      const now = Math.floor(Date.now() / 1000);
+    
+    const tick = () => {
+      const now = Date.now() / 1000;
+      const nextCandle = Math.ceil(now / tfSec) * tfSec;
+      const left = Math.max(0, Math.floor(nextCandle - now));
       
-      // Special logic for sub-minute timeframes to be more reactive
-      const nextCandle = Math.ceil((Date.now() / 1000) / tfSec) * tfSec;
-      const left = Math.max(0, nextCandle - now);
+      const s = left % 60;
+      const m = Math.floor((left % 3600) / 60);
+      const h = Math.floor(left / 3600);
       
-      if (left <= 0 && selectedTimeframe !== '1s') {
-        setRemainingTime("00:00");
-      } else {
-        const h = Math.floor(left / 3600);
-        const m = Math.floor((left % 3600) / 60);
-        const s = left % 60;
-        
-        let timeStr = "";
-        if (h > 0) timeStr += `${h.toString().padStart(2, '0')}:`;
-        timeStr += `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        setRemainingTime(timeStr);
+      let str = h > 0 ? `${String(h).padStart(2, '0')}:` : '';
+      str += `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      
+      if (str !== lastDisplayed) {
+        lastDisplayed = str;
+        setRemainingTime(str);
       }
-    }, 500); // More frequent update for smoothness
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
 
     return () => {
       ws.close();
-      clearInterval(timer);
+      cancelAnimationFrame(rafId);
     };
   }, [selectedSymbol, selectedTimeframe]);
 
@@ -916,7 +918,7 @@ const WyckoffAnalyzer: React.FC = () => {
           return;
         }
 
-        if (analysis.visuals.type === 'PIVOT' || key === 'levels') {
+        if ((analysis.visuals?.type as string) === 'PIVOT' || key === 'levels') {
           const cPrice = chartData.length ? chartData[chartData.length-1].close : 0;
           visuals.points.forEach((pt: any) => {
             const isRes = pt.label.startsWith('R');
@@ -1208,7 +1210,7 @@ const WyckoffAnalyzer: React.FC = () => {
     let bearish = 0;
     
     indicators.forEach(ind => {
-      if (!ind.enabled) return;
+      // Process all indicators regardless of enabled state as per user request
       
       // Map indicator ID to raw analysis keys
       let keys = [ind.id];

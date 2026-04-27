@@ -200,26 +200,27 @@ export function connectTickerStream(symbol: string, onMessage: (data: any) => vo
 
 export function connectKlineStream(symbol: string, interval: string, onMessage: (candle: any) => void): WebSocket {
   const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`);
-  let lastCandleTime = 0;
+  let lastEmit = 0;
 
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     const k = data.k;
-    const candleTime = k.t;
+    const now = Date.now();
+    const isFinal = k.x;
+    
+    // Throttle: only emit intermediate updates every 100ms
+    if (!isFinal && now - lastEmit < 100) return;
+    lastEmit = now;
 
-    // For 1s, we want to update even if it's the same candle but it's a price move
-    // But importantly, we must ensure we don't skip the "start" of a candle
     onMessage({
       time: k.t,
-      open: parseFloat(k.o),
-      high: parseFloat(k.h),
-      low: parseFloat(k.l),
-      close: parseFloat(k.c),
-      volume: parseFloat(k.v),
-      isFinal: k.x
+      open: +k.o,
+      high: +k.h,
+      low: +k.l,
+      close: +k.c,
+      volume: +k.v,
+      isFinal
     });
-    
-    lastCandleTime = candleTime;
   };
   return ws;
 }
