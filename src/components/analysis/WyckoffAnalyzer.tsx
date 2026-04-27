@@ -1439,7 +1439,8 @@ const WyckoffAnalyzer: React.FC = () => {
             {/* Drawing Toolbar */}
             <div className="absolute top-4 right-4 flex items-center gap-1 p-1 rounded-xl bg-black/60 backdrop-blur-md border border-white/10 z-[40]">
               {[
-                { id: 'hline', icon: '—', label: 'H-Line' },
+                { id: 'reset_view', icon: <RotateCcw size={16} />, label: 'Restablecer Vista' },
+                 { id: 'hline', icon: '—', label: 'H-Line' },
                 { id: 'trendline', icon: '↗', label: 'Trend' },
                 { id: 'erase', icon: '✕', label: 'Clear' },
                 { id: 'master_clear', icon: <Trash2 size={16} />, label: 'Limpiar Todo' }
@@ -1447,7 +1448,8 @@ const WyckoffAnalyzer: React.FC = () => {
                 <button
                   key={tool.id}
                   onClick={() => {
-                    if (tool.id === 'erase') clearDrawings();
+                    if (tool.id === 'reset_view') handleResetView();
+                    else if (tool.id === 'erase') clearDrawings();
                     else if (tool.id === 'master_clear') clearMaster();
                     else setDrawingTool(prev => prev === tool.id ? 'none' : tool.id as any);
                   }}
