@@ -200,27 +200,28 @@ export function connectTickerStream(symbol: string, onMessage: (data: any) => vo
 
 export function connectKlineStream(symbol: string, interval: string, onMessage: (candle: any) => void): WebSocket {
   const ws = new WebSocket(`wss://stream.binance.com:9443/ws/${symbol.toLowerCase()}@kline_${interval}`);
+  let lastCandleTime = 0;
   let lastEmit = 0;
 
   ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    const k = data.k;
+    const k = JSON.parse(event.data).k;
     const now = Date.now();
     const isFinal = k.x;
-    
-    // Throttle: only emit intermediate updates every 100ms
-    if (!isFinal && now - lastEmit < 100) return;
-    lastEmit = now;
+    const candleTime = k.t;
 
-    onMessage({
-      time: k.t,
-      open: +k.o,
-      high: +k.h,
-      low: +k.l,
-      close: +k.c,
-      volume: +k.v,
-      isFinal
-    });
+    // Cuando cambia el tiempo de vela → nueva barra, emitir INMEDIATAMENTE sin throttle
+    const isNewCandle = candleTime !== lastCandleTime;
+    if (isNewCandle) {
+      lastCandleTime = candleTime;
+      lastEmit = now;
+      onMessage({ time: candleTime, open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v, isFinal });
+      return;
+    }
+
+    // Misma vela: isFinal siempre pasa, actualizaciones intermedias throttleadas a 80ms
+    if (!isFinal && now - lastEmit < 80) return;
+    lastEmit = now;
+    onMessage({ time: candleTime, open: +k.o, high: +k.h, low: +k.l, close: +k.c, volume: +k.v, isFinal });
   };
   return ws;
 }

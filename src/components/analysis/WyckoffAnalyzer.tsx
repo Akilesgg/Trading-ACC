@@ -462,7 +462,7 @@ const WyckoffAnalyzer: React.FC = () => {
 
       const time = (candleTime / 1000) as UTCTimestamp;
       
-      // IMMEDIATE Chart Update (Direct update, no React render)
+      // Pintar siempre en el gráfico de forma inmediata
       candlestickSeriesRef.current.update({
         time,
         open: newCandle.open,
@@ -473,27 +473,36 @@ const WyckoffAnalyzer: React.FC = () => {
 
       pendingCandleRef.current = { ...newCandle, time: candleTime };
 
-      // Update state ONLY on final candle to trigger re-renders/analysis
-      if (newCandle.isFinal) {
-        setData(prev => {
+      // Actualizar state en nueva vela O en cierre — nunca en ticks intermedios
+      // Usamos el callback local para evitar cierres obsoletos (stale closures)
+      setData(prev => {
+        const lastTime = prev.length > 0 ? prev[prev.length - 1].time : 0;
+        if (newCandle.isFinal || candleTime > lastTime) {
           if (prev.length === 0) return [{ ...newCandle, time: candleTime }];
           const last = prev[prev.length - 1];
           if (last.time === candleTime) {
             const next = [...prev];
-            next[next.length - 1] = { 
-              ...last, 
+            next[next.length - 1] = {
+              ...last,
               close: newCandle.close,
               high: Math.max(last.high, newCandle.high),
               low: Math.min(last.low, newCandle.low),
-              volume: last.volume + (newCandle.volume / (aggregationMod || 1))
             };
             return next;
           } else if (candleTime > last.time) {
-            return [...prev, { ...newCandle, time: candleTime }].slice(-2000);
+            // Nueva vela: añadir inmediatamente para que aparezca en el gráfico
+            return [...prev, {
+              time: candleTime,
+              open: newCandle.open,
+              high: newCandle.high,
+              low: newCandle.low,
+              close: newCandle.close,
+              volume: newCandle.volume,
+            }].slice(-2000);
           }
-          return prev;
-        });
-      }
+        }
+        return prev;
+      });
     });
 
     // Countdown Timer Logic using requestAnimationFrame for zero-lag
