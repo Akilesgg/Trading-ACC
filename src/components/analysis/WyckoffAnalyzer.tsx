@@ -1217,26 +1217,31 @@ const WyckoffAnalyzer: React.FC = () => {
 
   const confluence = useMemo(() => {
     let bullish = 0;
-    let bearish = 0;
     
     indicators.forEach(ind => {
-      // Process all indicators regardless of enabled state as per user request
+      // Logic to determine if this specific indicator (from the list of 11) is bullish
+      let isIndicatorBullish = false;
       
-      // Map indicator ID to raw analysis keys
+      // Determine keys to check based on the indicator ID
       let keys = [ind.id];
-      if (ind.id === 'elliott') keys = ['elliott_major', 'elliott_minor'];
+      if (ind.id === 'elliott') keys = ['elliott_major', 'elliott_minor', 'elliott'];
       if (ind.id === 'wakeup') keys = ['wyckoff_schematic'];
       
-      keys.forEach(k => {
+      // If ANY of the sub-keys or the primary key are marked as BULLISH in the analysis engine, count as bullish
+      for (const k of keys) {
         const analysis = rawAnalysisData[k];
-        if (analysis) {
-          if (analysis.type === 'BULLISH') bullish++;
-          else if (analysis.type === 'BEARISH') bearish++;
+        if (analysis && analysis.type === 'BULLISH') {
+          isIndicatorBullish = true;
+          break;
         }
-      });
+      }
+      
+      if (isIndicatorBullish) bullish++;
     });
 
-    return { bullish, bearish };
+    const total = indicators.length;
+    // According to user request, sum of bullish + bearish must equal total indicators
+    return { bullish, bearish: total - bullish, total };
   }, [indicators, rawAnalysisData]);
 
   return (
@@ -1491,7 +1496,7 @@ const WyckoffAnalyzer: React.FC = () => {
                 </div>
 
                 {/* Timeframe Commands */}
-                <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-[2rem] border border-white/5">
+                <div className="flex items-center gap-1.5 bg-black/40 p-1.5 rounded-[2rem] border border-white/5 mr-2">
                   {["1s", "3s", "10s", "30s", "1m", "5m", "15m", "1h", "4h", "1d", "1w"].map(tf => (
                     <button
                       key={tf}
@@ -1507,6 +1512,16 @@ const WyckoffAnalyzer: React.FC = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* Reset View Button - Prominent as requested */}
+                <button
+                  onClick={handleResetView}
+                  className="mr-3 h-11 px-4 rounded-full bg-white/5 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white flex items-center gap-2 transition-all group"
+                  title="Restablecer Gráfico"
+                >
+                  <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
+                  <span>Restablecer</span>
+                </button>
 
                 {/* Status Indicator */}
                 <div className="flex items-center gap-3 pr-6 pl-2">
