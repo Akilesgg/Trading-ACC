@@ -131,17 +131,7 @@ const WyckoffAnalyzer: React.FC = () => {
   const [recommendation, setRecommendation] = useState<string>("");
   
   const [indicators, setIndicators] = useState<IndicatorConfig[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('helium_indicators_v2');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Error parsing indicators", e);
-        }
-      }
-    }
-    return [
+    const defaultIndicators = [
       { id: "patterns", name: "Patrones de Precios", enabled: false },
       { id: "candles", name: "Velas Japonesas", enabled: false },
       { id: "elliott", name: "Helium-3 (Elliott)", enabled: false },
@@ -154,6 +144,24 @@ const WyckoffAnalyzer: React.FC = () => {
       { id: "bollinger", name: "Bandas de Bollinger", enabled: false },
       { id: "ai_pro", name: "Análisis ✦✦", enabled: false }
     ];
+
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('helium_indicators_v2');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Reconcile saved indicators with defaults to ensure all 11 exist
+          const reconciled = defaultIndicators.map(def => {
+            const match = parsed.find((p: any) => p.id === def.id);
+            return match ? { ...def, enabled: match.enabled } : def;
+          });
+          return reconciled;
+        } catch (e) {
+          console.error("Error parsing indicators", e);
+        }
+      }
+    }
+    return defaultIndicators;
   });
 
   useEffect(() => {
@@ -1513,16 +1521,6 @@ const WyckoffAnalyzer: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Reset View Button - Prominent as requested */}
-                <button
-                  onClick={handleResetView}
-                  className="mr-3 h-11 px-4 rounded-full bg-white/5 border border-white/10 text-white/60 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white flex items-center gap-2 transition-all group"
-                  title="Restablecer Gráfico"
-                >
-                  <RotateCcw size={14} className="group-hover:rotate-[-45deg] transition-transform" />
-                  <span>Restablecer</span>
-                </button>
-
                 {/* Status Indicator */}
                 <div className="flex items-center gap-3 pr-6 pl-2">
                   <div className="flex flex-col items-end">
@@ -1587,7 +1585,7 @@ const WyckoffAnalyzer: React.FC = () => {
                 <span className="text-[18px] font-black text-red-500 leading-none">-{confluence.bearish}</span>
               </div>
               <div className="h-8 w-px bg-white/10 mx-1" />
-              <div className="px-3">
+              <div className="px-3 min-w-[120px]">
                 <span className="text-[8px] font-black text-white/30 uppercase tracking-[0.2em] block mb-0.5">ESTADO GLOBAL</span>
                 <span className={cn(
                   "text-[10px] font-black uppercase tracking-widest",
@@ -1596,6 +1594,15 @@ const WyckoffAnalyzer: React.FC = () => {
                   {confluence.bullish > confluence.bearish ? "CONFLUENCIA ALCISTA" : (confluence.bearish > confluence.bullish ? "CONFLUENCIA BAJISTA" : "ESTADO NEUTRAL")}
                 </span>
               </div>
+              <div className="h-8 w-px bg-white/10 mx-1" />
+              {/* Reset View Button - Integrado para mayor visibilidad */}
+              <button
+                onClick={handleResetView}
+                className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white flex items-center justify-center transition-all group"
+                title="Restablecer Vista del Gráfico"
+              >
+                <RotateCcw size={18} className="group-hover:rotate-[-45deg] transition-transform" />
+              </button>
             </div>
 
             {wyckoffPhase && (
